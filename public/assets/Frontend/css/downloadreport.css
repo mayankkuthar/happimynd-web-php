@@ -1,0 +1,144 @@
+.downloadreport {
+  padding: 40px 0;
+}
+
+.downloadreport h1 {
+  font-weight: normal;
+  font-size: 1.5rem;
+  line-height: 36px;
+  color: #9297A6;
+  margin: 0;
+}
+
+.downloadreport__headings__list {
+  padding: 0 64px;
+  padding-bottom: 37px;
+}
+
+.downloadreport__headings h2 {
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 24px;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: #58C4CB;
+  margin: 0;
+}
+
+.downloadreport__content__list {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 28px 56px;
+  border-left: 8px solid transparent;
+}
+
+.downloadreport__content__list:hover {
+  /* background: #EBF4F9; */
+  border-left: 8px solid #3C92C6;
+}
+
+.downloadreport__content__list1 {
+  border-top: 0;
+}
+
+.downloadreport__content__date h3,
+.downloadreport__content__status h3,
+.downloadreport__content__expiry h3 {
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 21px;
+  letter-spacing: 0.01em;
+  color: #000000;
+  margin: 0;
+}
+
+.downloadreport__content__status.expired h3,
+.downloadreport__content__expiry.expired h3 {
+  color: #DD1D43;
+}
+
+.downloadreport__content__buttons {
+  text-align: right;
+}
+
+.downloadreport__content__buttons-view {
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 24px;
+  letter-spacing: -0.01em;
+  color: #3C92C6;
+  padding: 4px 24px;
+  background-color: #FFFFFF;
+  border: 1px solid #3C92C6;
+  border-radius: 24px;
+  width: 82px;
+  margin-right: 12px;
+  transition: .3s;
+}
+
+.downloadreport__content__buttons-view:hover {
+  color: #20599B;
+  border: 1px solid #20599B;
+}
+
+.downloadreport__content__buttons-download {
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 24px;
+  letter-spacing: -0.01em;
+  color: #FFFFFF;
+  padding: 4px 24px;
+  background-color: #A3E8E5;
+  border: 1px solid #A3E8E5;
+  border-radius: 24px;
+  width: 119px;
+  transition: .3s;
+}
+
+.downloadreport__content__buttons-download:hover {
+  background-color: #58C4CB;
+  border: 1px solid #58C4CB;
+  color: #fff;
+}
+
+.downloadreport__content__buttons-view:disabled,
+.downloadreport__content__buttons-download:disabled {
+  color: rgba(16, 16, 16, 0.3);
+  background-color: rgba(239, 239, 239, 0.3);
+  border-color: rgba(118, 118, 118, 0.3);
+}
+
+.avail_free_summary a {
+  text-decoration: none;
+}
+
+@media screen and (max-width: 767px) {
+  .downloadreport__content__buttons {
+    text-align: left;
+  }
+  .downloadreport__content__list {
+    padding: 28px 0;
+    border-left: 0;
+  }
+  
+  .downloadreport__content__list:hover {
+    background: transparent;
+    border-left: 0;
+  }
+
+  .downloadreport__headings__list {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .downloadreport__content__date h3, .downloadreport__content__status h3, .downloadreport__content__expiry h3 {
+    padding-bottom: 8px;
+  }
+  .downloadreport__content__buttons-view {
+    margin-bottom: 4px;
+  }
+  .downloadreport__content__column {
+    flex-direction: column;
+  }
+  .avail_free_summary {
+    padding-bottom: 16px;
+  }
+}

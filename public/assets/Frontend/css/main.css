@@ -1,0 +1,282 @@
+body {
+  font-family: 'Poppins', sans-serif;
+  padding: 0 !important;
+  background-color: #E9FFFE;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+}
+
+ul li {
+  list-style: none;
+}
+
+button {
+  outline: 0 none;
+}
+
+button:focus {
+  outline: 0 none;
+}
+
+button:disabled {
+  color: rgba(16, 16, 16, 0.3);
+  background-color: #D8E9F4;
+  border-color: rgba(118, 118, 118, 0.3);
+}
+
+.modal-dialog {
+  padding: 0 10px;
+}
+
+.main__header {
+  position: sticky;
+  top: 0;
+  background: #A3E8E5;
+  z-index: 10;
+}
+
+.btn__loader1,
+.btn__loader2 {
+  pointer-events: none;
+  width: 16px;
+  height: 16px;
+  border: 3px solid transparent;
+  border-color: #FFFFFF;
+  border-top-color: transparent;
+  border-radius: 50%;
+  -webkit-animation: loadingspin 1s linear infinite;
+  -moz-animation: loadingspin 1s linear infinite;
+  -o-animation: loadingspin 1s linear infinite;
+  animation: loadingspin 1s linear infinite;
+  user-select: none;
+  margin: 0 auto;
+}
+
+.btn__loader2 {
+  border-color: #20599B;
+  border-top-color: transparent;
+}
+
+@-webkit-keyframes loadingspin {
+  100% {
+    transform: rotate(360deg)
+  }
+}
+
+@-moz-keyframes loadingspin {
+  100% {
+    transform: rotate(360deg)
+  }
+}
+
+@-o-keyframes loadingspin {
+  100% {
+    transform: rotate(360deg)
+  }
+}
+
+@keyframes loadingspin {
+  100% {
+    transform: rotate(360deg)
+  }
+}
+
+/** Thrive Code Generation **/
+
+.thrive__code {
+  background-image: url('../images/thrivecodebackimg.webp');
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+
+/*Homepage bitrix bot*/
+.b24-widget-button-wrapper{
+  display: none !important;
+}
+.thrive__code img {
+  width: 100%;
+  height: fit-content;
+  position: absolute;
+  top: 0;
+}
+
+.thrive__code__mob-img {
+  display: none;
+}
+
+.thrive__code__content-code {
+  max-width: 304px;
+  margin: 0 auto;
+  padding-top: 200px;
+}
+
+.thrive__code__content-steps {
+  max-width: 500px;
+  margin: 0 auto;
+  padding-top: 72px;
+  padding-bottom: 112px;
+}
+
+.thrive__code__content-code h1,
+.thrive__code__content-steps h1 {
+  font-weight: bold;
+  font-size: 2rem;
+  line-height: 138.5%;
+  text-align: center;
+  color: #3C92C6;
+  margin: 0;
+  padding-bottom: 40px;
+}
+
+.thrive__code__content-code input {
+  background: #FFFFFF;
+  border: 1.5px dashed #3C92C6;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 1.25rem;
+  line-height: 30px;
+  color: #000000;
+  text-align: center;
+  padding: 9px 52px;
+  width: 100%;
+  outline: 0 none;
+}
+
+.thrive__code__content-code p {
+  font-size: 0.75rem;
+  line-height: 18px;
+  color: rgba(0, 0, 0, 0.6);
+  margin: 0;
+  padding-top: 8px;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.thrive__code__content-steps h1 {
+  padding-bottom: 24px;
+}
+
+.thrive__code__content-steps p {
+  font-weight: normal;
+  font-size: 1.25rem;
+  line-height: 30px;
+  color: #000000;
+  margin: 0;
+  padding-bottom: 4px;
+  display: flex;
+  align-items: flex-start;
+}
+
+.thrive__code__content-steps p span {
+  color: #3C92C6;
+  margin-right: 5px;
+  width: 15px;
+  text-align: right;
+}
+
+.thrive__code__content-download-appbtn {
+  text-align: center;
+  padding-top: 40px;
+}
+
+.thrive__code__content-download-appbtn a {
+  text-decoration: none;
+  display: block;
+  padding: 12px 24px;
+  border: 1px solid #3C92C6;
+  border-radius: 24px;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 24px;
+  letter-spacing: -0.01em;
+  color: #3C92C6;
+}
+
+.thrive__code__content-download-appbtn a:hover {
+  text-decoration: none;
+}
+
+.happispace__contact__form {
+  padding: 50px 0;
+}
+
+.app__download_link {
+  padding-top: 40px;
+}
+
+.app__download_link__play_store {
+  margin-left: 8px;
+}
+
+.app__download_link__app_store img,
+.app__download_link__play_store img {
+  position: relative;
+  height: auto;
+}
+
+@media screen and (max-width: 767px) {
+  .thrive__code__mob-img {
+    display: block;
+  }
+  .thrive__code img {
+    height: inherit;
+  }
+  .thrive__code__desk-img {
+    display: none;
+  }
+  .thrive__code {
+    background-image: url('../images/thrivecodebackmobimg.webp');
+  }
+}
+
+/** Thrive Code Generation End **/
+
+.container,
+.container-fluid {
+  padding: 0 20px;
+}
+
+.dashboard__toast {
+  position: fixed;
+  top: -140px;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: 1s;
+  width: 352px;
+  max-width: 352px;
+  z-index: 2000;
+}
+
+.dashboard__toast__show {
+  top: 140px;
+}
+
+.dashboard__toast__text {
+  padding: 12px 24px;
+  background: #3C92C6;
+  border-radius: 20px;
+}
+
+.dashboard__toast__text h1 {
+  margin: 0;
+  font-weight: 500;
+  font-size: 0.75rem;
+  line-height: 16px;
+  text-align: center;
+  letter-spacing: -0.01em;
+  color: #FFFFFF;
+  padding: 0;
+}
+
+@media screen and (min-width: 768px) {
+  .container {
+    padding: 0;
+  }
+  .container-fluid {
+    padding: 0 15px ;
+  }
+}

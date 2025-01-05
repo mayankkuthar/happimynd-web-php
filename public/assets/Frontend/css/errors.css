@@ -1,0 +1,107 @@
+.error404,
+.error500 {
+  padding-top: 60px;
+  padding-bottom: 100px;
+}
+
+.error401 {
+  padding-bottom: 100px;
+}
+
+.error404__text,
+.error404__img,
+.error401__text,
+.error401__img,
+.error500__text,
+.error500__img {
+  padding-top: 40px;
+}
+
+.error404__text h1,
+.error401__text h1,
+.error500__text h1 {
+  margin: 0;
+  font-weight: bold;
+  font-size: 3rem;
+  line-height: 130%;
+  color: #49516A;
+  padding-bottom: 16px;
+}
+
+.maintenance_text h1 {
+  font-size: 2rem;
+}
+
+.error404__text p,
+.error401__text p,
+.error500__text p {
+  margin: 0;
+  font-weight: normal;
+  font-size: 1.25rem;
+  line-height: 30px;
+  color: #6D7488;
+  padding-bottom: 56px;
+}
+
+.error404__text a,
+.error401__text a,
+.error500__text a {
+  padding: 20px 45px;
+  max-width: 334px;
+  background: #58C4CB;
+  border-radius: 0px 40px 40px 40px;
+  font-weight: 600;
+  font-size: 1.5rem;
+  line-height: 130%;
+  text-align: center;
+  color: #FFFFFF;
+  display: block;
+  text-decoration: none;
+  transition: .3s;
+}
+
+.maintenance_text a {
+  width: 206px;
+}
+
+.error404__text a:hover,
+.error401__text a:hover,
+.error500__text a:hover {
+  text-decoration: none;
+  background: #A3E8E5;
+  color: #FFFFFF;
+}
+
+.error404__img img,
+.error401__img img,
+.error500__img img {
+  width: 100%;
+}
+
+@media screen and (min-width: 992px) {
+  .error401__text,
+  .error401__img {
+    padding-top: 0px;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .error404,
+  .error401,
+  .error500 {
+    padding-top: 0;
+  }
+  .error401__text,
+  .error401__img {
+    padding-top: 40px;
+  }
+}
+
+@media screen and (max-width: 400px) {
+  .error404__text a,
+  .error401__text a,
+  .error500__text a {
+    padding: 15px;
+    font-size: 1rem;
+  }
+}

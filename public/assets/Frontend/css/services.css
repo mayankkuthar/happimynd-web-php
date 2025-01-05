@@ -1,0 +1,209 @@
+.educationalservices,
+.otherservices {
+  padding-bottom: 40px;
+}
+
+.educationalservices h1,
+.otherservices h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 36px;
+  color: #9297A6;
+  margin: 36px 0 12px 0;
+}
+
+.educationalservices__card,
+.otherservices__card {
+  background: linear-gradient(180deg, #FFFFFF 0%, #EFFBF9 100%);
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 12px 0;
+  width: 100%;
+}
+
+.educationalservices__card .educationalservices__card_image {
+  min-height: 184px;
+  height: 184px;
+}
+.otherservices__card .otherservices__card_image {
+  min-height: 184px;
+  height: 184px;
+  background: #FFFFFF;
+  border-radius: 8px;
+}
+
+.educationalservices__card .educationalservices__card_image img,
+.otherservices__card .otherservices__card_image img {
+  width: 100%;
+  height: 100%;
+}
+
+.educationalservices__card h2,
+.otherservices__card h2 {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.25rem;
+  line-height: 30px;
+  color: #3C92C6;
+  padding-top: 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.educationalservices__card h3 {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 21px;
+  color: #6D7488;
+  padding: 4px 0;
+  word-break: break-word;
+}
+
+.educationalservices__card__starrating {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+  align-items: center;
+  padding: 4px 0
+}
+
+.educationalservices__card__starrating p:first-child {
+  font-weight: bold;
+  font-size: 1rem;
+  line-height: 24px;
+  color: #E5A662;
+  padding-right: 12px;
+}
+
+.educationalservices__card__starrating p:last-child {
+  font-size: 0.875rem;
+  line-height: 21px;
+  color: #B6B9C3;
+  padding-left: 8px;
+}
+
+.rating {
+  display: inline-block;
+  unicode-bidi: bidi-override;
+  color: #eee;
+  font-size: 25px;
+  /* height: 25px; */
+  width: auto;
+  margin: 0;
+  position: relative;
+  padding: 0;
+}
+
+.rating-upper {
+  color: #EDAF15;
+  padding: 0;
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  top: -10px;
+  left: 0;
+  overflow: hidden;
+}
+
+.rating-lower {
+  padding: 0;
+  display: flex;
+  z-index: 0;
+  position: relative;
+  top: -10px;
+}
+
+.educationalservices__card__pricing h4 {
+  margin: 0;
+  font-weight: bold;
+  font-size: 1.5rem;
+  line-height: 138.5%;
+  letter-spacing: -0.02em;
+  color: #3C92C6;
+}
+
+.educationalservices__card__link:hover,
+.otherservices__card__link:hover {
+  text-decoration: none;
+}
+
+.educationalservices__card__pricing h4 span {
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 23px;
+  letter-spacing: -0.02em;
+  color: #9297A6;
+  padding-right: 12px;
+  text-decoration: line-through;
+  margin-left: 12px;
+}
+
+.educationalservices__card__pricing a,
+.otherservices__card__pricing a {
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 24px;
+  text-align: center;
+  letter-spacing: -0.01em;
+  color: #FFFFFF;
+  padding: 8px 18px;
+  background: #3C92C6;
+  border: 1px solid #3C92C6;
+  border-radius: 24px;
+  -webkit-transition: all .3s ease;
+  -moz-transition: all .3s ease;
+  -ms-transition: all .3s ease;
+  -o-transition: all .3s ease;
+  transition: all .3s ease;
+  user-select: none;
+}
+
+.educationalservices__card__pricing a:hover,
+.otherservices__card__pricing a:hover {
+  background: #20599B;
+  border: 1px solid #20599B;
+  text-decoration: none;
+}
+
+.otherservices__card h2 {
+  padding-top: 6px;
+}
+
+.otherservices__card p {
+  font-size: 1rem;
+  line-height: 24px;
+  color: #6D7488;
+  margin: 0;
+  padding: 4px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.otherservices__card__pricing {
+  padding-top: 45px;
+}
+
+.otherservices__card__offer {
+  text-align: right;
+  padding-bottom: 15px;
+}
+
+.otherservices__card__offer span {
+  font-weight: 500;
+  padding: 6px 16px;
+  background: #E5A662;
+  border-radius: 24px;
+  font-size: 0.875rem;
+  line-height: 20px;
+  letter-spacing: -0.01em;
+  color: #FFFFFF;
+}

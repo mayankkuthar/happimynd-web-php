@@ -1,0 +1,1086 @@
+.commingsoon__popup,
+.login__popup,
+.alreadypaid__popup,
+.verifyaccount__popup {
+    max-width: 512px;
+    margin-top: 10%;
+}
+
+.commingsoon__popup .modal-content,
+.login__popup .modal-content,
+.raisequery__popup .modal-content,
+#usercheck .modal-content,
+#sendotp .modal-content,
+#newpassword .modal-content,
+#verifyotp .modal-content,
+.alreadypaid__popup .modal-content,
+.reportreview__popup .modal-content,
+.reportreview__popup .modal-content,
+.discountcoupon__popup .modal-content {
+    background-color: #ffffff;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
+    border-radius: 12px;
+    border: 0;
+}
+
+.commingsoon__popup .modal-content,
+.login__popup .modal-content {
+    padding: 0 15px;
+}
+
+.raisequery__popup {
+    width: 368px;
+    max-width: 368px;
+}
+
+.discountcoupon__popup {
+  width: 432px;
+  max-width: 432px;
+}
+
+.login__popup__content,
+.commingsoon__popup__content,
+.alreadypaid__popup__content {
+    padding: 50px 0;
+    text-align: center;
+    max-width: 366px;
+    margin: 0 auto;
+}
+
+.discountcoupon__popup__content {
+  max-width: 304px;
+  margin: 0 auto;
+  padding: 48px 0;
+}
+
+.alreadypaid__popup__content {
+    padding-top: 90px;
+    padding-bottom: 90px;
+}
+
+.login__popup__close,
+.alreadypaid__popup__close,
+.discountcoupon__popup__close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    cursor: pointer;
+}
+
+.login__popup__content h1,
+.commingsoon__popup__content h1,
+.alreadypaid__popup__content h1,
+.discountcoupon__popup__content h1 {
+    font-weight: bold;
+    font-size: 2rem;
+    line-height: 130%;
+    text-align: center;
+    color: #58C4CB;
+    margin: 0;
+    padding-bottom: 22px;
+}
+
+.login__popup__content p,
+.alreadypaid__popup__content p,
+.commingsoon__popup__content p {
+    font-size: 1.25rem;
+    line-height: 24px;
+    text-align: center;
+    color: #000000;
+    margin: 0;
+    padding-bottom: 50px;
+}
+
+.commingsoon__popup__content p {
+    text-align: justify;
+}
+
+.login__popup__content button,
+.commingsoon__popup__content button,
+.alreadypaid__popup__content button,
+.login__popup__content a,
+.discountcoupon__popup__content button {
+    background: #58C4CB;
+    border-radius: 16px;
+    border: 0;
+    transition: 0.3s;
+}
+
+.login__popup__content button:hover,
+.commingsoon__popup__content button:hover,
+.alreadypaid__popup__content button:hover,
+.login__popup__content a,
+.discountcoupon__popup__content button:hover {
+    background: #20599b;
+}
+
+.login__popup__content button a,
+.login__popup__content a,
+.commingsoon__popup__content button,
+.alreadypaid__popup__content button,
+.discountcoupon__popup__content button {
+    padding: 4px 12px;
+    display: block;
+    font-weight: bold;
+    font-size: 0.875rem;
+    line-height: 24px;
+    letter-spacing: -0.01em;
+    color: #ffffff;
+    text-decoration: none;
+    margin: 0 auto;
+    min-width: 64px;
+}
+
+.discountcoupon__popup__content button {
+  min-width: 100%;
+  border-radius: 8px;
+  margin-top: 16px;
+}
+
+/** Raise Query CSS start **/
+
+.raisequery__popup__content {
+    width: 100%;
+}
+
+.raisequery__popup__content h1 {
+    margin: 0;
+    font-weight: bold;
+    font-size: 1.5rem;
+    line-height: 130%;
+    color: #000000;
+    padding: 20px 32px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+.raisequery__popup__content__form {
+    padding: 32px;
+}
+
+.raisequery__popup__content__form h2 {
+    margin: 0;
+    font-weight: 500;
+    font-size: 0.8125rem;
+    line-height: 20px;
+    letter-spacing: -0.01em;
+    color: #000000;
+    padding-bottom: 4px;
+}
+
+.raisequery__popup__content__form span.error,
+.discountcoupon__popup__content__form span.error {
+    font-weight: normal;
+    font-size: 0.625rem;
+    line-height: 14px;
+    color: #dd1d43;
+    display: block;
+    margin: 0;
+    padding-top: 4px;
+}
+
+.raisequery__popup__content__form select,
+.raisequery__popup__content__form textarea {
+    background: #ffffff;
+    border: 1px solid #ced4da;
+    box-sizing: border-box;
+    border-radius: 4px;
+    width: 100%;
+    font-weight: normal;
+    font-size: 0.875rem;
+    line-height: 24px;
+    color: #08090a;
+    padding: 8px 12px;
+    -webkit-transition: 0.3s;
+    -moz-transition: 0.3s;
+    -ms-transition: 0.3s;
+    -o-transition: 0.3s;
+    transition: 0.3s;
+    margin-bottom: 16px;
+}
+
+.raisequery__popup__content__form textarea {
+    height: 80px;
+}
+
+.raisequery__popup__content__form select.error,
+.raisequery__popup__content__form textarea.error {
+    border: 1px solid #dd1d43;
+    box-shadow: 0 0 0 2px rgba(221, 29, 67, 0.5);
+}
+
+.raisequery__popup__content__form select:focus,
+.raisequery__popup__content__form textarea:focus {
+    outline: 0 none;
+    border: 1px solid #58C4CB;
+    box-shadow: 0 0 0 2px rgba(177, 211, 232, 0.5);
+}
+
+.raisequery__popup__content__form select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("../images/chevron-down.svg");
+    background-repeat: no-repeat;
+    background-position: center right 10px;
+}
+
+.raisequery__popup__content__form__btn__submit {
+    font-weight: 500;
+    font-size: 0.875rem;
+    line-height: 24px;
+    color: #ffffff;
+    background: #58C4CB;
+    border: 2px solid #58C4CB;
+    margin-right: 24px;
+}
+
+.raisequery__popup__content__form__btn__submit:hover {
+    background: #58C4CB;
+    border: 2px solid #58C4CB;
+}
+
+.raisequery__popup__content__form__btn__submit,
+.raisequery__popup__content__form__btn__cancel {
+    padding: 8px 40px;
+    border-radius: 8px;
+    margin-top: 24px;
+}
+
+.happiApp__popup_content_form_btn__submit,
+.happiApp__popup_content_form_btn__cancel {
+    padding: 8px 40px;
+    border-radius: 8px;
+    margin-top: 24px;
+}
+
+.raisequery__popup__content__form__btn__cancel {
+    font-weight: 500;
+    font-size: 0.875rem;
+    line-height: 24px;
+    color: #58C4CB;
+    background: #ffffff;
+    border: 2px solid #58C4CB;
+    box-sizing: border-box;
+}
+
+.raisequery__popup__content__form__btn__cancel:hover {
+    color: #20599b;
+    border: 2px solid #20599b;
+}
+
+/** Raise Query CSS END **/
+
+/** Assessment Instructions CSS start **/
+
+.assessment__popup {
+    max-width: 648px;
+}
+
+.assessment__popup .modal-content {
+    background: #ffffff;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
+    border-radius: 12px;
+    border: 0;
+}
+
+.assessment__popup__content {
+    padding: 64px;
+    background-color: #ffffff;
+    border-radius: 12px;
+}
+
+.assessment__popup__content h1 {
+    font-weight: bold;
+    font-size: 2rem;
+    line-height: 138.5%;
+    color: #49516a;
+    margin: 0;
+    padding-bottom: 2px;
+}
+
+.assessment__popup__content__description,
+.assessment__popup__content__description1 {
+    margin: 0;
+    font-weight: 500;
+    font-size: 1rem;
+    line-height: 23px;
+    color: #b6b9c3;
+    padding-bottom: 40px;
+}
+
+.assessment__popup__content__description1 {
+    font-size: 0.875rem;
+}
+
+.assessment__popup__content__instructions__number {
+    margin-right: 16px;
+}
+
+.assessment__popup__content__instructions__number span {
+    font-weight: 600;
+    font-size: 1.5rem;
+    line-height: 22px;
+    text-align: center;
+    color: #58C4CB;
+    display: block;
+    width: 40px;
+    height: 40px;
+    background: #ebf4f9;
+    border-radius: 50%;
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.assessment__popup__content__instructions {
+    padding-bottom: 16px;
+}
+
+.assessment__popup__content__instructions__text h2 {
+    font-weight: 600;
+    font-size: 18px;
+    line-height: 27px;
+    color: #49516a;
+    padding-bottom: 2px;
+    margin: 0;
+}
+
+.assessment__popup__content__instructions p {
+    margin: 0;
+    font-weight: normal;
+    font-size: 1.25rem;
+    line-height: 23px;
+    color: #9297a6;
+}
+
+.assessment__popup__content__instructions__text {
+    padding-bottom: 16px;
+}
+
+.assessment__popup__content__button {
+    text-align: center;
+    padding-top: 16px;
+}
+
+.assessment__popup__content__button button {
+    padding: 4px 12px;
+    background: #58C4CB;
+    border-radius: 24px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 24px;
+    letter-spacing: -0.01em;
+    color: #ffffff;
+    border: 0;
+    transition: 0.3s;
+}
+
+.assessment__popup__content__button button:hover {
+    background: #98E3E1;
+}
+
+.assessment__popup {
+    position: relative;
+}
+
+/** Send Full Report Pop, Report Reading pop, Verify acoount **/
+
+.sendfullreport__popup,
+.reportreading__popup,
+.confirmcode__popup,
+.calltime__popup {
+    max-width: 512px;
+}
+
+.sendfullreport__popup__close,
+.reportreading__popup__close,
+.verifyaccount__popup__close,
+.confirmcode__popup__close,
+.calltime__popup__close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    cursor: pointer;
+}
+
+.sendfullreport__popup .modal-content,
+.reportreading__popup .modal-content,
+.verifyaccount__popup .modal-content,
+.confirmcode__popup .modal-content,
+.calltime__popup .modal-content {
+    background-color: #ffffff;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
+    border-radius: 12px;
+    padding: 50px 75px;
+    padding-bottom: 166px;
+    border: 0;
+}
+
+.sendfullreport__popup .modal-content {
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: 50px;
+}
+
+.reportreading__popup .modal-content{
+    padding: 50px 70px;
+}
+
+.calltime__popup .modal-content {
+  padding: 50px;
+}
+
+.confirmcode__popup .modal-content {
+    padding: 50px 70px;
+}
+
+.verifyaccount__popup .modal-content {
+    padding: 50px 70px;
+}
+
+.sendfullreport__popup__content {
+    max-width: 360px;
+    margin: 0 auto;
+}
+
+.verifyaccount__popup__content,
+.calltime__popup__content {
+    max-width: 360px;
+    margin: 0 auto;
+}
+
+.confirmcode__popup__content {
+    max-width: 360px;
+    margin: 0 auto;
+}
+
+.custom_popup_heading,
+.sendfullreport__popup__content h1,
+.reportreading__popup__content h1,
+.verifyaccount__popup__content h1,
+.confirmcode__popup__content h1,
+.calltime__popup__content h1,
+.reportreview__popup__content__text h1 {
+    font-weight: bold;
+    font-size: 2rem;
+    line-height: 138.5%;
+    color: #58C4CB;
+    margin: 0;
+    padding-bottom: 8px;
+    text-align: center;
+}
+
+#sendotp .sendfullreport__popup__content h1 {
+    font-size: 1.625rem;
+    padding-bottom: 40px;
+}
+
+#newpassword .sendfullreport__popup__content h1 {
+    font-size: 1.625rem;
+}
+
+.verifyaccount__popup__content h1 {
+    padding-bottom: 24px;
+}
+
+.custom_popup_content,
+.sendfullreport__popup__content p,
+.reportreading__popup__content p,
+.confirmcode__popup__content p,
+.calltime__popup__content p,
+.reportreview__popup__content__text p {
+    font-weight: normal;
+    font-size: 1.25rem;
+    line-height: 23px;
+    color: #6d7488;
+    margin: 0;
+    padding-bottom: 40px;
+    text-align: center;
+}
+
+.reportreading__popup__form,
+.calltime__popup__form {
+    max-width: 360px;
+    margin: 0 auto;
+}
+
+.sendfullreport__popup__form__input h2,
+.reportreading__popup__form__input h2,
+.confirmcode__popup__form__input h2,
+.calltime__popup__form__input h2,
+.discountcoupon__popup__form__input h2 {
+    font-weight: 500;
+    font-size: 0.8125rem;
+    line-height: 20px;
+    letter-spacing: -0.01em;
+    color: #000000;
+    margin: 0;
+    padding-bottom: 4px;
+}
+
+#newpassword .sendfullreport__popup__form__input {
+    padding: 8px 0;
+}
+
+.sendfullreport__popup__form__input input,
+.reportreading__popup__form__input input,
+.confirmcode__popup__form__input input,
+.calltime__popup__form__input input,
+.discountcoupon__popup__form__input input {
+    background-color: #ffffff;
+    border: 1px solid #ced4da;
+    box-sizing: border-box;
+    border-radius: 8px;
+    width: 100%;
+    padding: 8px 12px;
+    outline: 0 none;
+    transition: 0.3s;
+}
+
+.discountcoupon__popup__form__input input {
+  font-size: 0.875rem;
+}
+
+.discountcoupon__popup__form__input input.error {
+  border: 1px solid #DD1D43;
+  box-shadow: 0 0 0 2px rgba(255,190,192, 0.5);
+}
+
+.sendfullreport__popup__form__input input:focus,
+.reportreading__popup__form__input input:focus,
+.confirmcode__popup__form__input input:focus,
+.calltime__popup__form__input input:focus,
+.discountcoupon__popup__form__input input:focus {
+    outline: 0 none;
+    border: 1px solid #58C4CB;
+    box-shadow: 0 0 0 2px rgba(177, 211, 232, 0.5);
+}
+
+.calltime__popup__form__input input {
+    background-image: url("../images/chevron-down.svg");
+    background-repeat: no-repeat;
+    background-position: center right 10px;
+}
+
+.sendfullreport__popup__form__button,
+.reportreading__popup__form__button,
+.confirmcode__popup__form__button {
+    padding-top: 16px;
+    text-align: center;
+}
+
+.sendfullreport__popup__form__button button,
+.reportreading__popup__form__button__continue,
+.confirmcode__popup__form__button button,
+.calltime__popup__form__button button,
+.reportreview__popup__content__text__btn__proceed button {
+    background-color: #58C4CB;
+    border-radius: 8px;
+    border: 0;
+    padding: 8px 10px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    line-height: 24px;
+    text-align: center;
+    color: #ffffff;
+    width: 100%;
+    display: block;
+    transition: 0.3s;
+}
+
+.sendfullreport__popup__form__button button:hover,
+.reportreading__popup__form__button__continue:hover,
+.confirmcode__popup__form__button button:hover,
+.calltime__popup__form__button button:hover,
+.reportreview__popup__content__text__btn__proceed button:hover {
+    background-color: #A3E8E5;
+}
+
+.reportreading__popup__form__button__later,
+.verifyaccount__popup__content button,
+.reportreview__popup__content__text__btn__nothanks button {
+    background: #ffffff;
+    border: 1px solid #58C4CB;
+    box-sizing: border-box;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    line-height: 24px;
+    text-align: center;
+    padding: 8px 10px;
+    color: #58C4CB;
+    width: 100%;
+    margin-top: 16px;
+    transition: 0.3s;
+}
+
+.reportreading__popup__form__button__later:hover,
+.verifyaccount__popup__content button:hover,
+.reportreview__popup__content__text__btn__nothanks button:hover {
+    border: 1px solid #20599b;
+    color: #20599b;
+}
+
+.sendfullreport__popup__form__button button:focus,
+.calltime__popup__form__button button:focus {
+    outline: 0 none;
+}
+
+.reportreading__popup__form__button a,
+.confirmcode__popup__form__button a,
+.confirmcode__popup__form__button span {
+    display: block;
+    font-weight: 500;
+    font-size: 0.875rem;
+    line-height: 24px;
+    color: #58C4CB;
+    padding-top: 16px;
+}
+
+.confirmcode__popup__form__button span {
+    display: none;
+}
+
+.sendfullreport__popup__form__maybe h3 {
+    margin: 0;
+    text-align: center;
+    font-weight: 500;
+    font-size: 0.875rem;
+    line-height: 24px;
+    color: #58C4CB;
+    padding-top: 16px;
+    cursor: pointer;
+}
+
+.sendfull__report__checkbox {
+    padding-top: 7px;
+}
+
+.sendfull__report__checkbox__input {
+    position: relative;
+}
+.sendfull__report__checkbox__input label {
+    font-weight: 500;
+    font-size: 0.75rem;
+    line-height: 20px;
+    color: #6d7488;
+    margin: 0;
+    cursor: pointer;
+    padding: 8px 0 0 0;
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+}
+
+.sendfull__report__checkbox__input input {
+    display: none;
+}
+
+.sendfull__report__checkbox__input input:checked + label {
+    color: #6d7488;
+}
+
+.sendfull__report__checkbox__input label:before {
+    content: "";
+    -webkit-appearance: none;
+    background-color: transparent;
+    border: 2px solid #ced4da;
+    border-radius: 50%;
+    padding: 10px;
+    display: inline-block;
+    position: relative;
+    vertical-align: middle;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-right: 8px;
+}
+
+.sendfull__report__checkbox__input input:checked + label:after {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 12px;
+    left: 8.5px;
+    width: 6px;
+    height: 12px;
+    border: solid #ffffff;
+    border-width: 0 2.5px 2.5px 0;
+    transform: rotate(45deg);
+    transition: 0.3s;
+}
+
+.sendfull__report__checkbox__input input:checked + label:before {
+    background: #58C4CB;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    transition: 0.3s;
+}
+
+/** Call date and time **/
+
+.calltime__popup {
+    margin-top: 10%;
+}
+
+.calltime__popup__form__input {
+    margin-bottom: 16px;
+}
+
+.calltime__popup__form__input__time {
+    background: #ffffff;
+    border-radius: 8px;
+    width: 100%;
+    padding: 16px 10px;
+    padding-bottom: 4px;
+    max-height: 250px;
+    overflow: auto;
+}
+
+.calltime__popup__form__input__time__content button {
+    font-weight: 500;
+    font-size: 0.875rem;
+    line-height: 20px;
+    letter-spacing: -0.01em;
+    color: #000000;
+    padding: 6px 10px;
+    background-color: #ebf4f9;
+    border-radius: 24px;
+    display: inline-block;
+    margin-right: 5px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    border: 0;
+}
+
+.calltime__popup__form__input__time__content button.active {
+    background-color: #58C4CB;
+    color: #ffffff;
+}
+
+/* Report popups */
+
+#reportreview .modal-dialog {
+    max-width: 708px;
+}
+
+.reportreview__popup .modal-content {
+    padding: 32px 0px;
+}
+
+.reportreview__popup__content__reportcontent {
+    height: 315px;
+    overflow-x: hidden;
+    margin-right: 4px;
+}
+
+.reportreview__popup__content__reportcontent::-webkit-scrollbar-thumb {
+    background-color: #edeef0;
+    border-radius: 4px;
+}
+
+.reportreview__popup__content__reportcontent::-webkit-scrollbar {
+    background-color: transparent;
+    width: 8px;
+}
+
+.reportreview__popup__content__reportcontent,
+.reportreview__popup__content__text {
+    padding: 0 30px;
+}
+
+.reportreview__popup__content__reportcontent__text {
+    padding: 45px 32px;
+    background: #ebf4f9;
+    border-radius: 12px;
+    margin-bottom: 10px;
+}
+
+.reportreview__popup__content__reportcontent__text h1 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.75rem;
+    line-height: 138.5%;
+    color: #000000;
+    padding-bottom: 16px;
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    align-items: center;
+}
+
+.reportreview__popup__content__reportcontent__text h1 img {
+    margin-left: auto;
+    width: 65px;
+    height: 65px;
+}
+
+.reportreview__popup__content__reportcontent__text p {
+    margin: 0;
+    font-weight: normal;
+    font-size: 0.875rem;
+    line-height: 24px;
+    letter-spacing: 0.01em;
+    color: #6d7488;
+}
+
+.reportreview__popup__content__reportcontent__text__blured {
+    pointer-events: none;
+    user-select: none;
+}
+
+.reportreview__popup__content__reportcontent__text__blured
+    .reportreview__popup__content__reportcontent__text {
+    filter: blur(7px);
+    -webkit-filter: blur(7px);
+}
+
+.reportreview__popup__content__reportcontent__text__blured__lock {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.reportreview__popup__content__text h1 {
+    padding-bottom: 16px;
+    padding-top: 48px;
+}
+
+.reportreview__popup__content__text p {
+    padding-bottom: 40px;
+    max-width: 511px;
+    margin: 0 auto;
+}
+
+.reportreview__popup__content__text__btn {
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reportreview__popup__content__text__btn__proceed button,
+.reportreview__popup__content__text__btn__nothanks button {
+    border-radius: 24px;
+    margin-top: 0;
+    width: auto;
+    padding: 12px 24px;
+    margin: 0 auto;
+}
+
+.reportreview__popup__content__text__btn__proceed {
+    padding-left: 32px;
+}
+
+/* Report popups end */
+
+/* Forget Password */
+
+.forget__password {
+    text-align: center;
+}
+
+.forget__password button {
+    border: 0;
+    background: transparent;
+    outline: 0 none;
+    font-weight: 500;
+    font-size: 0.875rem;
+    line-height: 24px;
+    text-align: center;
+    color: #58C4CB;
+    padding: 16px 0 0 0;
+}
+
+.forget__password button:focus,
+.forget__password button:hover {
+    background: transparent;
+    outline: 0 none;
+    color: #A3E8E5;
+}
+
+.send__otp {
+    max-width: 304px;
+    margin: 0 auto;
+    padding-bottom: 16px;
+}
+
+.send__otp button {
+    font-weight: 500;
+    font-size: 0.875rem;
+    line-height: 24px;
+    width: 100%;
+    text-align: center;
+    color: #58C4CB;
+    background-color: transparent;
+    border: 1px solid #58C4CB;
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.send__otp button:hover {
+    color: #20599b;
+    border: 1px solid #20599b;
+}
+
+/* Forget Password end */
+
+@media screen and (max-width: 767px) {
+    .assessment__popup {
+        width: 100%;
+        height: 100%;
+    }
+    .assessment__popup__content {
+        padding: 64px 15px;
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .login__popup,
+    .commingsoon__popup {
+        max-width: 100%;
+        height: 100%;
+        border-radius: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+    }
+
+    .alreadypaid__popup .modal-content {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    header.dashboard__header {
+        z-index: 100;
+    }
+    .raisequery__popup {
+        display: block;
+    }
+    .raisequery__popup__content h1 {
+        box-shadow: none;
+    }
+    .raisequery__popup__content h1 {
+        padding: 20px 15px;
+    }
+    .raisequery__popup__content__form {
+        padding: 32px 15px;
+    }
+    .reportreading__popup .modal-content {
+        padding: 64px 15px;
+    }
+    .sendfullreport__popup .modal-content {
+        padding: 88px 15px;
+        padding-bottom: 166px;
+    }
+
+    #verifyaccount,
+    #sendfullreport,
+    #sendFurtherIntruction,
+    #reportreading,
+    #confirmcode,
+    #calltime,
+    #assessment_instruction,
+    #raisequery,
+    #usercheck,
+    #sendotp,
+    #newpassword,
+    #verifyotp,
+    #alreadypaid,
+    #discountcoupon {
+        background-color: #ffffff;
+    }
+
+    .verifyaccount__popup,
+    .sendfullreport__popup,
+    .reportreading__popup,
+    .confirmcode__popup,
+    .calltime__popup,
+    .raisequery__popup,
+    #usercheck,
+    #sendotp,
+    #newpassword,
+    #verifyotp,
+    .alreadypaid__popup,
+    .assessment__popup {
+        width: 100%;
+        margin: 0;
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 64px;
+    }
+
+    #usercheck,
+    #sendotp,
+    #newpassword,
+    #verifyotp {
+        margin-top: 0;
+    }
+
+    .verifyaccount__popup .modal-content,
+    .sendfullreport__popup .modal-content,
+    .reportreading__popup .modal-content,
+    .confirmcode__popup .modal-content,
+    .calltime__popup .modal-content,
+    .raisequery__popup .modal-content,
+    #usercheck .modal-content,
+    #sendotp .modal-content,
+    #verifyotp .modal-content,
+    #newpassword .modal-content,
+    .alreadypaid__popup .modal-content,
+    .assessment__popup .modal-content {
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .verifyaccount__popup .modal-content {
+        padding: 144px 15px;
+    }
+    .confirmcode__popup .modal-content {
+        padding: 104px 15px;
+    }
+
+    .calltime__popup .modal-content {
+        padding: 64px 15px;
+    }
+}
+
+@media screen and (min-width: 576px) {
+    .raisequery__popup__content__form__btn,
+    .happiApp__popup_content_form_btn {
+        display: -webkit-box;
+        display: -moz-box;
+        display: -ms-flexbox;
+        display: -webkit-flex;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .reportreview__popup__content__text__btn {
+        display: block;
+    }
+    .reportreview__popup__content__text__btn__proceed,
+    .reportreview__popup__content__text__btn__nothanks {
+        text-align: center;
+    }
+    .reportreview__popup__content__text__btn__proceed {
+        padding-left: 0;
+        padding-top: 10px;
+    }
+}

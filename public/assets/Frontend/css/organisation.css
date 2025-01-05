@@ -1,0 +1,217 @@
+.organisation{
+  padding-top: 78px;
+}
+
+#organisationfaq {
+  padding-bottom: 50px;
+}
+
+.organisation__content h2,
+.organisation__howcanwe__content__text h2,
+.organisation__whyus__content__text h2 {
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 23px;
+  text-transform: uppercase;
+  color: #59C5CC;
+  padding-bottom: 8px;
+  margin: 0;
+}
+
+.organisation__content h1,
+.organisation__howcanwe__content__text h1,
+.organisation__whyus__content__text h1 {
+  font-weight: bold;
+  font-size: 2.5rem;
+  line-height: 130%;
+  color: #111010;
+  margin: 0;
+  max-width: 488px;
+  padding-bottom: 24px;
+}
+
+.organisation__content p,
+.organisation__howcanwe__content__text p,
+.organisation__whyus__content__text p {
+  font-weight: normal;
+  font-size: 1.125rem;
+  line-height: 27px;
+  color: #111010;
+  margin: 0;
+  padding-bottom: 56px;
+  max-width: 488px;
+}
+
+.organisation__content p {
+  text-align: justify;
+}
+
+.organisation__content__contact_sales {
+  min-width: 230px;
+}
+
+.organisation__content__contact_sales a {
+  font-weight: 600;
+  font-size: 1.25rem;
+  line-height: 130%;
+  color: #000;
+  padding: 18px 44px;
+  background: #A3E8E5;
+  border-radius: 32px;
+  border-top-left-radius: 0;
+  display: block;
+  -webkit-transition: .3s;
+  -moz-transition: .3s;
+  -ms-transition: .3s;
+  -o-transition: .3s;
+  transition: .3s;
+  width: -webkit-max-content;
+  width: max-content;
+}
+
+.organisation__content__contact_sales a:hover {
+  text-decoration: none;
+  background: #58C4CB;
+}
+
+.organisation__content__img img {
+  width: 100%;
+}
+
+.organisation__companies {
+  margin-top: 100px;
+  text-align: center;
+  padding: 0 15px;
+}
+
+.organisation__companies h1 {
+  font-weight: 600;
+  font-size: 1.25rem;
+  line-height: 30px;
+  text-align: center;
+  letter-spacing: 0.01em;
+  color: #59C5CC;
+  margin: 0;
+  padding-bottom: 22px;
+}
+.organisation__howcanwe__content__text  circle, .organisation__whyus__content__text circle
+{
+  fill: #58C4CB !important;
+}
+.organisation__companies ul li {
+  display: inline-block;
+  padding: 10px 0;
+  padding-right: 56px;
+}
+
+.organisation__companies ul li:last-child {
+  padding-right: 0;
+}
+
+.organisation__companies__img-dhl {
+  width: 172px;
+}
+
+.organisation__companies__img-next {
+  width: 145px;
+}
+
+.organisation__companies__img-aviva {
+  width: 110px;
+}
+
+.organisation__companies__img-santander {
+  width: 177px;
+}
+
+.organisation__companies__img-healthshield {
+  width: 202px;
+}
+
+.organisation__companies__img-serco {
+  width: 190px;
+}
+
+.organisation__howcanwe__content__text p,
+.organisation__whyus__content__text p {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+}
+
+.organisation__howcanwe {
+  background: #fff;
+  padding: 181px 0;
+  margin-top: 93px;
+}
+
+.organisation__howcanwe__content__text p,
+.organisation__whyus__content__text p {
+  padding-bottom: 16px;
+}
+
+.organisation__howcanwe__content__text p span:last-child,
+.organisation__whyus__content__text p span:last-child {
+  padding-left: 16px;
+}
+
+.organisation__howcanwe__content__img img,
+.organisation__whyus__content__img img {
+  max-width: 100%;
+}
+
+.organisation__whyus {
+  padding-top: 154px;
+}
+
+.section8__content__organisation {
+  padding: 96px 15px;
+}
+
+.section8__content__organisation h2 {
+  padding-bottom: 32px;
+  max-width: 756px;
+}
+
+.section8__content__organisation__score {
+  max-width: 340px;
+}
+
+.organisation__thrive h2 {
+  padding-top: 93px;
+  font-style: italic;
+  color: #7B7B7B;
+}
+
+@media screen and (max-width: 767px) {
+  .organisation__content__img {
+    padding-top: 50px;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .organisation__content h1, .organisation__howcanwe__content__text h1, .organisation__whyus__content__text h1 {
+    font-size: 2rem;
+  }
+  .organisation__content p, .organisation__howcanwe__content__text p, .organisation__whyus__content__text p {
+    font-size: 1rem;
+  }
+  .organisation__content__img {
+    padding-top: 0px;
+    padding-bottom: 50px;
+  }
+}
+
+@media screen and (max-width: 400px) {
+  .organisation__companies ul li {
+    text-align: center;
+    display: block;
+  }
+
+  .organisation__companies ul li {
+    padding-right: 0;
+    padding-bottom: 15px;
+  }
+}

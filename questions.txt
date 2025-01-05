@@ -1,0 +1,145 @@
+Mostly I have fun and enjoyment in my life.;Schizoid
+I don't like others offending me and do not react well in such situation.;Paranoid
+I do not get into too many details.;Anankastic
+I am not sure what kind of person I want to be.;Borderline
+I express my feelings so that everyone can see.;Histrionic
+I allow other people to take my life's major decisions.;Dependent
+I usually feel nervous or tense.;Anxious
+I never get angry about anything.;Schizoid
+I go to extremes to try to keep people from abandoning me.;Borderline
+I am very cautious in my life and activities.;Anankastic
+I have never faced legal action.;Dissocial
+People find me less expressive and detached.;Schizoid
+I get into short lasting intense relationships.;Borderline
+I generally find good and honest people around me.;Paranoid
+With people on whom I depend a lot, I find it hard to disagree.;Dependent
+I feel uncomfortable in social situations, crowded parties etc.;Anxious
+I get too easily influenced by what’s happening around me.;Histrionic
+When I hurt or mistreat someone, I usually feel bad.;Dissocial
+I get aggressive (verbally or physically) if anyone tries to obstruct in my way of work and wishes.;Impulsive
+At times I've refused to hold a job or responsibility, when it was expected out of me.;Dissocial
+I don’t show my reaction when someone praises or criticizes me.;Schizoid
+For years I have kept hard feelings against people.;Paranoid
+I seek perfection even if it means spending extra time on things.;Anankastic
+People often ridicule me in my absence.;Paranoid
+I have never threatened suicide or knowingly harmed myself.;Borderline
+I switch between my feelings very frequently.;Histrionic
+Even if people don’t like it, I will fight for my rights.;Paranoid
+I like to dress to get noticed in a group of people.;Histrionic
+I will lie or cheat to serve my purpose.;Dissocial
+If I don’t get results quickly, I change my plan.;Impulsive
+I don’t feel like having sex with anyone.;Schizoid
+People find me strictly disciplined and rules oriented.;Anankastic
+Being alone makes me uncomfortable and helpless.;Dependent
+Until I am certain that people like me, I will not get involved with them.;Anxious
+I don’t like to be center of attraction.;Histrionic
+I suspect my spouse or partner is cheating on me.;Paranoid
+Sometimes out of anger I break or throw things.;Impulsive
+I have some very close friends from many years.;Dissocial
+I constantly wonder that people around may not like me.;Anxious
+I often have feeling of emptiness inside me.;Borderline
+I am unnecessarily preoccupied with perfection & productivity which leads to missing general pleasures of life.;Anankastic
+I am afraid of living by myself, without anyone around.;Dependent
+A lot of things which don’t bother others, seem dangerous to me.;Anxious
+People see me as a flirt.;Histrionic
+I don't ask favors from people I am close with.;Dependent
+I prefer solitary activities.;Schizoid
+I get into physical fights after losing my temper.;Dissocial
+I have a reputation of being too stiff or formal.;Anankastic
+For routine decisions, I often depend on other's advice or reassurance.;Dependent
+Even if there are other people around, I keep to myself.;Anxious
+I often get into trouble.;Dissocial
+I am sure there is a conspiracy behind many things in the world.;Paranoid
+I get frequent mood swings.;Impulsive
+I find it hard to adjust to new ways of doing things.;Anankastic
+I am seen as a strange person by most people.;Schizoid
+I love to take risks sometimes in life.;Impulsive
+We need friends in our life to be happy.;Schizoid
+I am more concerned about my own thoughts than what goes around me.;Schizoid
+I usually try to make people do things my way.;Anankastic
+I feel preoccupied with the Internet linked things (think about previous online activity or keep waiting for next online session).;Internet addiction
+To keep you satisfied, are you constantly increasing the time spent on internet?;Internet addiction
+Have you frequently tried controlling, cutting or stopping your internet usage but failed to do so.;Internet addiction
+I feel restless, moody, depressed or irritable when attempting to cut down or stop my Internet use.;Internet addiction
+I mostly stay online longer than I originally plan to do.;Internet addiction
+I have jeopardized or risked the loss of significant relationship, job, educational or career opportunity because of the Internet?;Internet addiction
+I use the Internet as a way of escaping from problems or for relieving my low mood (e.g., feelings of helplessness, guilt, anxiety, depression).;Internet addiction
+I find it hard to cool down or calm down.;Stress
+I am aware of dryness of my mouth or consistent thirst.;Anxiety
+I can’t experience any positive feeling in most scenarios.;Depression
+I experience breathing difficulty (eg. excessively rapid breathing, breathlessness even without physical exertion).;Anxiety
+I find it difficult to take initiative to do things.;Depression
+I frequently over-react to situations.;Stress
+I experience trembling/shaking (eg. in my hands/legs).;Anxiety
+I feel that I am using a lot of nervous energy.;Stress
+I am worried about situations in which I might panic and make a fool of myself.;Anxiety
+I feel that I have nothing to look forward to in life.;Depression
+I get agitated/angry easily.;Stress
+I find it difficult to relax.;Stress
+I feel discouraged & sad.;Depression
+I do not tolerate any distractions to my work in hand.;Stress
+I feel I am about to experience panic.;Anxiety
+I am not enthusiastic about anything.;Depression
+I feel I am not of much worth as a person.;Depression
+I feel I am oversensitive.;Stress
+I am aware of the action of my heart even without physical exertion (eg. sense of heart rate increase, heart missing a beat).;Anxiety
+I am in constant fear of unknown.;Anxiety
+I feel that life is meaningless.;Depression
+Overall I am satisfied with myself.;self esteem
+Sometimes I think I am not good for anything.;self esteem
+I feel I have many good qualities.;self esteem
+I am able to do things as good as most other people.;self esteem
+I feel I have nothing to feel proud about.;self esteem
+At times  I feel that I am useless.;self esteem
+I feel I have worth as a person & am equal to others.;self esteem
+I wish I could have more respect for myself.;self esteem
+I feel that overall I am a failure.;self esteem
+I feel positive about self.;self esteem
+I feel peaceful.;State Anxiety
+I am tensed.;State Anxiety
+I feel upset.;State Anxiety
+I am relaxed.;State Anxiety
+I am satisfied.;State Anxiety
+I am worried.;State Anxiety
+I feel peaceful generally.;Trait anxiety
+I am tensed generally.;Trait anxiety
+I feel upset generally.;Trait anxiety
+Generally I am relaxed.;Trait anxiety
+Generally I feel satisfied.;Trait anxiety
+Generally I am worried.;Trait anxiety
+I feel emotionally drained due to my work.;Burn out
+I feel like my work is too much for me to handle.;Burn out
+I feel tired when I get up in the morning  to face another day of work.;Burn out
+I think due to my work/ office I have become less caring for my loved ones.;Burn out
+By the end of the day, I start losing my patience.;Burn out
+I think during my work/office hours I accomplish many important things.;Burn out
+After hard times I bounce back quickly.;Resilience
+It's difficult for me to get through stressful events.;Resilience
+I recover pretty fast from stressful events.;Resilience
+It is difficult for me to rebound when something bad happens.;Resilience
+It's easy for me to come back out of difficult times.;Resilience
+I take a long time to get over set-backs in my life.;Resilience
+I receive acknowledgment for doing a good job.;Job Satisfaction
+I feel close to the people with whom I work.;Job Satisfaction
+I feel good about working at my current organization.;Job Satisfaction
+I have a feeling of job security at my current organization.;Job Satisfaction
+I believe management is concerned about me at my current organization.;Job Satisfaction
+I believe overall work is good for my physical health.;Job Satisfaction
+My compensation at work is good.;Job Satisfaction
+I get enough scope to use all my skills and talent in the current job.;Job Satisfaction
+I have good relations with my senior colleagues.;Job Satisfaction
+I feel good about my job.;Job Satisfaction
+How is your health & well-being?;Happiness
+Do you like what you are doing at work?;Happiness
+Do you help other people and try to make difference in their lives?;Happiness
+Do you feel loved by others?;Happiness
+How satisfied are you about your financial situations?;Happiness
+How is your relationship with children?;Happiness
+Are you comfortable with your neighbors?;Happiness
+Are you a member of a group, club or community?;Happiness
+Is your home a happy place for you?;Happiness
+Do you have any personal goal in your life and if so are you working for it?;Happiness
+Have you ever felt you ought to cut down on your drinking or drug use?;Substance Abuse
+Have people annoyed you by criticizing your drinking or drug use?;Substance Abuse
+Have you felt bad or guilty about your drinking or drug use?;Substance Abuse
+Have you ever had a drink or used drugs first thing in the morning to steady your nerves or to get rid of a hangover (eye-opener)?;Substance Abuse

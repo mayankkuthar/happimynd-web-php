@@ -1,0 +1,304 @@
+.sychologist__page {
+  padding-bottom: 150px;
+}
+
+.sychologist {
+  max-width: 708px;
+  margin: 0 auto;
+  padding: 48px 0;
+}
+.sychologist__search {
+  position: relative;
+}
+
+.no_results_found__img {
+  max-width: 412px;
+  margin: 0 auto;
+}
+.no_results_found__img img {
+  width: 100%;
+}
+.no_results_found h1 {
+  font-weight: bold;
+  font-size: 2.5rem;
+  line-height: 130%;
+  text-align: center;
+  color: #59C5CC;
+  margin: 0;
+  padding-top: 72px;
+  padding-bottom: 16px;
+}
+.no_results_found p {
+  margin: 0;
+  font-weight: 500;
+  font-size: 2rem;
+  line-height: 138.5%;
+  text-align: center;
+  color: #6D7488;
+}
+
+.sychologist__search input {
+  background-color: #F9F9F9;
+  border: 1px solid #DBDCE1;
+  box-sizing: border-box;
+  border-radius: 24px;
+  padding: 10px 48px 10px 48px;
+  outline: 0 none;
+  width: 100%;
+  height: 40px;
+}
+
+.sychologist__search input:focus {
+  outline: 0 none;
+}
+
+.sychologist__search svg {
+  position: absolute;
+  top: 10px;
+  left: 20px;
+}
+
+.sychologist__search__btn button {
+  width: 122px;
+  height: 40px;
+  background-color: #A3E8E5;
+  border: 1px solid #A3E8E5;
+  border-radius: 24px;
+  font-weight: 500;
+  font-size: 1rem;
+  line-height: 24px;
+  letter-spacing: -0.01em;
+  color: #FFFFFF;
+  outline: 0 none;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.sychologist__search__btn button:focus {
+  outline: 0 none;
+}
+
+.sychologist__dropdowns__select {
+  padding: 10px 20px;
+  background-color: #F9F9F9;
+  border: 1px solid #DBDCE1;
+  box-sizing: border-box;
+  border-radius: 24px;
+  font-size: 0.875rem;
+  line-height: 20px;
+  letter-spacing: -0.01em;
+  color: #9297A6;
+  outline: 0 none;
+}
+
+.sychologist__dropdowns__select.selected {
+  background-color: #59C5CC;
+  border-color: #59C5CC;
+  color: #FFFFFF;
+}
+
+.sychologist__dropdowns__select:focus {
+  outline: 0 none;
+}
+
+.sychologist__dropdowns__select span {
+  font-weight: 500;
+  color: #6D7488;
+  padding-left: 8px;
+}
+
+.sychologist__dropdowns .dropdown-menu {
+  border: 1px solid #DBDCE1;
+  border-radius: 4px;
+  padding: 4px 0;
+}
+
+.sychologist__dropdowns .dropdown-menu .dropdown-item {
+  padding: 12px 16px;
+  font-size: 1rem;
+  line-height: 23px;
+  color: #49516A;
+}
+
+.sychologist__dropdowns .dropdown-menu .dropdown-item:hover {
+  background-color: #D8E9F4;
+}
+
+.sychologist__dropdowns__content {
+  display: inline-block;
+  margin-right: 12px;
+  margin-top: 16px;
+}
+
+.bundles__content__psychologist {
+  max-width: 1000px;
+  margin: 24px auto;
+}
+
+.bundles__content__psychologistoptions {
+  padding: 16px 24px;
+}
+
+.bundles__content__psychologist__content {
+  display: flex;
+  align-items: flex-start;
+}
+
+.bundles__content__psychologist__img {
+  width: 135px;
+  height: 135px;
+  margin-right: 16px;
+}
+
+.bundles__content__psychologist__img img {
+  width: 135px;
+  height: 135px;
+  border-radius: 50%;
+}
+
+.bundles__content__psychologist__text h1 {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.125rem;
+  line-height: 27px;
+  color: #49516A;
+}
+
+.bundles__content__psychologist__text p {
+  margin: 0;
+  padding: 4px 0;
+  font-weight: 500;
+  font-size: 1rem;
+  line-height: 24px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #59C5CC;
+}
+
+.bundles__content__psychologist__text span {
+  font-weight: normal;
+  font-size: 0.875rem;
+  line-height: 20px;
+  color: #6D7488;
+  padding-bottom: 4px;
+}
+
+.bundles__content__psychologist__text__features {
+  display: block;
+}
+
+.bundles__content__psychologist__text span span {
+  color: #59C5CC;
+  font-weight: bold;
+}
+
+.bundles__content__psychologistoptions__timedesc--lg6 {
+  padding-top: 20px;
+}
+
+.bundles__content__psychologistoptions__timedesc--lg12 {
+  padding-left: 161px;
+}
+
+.bundles__content__psychologistoptions__timedesc p {
+  font-weight: normal;
+  font-size: 0.875rem;
+  line-height: 20px;
+  color: #6D7488;
+  margin: 0;
+}
+
+.bundles__content__psychologistoptions__timedesc svg {
+  margin-right: 8px;
+}
+
+.bundles__content__psychologistoptions__time {
+  padding-right: 24px;
+}
+
+.bundles__content__psychologistoptions__desc {
+  padding-top: 4px;
+}
+
+.bundles__content__psychologist .bundles__content__paymentoptions__price__text h2 {
+  font-size: 1rem;
+}
+
+.bundles__content__psychologist .bundles__content__paymentoptions__price__text h2 b {
+  font-size: 1.5rem;
+  padding-left: 18px;
+}
+
+.bundles__content__psychologist .bundles__content__psychologist__pricing  .bundles__content__paymentoptions__price__text h2 b {
+  padding-left: 0;
+}
+
+.bundles__content__psychologist__pricing,
+.bundles__content__psychologistoptions__timedesc--lg6 {
+  display: none;
+}
+
+.bundles__content__psychologist__pricing__paddingtop {
+  padding-top: 24px;
+}
+
+.no_results_found__img {
+  max-width: 412px;
+  margin: 0 auto;
+}
+
+.no_results_found__img img {
+  width: 100%;
+}
+
+.no_results_found h1 {
+  font-weight: bold;
+  font-size: 2.5rem;
+  line-height: 130%;
+  text-align: center;
+  color: #59C5CC;
+  margin: 0;
+  padding-top: 72px;
+  padding-bottom: 16px;
+}
+
+.no_results_found p {
+  margin: 0;
+  font-weight: 500;
+  font-size: 2rem;
+  line-height: 138.5%;
+  text-align: center;
+  color: #6D7488;
+}
+
+.psychologist_summary {
+  overflow-wrap: break-word!important;
+  word-wrap: break-word!important;
+  word-break: break-word!important;
+  text-align: justify;
+} 
+
+@media screen and (max-width: 991px) {
+  .bundles__content__psychologistoptions__timedesc--lg12 {
+    padding-top: 20px;
+  }
+}
+@media screen and (max-width: 767px) {
+  .sychologist__search__btn button {
+    position: relative;
+  }
+  .sychologist__search__btn {
+    padding-top: 16px;
+    text-align: center;
+  }
+  .bundles__content__psychologistoptions__timedesc--lg12 {
+    padding-left: 0;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .bundles__content__psychologist__content {
+    display: block;
+  }
+}

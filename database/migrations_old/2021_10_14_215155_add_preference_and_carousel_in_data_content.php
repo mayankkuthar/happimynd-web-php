@@ -1,0 +1,34 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class AddPreferenceAndCarouselInDataContent extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::table('data_contents', function (Blueprint $table) {
+            $table->integer('preference')->nullable()->after('image');
+            $table->foreignId('carousel_section_id')->nullable()->constrained()->onUpdate('cascade')->onDelete('cascade');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::table('data_contents', function (Blueprint $table) {
+            $table->dropColumn('prefernce');
+            $table->dropColumn('carousel_section_id');
+        });
+    }
+}

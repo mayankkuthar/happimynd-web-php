@@ -1,0 +1,298 @@
+.bundles {
+  padding-top: 56px;
+  padding-bottom: 211px;
+}
+
+.bundles__content {
+  background: #FFFFFF;
+  border: 1px solid #DBDCE1;
+  border-radius: 12px;
+}
+
+.bundles__content__paymentoptions {
+  padding: 40px 0;
+  margin: 0 40px;
+  border-bottom: 1px solid #DBDCE1;
+}
+
+.bundles__content__paymentoptions:last-child {
+  border-bottom: 0;
+}
+
+.bundles__content__paymentoptions__text h1 {
+  padding-bottom: 8px;
+  margin: 0;
+}
+
+.bundles__content__paymentoptions__text h1 .bundles__content__paymentoptions__text__name {
+  font-weight: 500;
+  font-size: 1.5rem;
+  line-height: 138.5%;
+  letter-spacing: -0.02em;
+  color: #49516A;
+  margin-right: 12px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.bundles__content__paymentoptions__text h1 .bundles__content__paymentoptions__text__offer {
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 21px;
+  letter-spacing: -0.01em;
+  color: #FFFFFF;
+  padding: 3px 16px;
+  background: #A3E8E5;
+  border-radius: 8px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.bundles__content__paymentoptions__text p {
+  font-weight: normal;
+  font-size: 1rem;
+  line-height: 23px;
+  letter-spacing: -0.02em;
+  color: #9297A6;
+  margin: 0;
+}
+
+/* .bundles__content__paymentoptions__price {
+  border-bottom: 1px solid #DBDCE1;
+} */
+
+.bundles__content__paymentoptions__price__text h2 {
+  margin: 0;
+  font-weight: 500;
+  font-size: 1rem;
+  line-height: 138.5%;
+  letter-spacing: -0.02em;
+  color: #111010;
+}
+
+.bundles__content__paymentoptions__price__text h2 b {
+  font-size: 1.5rem;
+  color:#A3E8E5;
+}
+
+.bundles__content__paymentoptions__price__text h2 span {
+  font-weight: 500;
+  font-size: 1rem;
+  line-height: 23px;
+  letter-spacing: -0.02em;
+  color: #9297A6;
+  padding-right: 12px;
+  text-decoration: line-through;
+}
+
+.bundles__content__paymentoptions__price__text span {
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 23px;
+  letter-spacing: -0.02em;
+  color: #9297A6;
+}
+
+.bundles__content__paymentoptions__price__addbtn__add,
+.bundles__content__paymentoptions__price__addbtn__avail {
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 24px;
+  text-align: center;
+  letter-spacing: -0.01em;
+  color: #FFFFFF;
+  padding: 8px 18px;
+  background: #A3E8E5;
+  border: 1px solid #A3E8E5;
+  border-radius: 24px;
+  -webkit-transition: all .3s ease;
+  -moz-transition: all .3s ease;
+  -ms-transition: all .3s ease;
+  -o-transition: all .3s ease;
+  transition: all .3s ease;
+  user-select: none;
+}
+
+.bundles__content__paymentoptions__price__addbtn__add:hover {
+  background: #58C4CB;
+  border: 1px solid #58C4CB;
+}
+
+.bundles__content__paymentoptions__price__addbtn__add--added {
+  padding: 8px 18px;
+  background: #FFFFFF;
+  border: 1px solid #A3E8E5;
+  border-radius: 24px;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 24px;
+  letter-spacing: -0.01em;
+  color: #A3E8E5;
+  -webkit-transition: all .3s ease;
+  -moz-transition: all .3s ease;
+  -ms-transition: all .3s ease;
+  -o-transition: all .3s ease;
+  transition: all .3s ease;
+}
+
+.bundles__content__paymentoptions__price__addbtn__add--added:hover {
+  border-color:#A3E8E5;
+  background: #FFFFFF;
+  color: #A3E8E5;
+}
+
+.bundles__content__paymentoptions__price__padding {
+  padding-bottom: 24px;
+}
+
+.bundles__content__paymentoptions__price__padding:last-child {
+  padding-bottom: 0;
+}
+
+.bundles__proceedpay {
+  background: #FFFFFF;
+  box-shadow: 0px -2px 6px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  padding-top: 14px;
+  padding-bottom: 18px;
+}
+
+.bundles__proceedpay__content {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.bundles__proceedpay__content h1,
+.bundles__proceedpay__content-new h1 {
+  margin: 0;
+  font-weight: 500;
+  font-size: 1.25rem;
+  line-height: 138.5%;
+  color: #49516A;
+}
+
+.bundles__proceedpay__content h1 span,
+.bundles__proceedpay__content-new h1 span {
+  font-weight: bold;
+  font-size: 1.25rem;
+  line-height: 138.5%;
+  color: #49516A;
+  padding-left: 8px;
+}
+
+.bundles__proceedpay__content button,
+.bundles__proceedpay__content-new button {
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 24px;
+  letter-spacing: -0.01em;
+  color: #000 !important;
+  padding: 12px 24px;
+  background: #58C4CB;
+  border: 0;
+  border-radius: 24px;
+  margin-left: 80px;
+  -webkit-transition: all .3s ease;
+  -moz-transition: all .3s ease;
+  -ms-transition: all .3s ease;
+  -o-transition: all .3s ease;
+  transition: all .3s ease;
+}
+
+.bundles__proceedpay__content button:hover,
+.bundles__proceedpay__content-new button:hover {
+  background: #58C4CB;
+}
+
+.subscribed__service {
+  padding-bottom: 211px;
+}
+
+.subscribed__service__text {
+  margin: 0;
+  font-weight: normal;
+  font-size: 1rem;
+  line-height: 23px;
+  text-align: center;
+  color: #49516A;
+}
+
+.subscribed__service__info {
+  padding: 32px 0 16px 0;
+}
+
+.subscribed__service__info svg {
+  margin-right: 12px;
+}
+
+.bundles__proceedpay__content button.apply-coupon,
+.bundles__proceedpay__content-new button.apply-coupon {
+  font-style: normal;
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 24px;
+  text-align: center;
+  color: #3C92C6;
+  border: 0;
+  background-color: unset;
+  outline: 0 none;
+  padding: 0;
+  margin: 0;
+}
+
+.coupon-applied-text{
+  font-weight: 600;
+  font-size: 1.25rem;
+  line-height: 138.5%;
+  color: #49516A;
+  margin: 0;
+  margin-bottom: 4px;
+}
+
+.coupon-applied {
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 21px;
+  letter-spacing: 0.01em;
+  color: #03A685;
+  margin: 0;
+}
+
+@media screen and (min-width: 577px) {
+  .bundles__content__paymentoptions__price__addbtn,
+  .bundles__content__paymentoptions__price__text {
+    text-align: right;
+  }
+}
+
+@media screen and (max-width: 991px) {
+  .bundles__content__paymentoptions__price {
+    padding-top: 20px;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .bundles__content__paymentoptions__price__addbtn {
+    padding-top: 15px;
+  }
+  .bundles__content__paymentoptions {
+    margin: 0 20px;
+  }
+  .bundles__proceedpay__content {
+    display: block;
+    text-align: center;
+  }
+  .bundles__proceedpay__content button {
+    margin-left: 0;
+    margin-top: 10px;
+  }
+}

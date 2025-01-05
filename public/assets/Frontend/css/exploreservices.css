@@ -1,0 +1,31 @@
+.explore-services {
+  padding: 40px 0;
+}
+
+.explore-services h1 {
+  margin: 0;
+  font-weight: 500;
+  font-size: 1.5rem;
+  line-height: 36px;
+  text-align: center;
+  color: #58C4CB;
+  padding-bottom: 50px;
+}
+
+.explore-services-happyapp,
+.explore-services-happytalk,
+.explore-services-happyspace,
+.explore-services-happychat {
+  display: block;
+  padding-bottom: 136px;
+}
+
+@media screen and (max-width: 767px) {
+  .explore-services-happyapp-flexdir,
+  .explore-services-happyspace-flexdir {
+    flex-direction: column-reverse;
+  }
+  .explore-services__content__text {
+    padding-top: 32px;
+  }
+}

@@ -1,0 +1,341 @@
+.report {
+  width: 1440px;
+  margin: 0 auto;
+}
+
+.report__firstpage,
+.report__content__tabs--secondpage,
+.report__content__tabs__last {
+  background-image: url("../images/report_backimg.svg"),
+  url("../images/report_disclaimer_backimg.svg");
+  background-position: top, bottom;
+  background-repeat: no-repeat;
+  background-size: contain;
+  padding: 0 100px;
+  height: 2000px;
+}
+
+.report__content__tabs--secondpage,
+.report__content__tabs__last {
+  page-break-before: always;
+}
+
+.report__printbtn {
+  text-align: right;
+  padding-top: 20px;
+}
+
+.report__printbtn button {
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 24px;
+  border: none;
+  background-color: transparent;
+  outline: 0 none;
+  color: #3c92c6;
+}
+
+.report__printbtn button svg {
+  margin-right: 8px;
+}
+
+.report__content {
+  /* padding-top: 75px; */
+}
+
+.report__content hr {
+  border-color: #b6b9c3;
+  margin-top: 32px;
+  margin-bottom: 26px;
+}
+
+.report__content h1 {
+  font-weight: 600;
+  font-size: 1.5rem;
+  line-height: 130%;
+  color: #49516a;
+  padding-bottom: 32px;
+}
+
+.report__content__userinfo h2 {
+  font-weight: 500;
+  font-size: 1.125rem;
+  line-height: 24px;
+  color: #49516a;
+  margin: 0;
+  padding-bottom: 16px;
+}
+
+.report__content__userinfo h2:last-child {
+  padding-bottom: 0;
+}
+
+.report__content__summary h2 {
+  font-weight: bold;
+  font-size: 1.125rem;
+  line-height: 24px;
+  letter-spacing: 0.02em;
+  color: #3c92c6;
+  margin: 0;
+  padding-bottom: 16px;
+}
+
+.report__content__summary p {
+  font-weight: normal;
+  font-size: 1.125rem;
+  line-height: 28px;
+  letter-spacing: 0.01em;
+  color: #000000;
+  margin: 0;
+  text-align: justify;
+}
+
+.report__content__summary__wheel {
+  padding: 50px 0;
+}
+
+.report__content__summary__wheel__margin-left {
+  margin-left: 85px;
+}
+
+.report__content__summary__wheel--preview {
+  padding: 0;
+}
+
+.report__content__tabs__text--secondpage-padding {
+  padding-bottom: 100px;
+}
+
+.report__content__summary__wheel__img {
+  padding-right: 163px;
+}
+
+.report__content__summary__wheel__img--preview {
+  padding-right: 0;
+}
+
+.report__content__summary__wheel__desc {
+  max-width: 400px;
+}
+
+.report__content__summary__wheel__desc h2 {
+  margin: 0;
+  font-weight: bold;
+  font-size: 1.125rem;
+  line-height: 24px;
+  letter-spacing: 0.02em;
+  color: #3c92c6;
+  padding-bottom: 16px;
+}
+
+.report__content__summary__wheel__desc p {
+  margin: 0;
+  font-weight: normal;
+  font-size: 1.125rem;
+  line-height: 28px;
+  letter-spacing: 0.01em;
+  color: #000000;
+  text-align: justify;
+}
+
+.report__content__tabs__text__withlogo {
+  padding-top: 100px;
+}
+
+.report__content__tabs__text__withlogo img,
+.report__content__userinfo img {
+  width: 214px;
+}
+
+.report__content__tabs__text__withlogo .report__content__tabs__text {
+  padding-top: 50px;
+}
+
+.report__content__tabs__text h2 {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.75rem;
+  line-height: 138.5%;
+  color: #000000;
+  width: 210px;
+  text-align: center;
+  word-break: break-word;
+}
+
+.report__content__tabs__text__img,
+.report__content__tabs__text {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+  align-items: center;
+}
+
+.report__content__tabs__text img,
+.report__content__tabs__text__img__div {
+  margin-left: auto;
+  width: 120px;
+  height: 120px;
+}
+
+.report__content__tabs__text span {
+  margin: 0;
+  font-weight: normal;
+  font-size: 1.125rem;
+  line-height: 24px;
+  letter-spacing: 0.01em;
+  color: #6d7488;
+  background: #ebf4f9;
+  border-radius: 12px;
+  padding: 24px;
+  margin-left: 40px;
+  min-height: 120px;
+  /* width: 780px; */
+  margin: 12px 0;
+  margin-left: 40px;
+  text-align: justify;
+}
+
+.report__content__donext {
+  padding-top: 48px;
+}
+
+.report__content__disclaimer {
+  padding-top: 48px;
+}
+
+.report__content__donext h2,
+.report__content__disclaimer h2 {
+  margin: 0;
+  font-weight: bold;
+  font-size: 1.125rem;
+  line-height: 24px;
+  letter-spacing: 0.02em;
+  color: #3c92c6;
+  padding-bottom: 16px;
+}
+
+.report__content__donext p,
+.report__content__disclaimer p {
+  font-weight: normal;
+  font-size: 1.125rem;
+  line-height: 28px;
+  letter-spacing: 0.01em;
+  color: #000000;
+  margin: 0;
+  text-align: justify;
+}
+
+.report__content__disclaimer p.footer__copyright__text {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #000000;
+  max-width: 100%;
+  padding-top: 20px;
+  text-align: center;
+  padding-top: 30px;
+  padding-bottom: 60px;
+}
+
+.report__content__tabs__paddingtop {
+  padding-top: 50px;
+}
+
+@media screen and (max-width: 576px) {
+  .report__content__tabs__text {
+    padding: 12px 15px;
+  }
+}
+
+@media screen and (max-width: 250px) {
+  .report__content__userinfo img {
+    width: 100%;
+  }
+}
+@page {
+  margin: 0in;
+}
+#wheeloflife {
+  position: relative;
+  display: block;
+  width: 555px;
+  height: 555px;
+  max-width: 100%;
+  max-height: 100%;
+  margin-left: auto;
+}
+
+#wheeloflife.wheeloflife__preview {
+  width: 40%;
+  height: 40%;
+}
+
+#wheeloflife__background {
+  width: 100%;
+}
+
+.wheeloflife__fill {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 50%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  transform-origin: bottom right;
+  -webkit-transition: all 0.5s ease;
+  -moz-transition: all 0.5s ease;
+  -ms-transition: all 0.5s ease;
+  -o-transition: all 0.5s ease;
+  transition: all 0.5s ease;
+}
+
+.wheeloflife__fill svg {
+  fill-opacity: 0.8;
+  height: 79%;
+}
+
+#selfesteem {
+  fill: #ed2527;
+}
+
+#happiness {
+  fill: #3db549;
+  transform: rotate(40deg);
+}
+
+#resilience {
+  fill: #2289b4;
+  transform: rotate(80deg);
+}
+
+#jobsatisfaction {
+  fill: #f79321;
+  transform: rotate(120deg);
+}
+
+#burnout {
+  fill: #94afdc;
+  transform: rotate(160deg);
+}
+
+#stress {
+  fill: #ff5f75;
+  transform: rotate(200deg);
+}
+
+#anxiety {
+  fill: #8c6239;
+  transform: rotate(240deg);
+}
+
+#internetaddiction {
+  fill: #00adef;
+  transform: rotate(280deg);
+}
+
+#depression {
+  fill: #935fa7;
+  transform: rotate(320deg);
+}
