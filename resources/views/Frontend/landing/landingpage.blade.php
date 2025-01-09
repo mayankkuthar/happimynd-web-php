@@ -122,8 +122,8 @@
           </a>
         </div>
         <div id="landing_button_div" class="section1__explore__mind m-0 mx-auto landing-modal-button">
-          <!-- <a id="happilife_screening2" class="px-4" href="https://b24-soslcy.bitrix24.site/crm_form_1jsqt/"  >{{$button_contents->button_content}} -->
-          </a>
+          <!--<a id="happilife_screening2" class="px-4" href="javascript:void(0)" id="contact-now-btn" >{{$button_contents->button_content}}
+          </a>-->
         </div>
 
         

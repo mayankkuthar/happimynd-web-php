@@ -182,6 +182,13 @@
                 </ul>
             </li>
             @endif
+            @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'contacts']))
+            <li><a><i class="fa fa-pencil-square-o"></i>Contact Leads <span class="fa fa-chevron-down"></span></a>
+                <ul class="nav child_menu">
+                  <li><a href="{{ route('admin.contacts') }}"><i class="fa fa-cubes"></i> Contact Details</span></a></li>
+                </ul>
+            </li>
+            @endif
             @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'assessments']))
                 <li><a><i class="fa fa-users"></i> Assessment <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">

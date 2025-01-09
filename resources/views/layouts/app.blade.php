@@ -112,6 +112,116 @@
         <!-- Scripts -->
         {{-- <script src="{{ asset('js/app.js') }}" defer></script> --}}
         @laravelPWA
+
+        <style>
+                /* Modal Backdrop */
+                #contact-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        /* Modal Content */
+        #contact-modal .modal-content {
+            background: #ffffff;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.3s ease-in-out;
+            text-align: center;
+        }
+
+        /* Form Styles */
+        #contact-modal h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        #contact-modal p {
+            font-size: 14px;
+            margin-bottom: 20px;
+            color: #666;
+        }
+
+        #contact-modal form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #contact-modal .form-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        #contact-modal input,
+        #contact-modal select,
+        #contact-modal textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        #contact-modal textarea {
+            resize: none;
+            height: 80px;
+        }
+
+        #contact-modal button {
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #contact-modal .submit-btn {
+            background-color: #aaf2ee;
+            color: #000;
+            font-weight: bold;
+        }
+
+        #contact-modal .submit-btn:hover {
+            background-color: #90e8e2;
+        }
+
+        #contact-modal .close-btn {
+            background-color: #ff5c5c;
+            color: white;
+            margin-top: 10px;
+        }
+
+        #contact-modal .close-btn:hover {
+            background-color: #ff2c2c;
+        }
+
+        /* Fade-in Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+        </style>
+
     </head>
     <body class="font-sans antialiased">
       @include('Frontend.includes.toast')
@@ -148,5 +258,113 @@
           AOS.init();
         </script>
         @yield('js')
+        <div id="contact-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h2>Contact Us</h2>
+                <p>Reach out and we'll get in touch with you.</p>
+                <form id="contact-form">
+                    <div class="form-group">
+                        <input type="text" id="first-name" name="first_name" placeholder="First Name*" required />
+                        <input type="text" id="last-name" name="last_name" placeholder="Last Name*" required />
+                    </div>
+                    <div class="form-group">
+                        <input type="tel" id="phone-number" name="phone_number" placeholder="Phone Number*" required />
+                    </div>
+                    <div class="form-group">
+                        <select id="reason" name="reason" required>
+                            <option value="">Select Reason*</option>
+                            <option value="query">General Query</option>
+                            <option value="support">Support</option>
+                            <option value="feedback">Feedback</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <textarea id="message" name="message" placeholder="Enter Message" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <select id="find-out" name="find_out">
+                            <option value="">How did you find out about us?</option>
+                            <option value="google">Google</option>
+                            <option value="social-media">Social Media</option>
+                            <option value="friend">Friend</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="submit-btn">Submit</button>
+                </form>
+                <button id="close-modal" class="close-btn">Close</button>
+            </div>
+        </div>
+        <div 
+            style="position: fixed; bottom: 20px; right: 20px; z-index: 1000; width: 60px; height: 60px;">
+            <a href="javascript:void(0)" id="contact-now-btn">
+            <img 
+                src="https://www.pngfind.com/pngs/m/671-6712663_png-logo-of-contact-us-transparent-png.png" 
+                alt="Contact Us" 
+                style="width: 100%; height: 100%; border-radius: 50%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); cursor: pointer;">
+            </a>
+        </div>
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+            const contactNowBtn = document.getElementById("contact-now-btn");
+            const contactNowBtn1 = document.getElementById("contact-now-btn-1");
+            const contactNowBtn2 = document.getElementById("contact-now-btn-2");
+            const modal = document.getElementById("contact-modal");
+            const closeModalBtn = document.getElementById("close-modal");
+
+            // Function to open modal
+            function openModal(event) {
+                event.preventDefault();
+                modal.style.display = "flex";
+            }
+
+            // Attach event listener if button exists
+            if (contactNowBtn) {
+                contactNowBtn.addEventListener("click", openModal);
+            }
+
+            if (contactNowBtn1) {
+                contactNowBtn1.addEventListener("click", openModal);
+            }
+
+            if (contactNowBtn2) {
+                contactNowBtn2.addEventListener("click", openModal);
+            }
+
+            // Close modal on clicking 'Close' button
+            if (closeModalBtn) {
+                closeModalBtn.addEventListener("click", function () {
+                    modal.style.display = "none";
+                });
+            }
+
+            // Close modal when clicking outside the modal content
+            window.addEventListener("click", function (event) {
+                if (event.target === modal) {
+                    modal.style.display = "none";
+                }
+            });
+        });
+
+        document.getElementById("contact-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+
+        fetch('/submit-contact', {
+            method: 'POST',
+            headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+            alert(data.message);
+            document.getElementById("contact-modal").style.display = "none";
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        </script>
     </body>
 </html>

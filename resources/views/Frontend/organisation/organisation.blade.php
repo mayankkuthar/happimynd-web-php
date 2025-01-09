@@ -20,7 +20,7 @@
                   <p>{{$organizations[0]->description}}</p>
                 </div>
                 <div class="organisation__content__contact_sales">
-                  <a id="get_happispace_now1" href="{{ route('happispaceform') }}" > {{ $organisation_buttons[0]->button_content }}</a>
+                  <a id="contact-now-btn-1" href="javascript:void(0)"> {{ $organisation_buttons[0]->button_content }}</a>
                   <!-- <a id="get_happispace_now1" href="{{ route('organisation') }}" > {{ $organisation_buttons[0]->button_content }}</a> -->
                   
                 </div>
@@ -150,7 +150,7 @@
         <div>
           <h2>Build a Happi & Productive workspace</h2>
           <div class="section8__content-check-score section8__content__organisation__score">
-            <a id="get_happispace_now" href="{{ route('happispaceform') }}" target="_blank">{{ $organisation_buttons[1]->button_content }}</a>
+            <a id="contact-now-btn-2" href="javascript:void(0)">{{ $organisation_buttons[1]->button_content }}</a>
           </div>
         </div>
       </div>

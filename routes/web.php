@@ -42,6 +42,7 @@ use App\Http\Controllers\HappiguideController;
 use App\Http\Controllers\Notification;
 use App\Http\Controllers\HappiselfController;
 use App\Http\Controllers\HappibuddyController;
+use App\Http\Controllers\ContactController;
 use Illuminate\Support\Facades\Storage;
 
 use App\Http\Controllers\ChatBot\DiscussionTopicsController;
@@ -179,6 +180,7 @@ Route::get('/privacy', [UserController::class, 'getPrivacy'])->name('privacy');
 Route::get('/terms', [UserController::class, 'getTerms'])->name('getTerms');
 
 Route::get('/search', [PsychologistController::class, 'filterPsychologist'])->name('filterPsychologist.get');
+Route::post('/submit-contact', [ContactController::class, 'store'])->name('submit.contact');
 
 Route::get('/services', [UserController::class, 'Services'])->name('services');
 Route::get('/educationalservices', [UserController::class, 'educationServices'])->name('educationalservices');
@@ -234,6 +236,8 @@ Route::get('/admin/login', function () {
 })->name('admin.getLogin')->middleware('custom.guest:admin');
 Route::post('admin/login', [AuthController::class, 'adminLogin'])->name('postLogin');
 Route::any('/admin/logout', [AuthController::class, 'adminLogout'])->name('admin.logout')->middleware('jwt.verify:admin');
+Route::get('/admin/contacts', [ContactController::class, 'index'])->name('admin.contacts');
+
 
 Route::prefix('admin')->name('admin.')->middleware(['jwt.verify:admin'])->group(function () {
 
