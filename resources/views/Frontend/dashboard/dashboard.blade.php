@@ -41,7 +41,7 @@
       <div class="dashboard__headtext">
         <h1>Dashboard</h1>
         <div class="dashboard__headtext__subscribed">
-          @if(auth('user')->user()->assessment->count() == 0)
+          @if(auth('user')->user()->assessment->count() < 6)
             <a href="{{ route('user.assessment') }}">Start HappiLIFE Awareness</a>
           @elseif(auth('user')->user()->hasPendingAssessment() && !Route::is('user.assessment'))
             <a href="{{ route('user.assessment') }}">Complete HappiLIFE Awareness Tool</a>
