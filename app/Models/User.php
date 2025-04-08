@@ -175,137 +175,95 @@ class User extends Authenticatable implements JWTSubject
     }
 
     public function generateReportAndSendMail($sendMail = true, $skipChecks = false)
-    {
-
-        $user_id =  $this->id;
-        $assessment_id = Assessment::where('user_id' , $user_id)->first();
-
-        $assessment = Assessment::where('id' , $assessment_id->id)->first();
-        $user = User::where('id' , $user_id)->first();
-
-        // echo 'checking  ==='. $sendMail; die();
-        \Log::debug('User.php generateReportAndSendMail() start');
-        //generate pdf if GENERATE_PDF set to true in env
-        if (is_null(env('GENERATE_PDF')) || env('GENERATE_PDF') == false) {
-            \Log::debug('User.php generateReportAndSendMail() exited due to env not set');
-            return 0;
-        }
-
+{
+    $user_id = $this->id;
+    $user = User::where('id', $user_id)->first();
+    
+    \Log::debug('User.php generateReportAndSendMail() start');
+    
+    // Check if PDF generation is enabled
+    if (is_null(env('GENERATE_PDF')) || env('GENERATE_PDF') == false) {
+        \Log::debug('User.php generateReportAndSendMail() exited due to env not set');
+        return 0;
+    }
+    
+    // Get all assessments for the user where report is null
+    $assessments = Assessment::where('user_id', $user_id)
+                            ->whereNull('report')
+                            ->get();
+    
+    if ($assessments->isEmpty()) {
+        \Log::debug('No assessments with null reports found for userId:' . $user_id);
+        return 0;
+    }
+    
+    $processedCount = 0;
+    
+    foreach ($assessments as $assessment) {
+        $shouldGenerateReport = false;
+        
         if (!$skipChecks && !is_null($this->bundleStatus)) {
-            $generateReportPDF = false;
             foreach ($this->bundleStatus as $subscribedBundle) {
                 if (
                     ($subscribedBundle->plans->package_id == 1 || $subscribedBundle->plans->package_id == 2) &&
                     ($subscribedBundle->valid) &&
                     ($subscribedBundle->percentage_covered == 100.00)
                 ) {
-                    $generateReportPDF = true;
+                    $shouldGenerateReport = true;
+                    break;
                 }
-            }
-            if ($generateReportPDF) {
-                \Log::debug("before dispatch " . Carbon::now()->format("g:i a"));
-                // dispatch(new GenerateScreeningReport($this->id))->delay(1);
-                // \Log::debug("after dispatch " . Carbon::now()->format('g:i a'));
-
-                //Code from GenerateScreening Report file
-                try {
-                    if (is_null($assessment->report)) {
-
-                        $response = Http::get(env('NODE_URL') . '/check');
-                        if ($response->ok()) {
-                            $response = Http::get(env('NODE_URL') . '/pdf?reportUrl=' . env('APP_URL') . '/calculate-score?assessment_id=' . $assessment->id . '&fileName=' . $assessment->id . '_' . $user->nickname.'testing' . '-ScreeningReport.pdf');
-                            $res = $response->json();
-
-                            // print_r($res['link']);
-                            \Log::info('response body:' . json_encode($res));
-                            // $assessment->report = $res['link'];
-                            $assessment->update(['report' => $res['link']]);
-                        } else {
-                            \Log::critical('respone not ok');
-                            \Log::critical($response);
-                        }
-                    }
-
-                    // return [$sendMail , $user , $assessment->report , $user->isEmailVerified()];
-                    if ($sendMail && $user && $assessment->report && $user->isEmailVerified()) {
-
-
-                        Mail::send('mail/report', [], function ($message) use ($assessment, $user) {
-                            $message->to($user->email)->subject('Happimynd Screening Report');
-                            $message->attach($assessment->report, [
-                                'as' => 'ScreeningReport.pdf'
-                            ]);
-                            $message->from(env('MAIL_FROM_ADDRESS'));
-
-                        });
-
-                            return 33;
-
-                        \Log::debug('Report Mail sent to user:' . json_encode($user));
-                    } else {
-                        \Log::info('Report mail not sent to user: ' . $user->id . ': email not verified' . json_encode($user));
-                    }
-                } catch (Exception $e) {
-                    \Log::critical('Node server is down at ' . now());
-                    \Log::critical($e);
-                }
-
             }
         } else {
-            \Log::debug('No bundles for userId:' . $this->id);
+            // Skip checks or no bundles - generate if skipChecks is true
+            $shouldGenerateReport = $skipChecks;
             if ($skipChecks) {
-                \Log::debug("generating report invoked from admin panel");
-                \Log::debug("before dispatch " . Carbon::now()->format("g:i a"));
-                // dispatch(new GenerateScreeningReport($this->id, $sendMail))->delay(1);
-                // \Log::debug("after dispatch " . Carbon::now()->format('g:i a'));
-
-                //Code from GenerateScreening Report file
-                try {
-                    if (is_null($assessment->report)) {
-
-                        $response = Http::get(env('NODE_URL') . '/check');
-                        if ($response->ok()) {
-                            $response = Http::get(env('NODE_URL') . '/pdf?reportUrl=' . env('APP_URL') . '/calculate-score?assessment_id=' . $assessment->id . '&fileName=' . $assessment->id . '_' . $user->nickname . '-ScreeningReport.pdf');
-                            $res = $response->json();
-
-                            // print_r($res['link']);
-                            \Log::info('response body:' . json_encode($res));
-                            // $assessment->report = $res['link'];
-                            $assessment->update(['report' => $res['link']]);
-                        } else {
-                            \Log::critical('respone not ok');
-                            \Log::critical($response);
-                        }
-                    }
-
-                    // return [$sendMail , $user , $assessment->report , $user->isEmailVerified()];
-                    if ($sendMail && $user && $assessment->report && $user->isEmailVerified()) {
-
-
+                \Log::debug("Generating report invoked from admin panel for assessment ID: " . $assessment->id);
+            } else {
+                \Log::debug('No bundles for userId:' . $user_id);
+            }
+        }
+        
+        if ($shouldGenerateReport) {
+            try {
+                \Log::debug("Processing assessment ID: " . $assessment->id . " at " . Carbon::now()->format("g:i a"));
+                
+                $response = Http::get(env('NODE_URL') . '/check');
+                if ($response->ok()) {
+                    $fileName = $assessment->id . '_' . $user->nickname . '-ScreeningReport.pdf';
+                    $response = Http::get(env('NODE_URL') . '/pdf?reportUrl=' . env('APP_URL') . '/calculate-score?assessment_id=' . $assessment->id . '&fileName=' . $fileName);
+                    $res = $response->json();
+                    
+                    \Log::info('Response for assessment ' . $assessment->id . ': ' . json_encode($res));
+                    $assessment->update(['report' => $res['link']]);
+                    $processedCount++;
+                    
+                    if ($sendMail && $user && $user->isEmailVerified()) {
                         Mail::send('mail/report', [], function ($message) use ($assessment, $user) {
                             $message->to($user->email)->subject('Happimynd Screening Report');
                             $message->attach($assessment->report, [
                                 'as' => 'ScreeningReport.pdf'
                             ]);
                             $message->from(env('MAIL_FROM_ADDRESS'));
-
                         });
-
-                        \Log::debug('Report Mail sent to user:' . json_encode($user));
+                        
+                        \Log::debug('Report Mail sent to user:' . $user->id . ' for assessment: ' . $assessment->id);
                     } else {
-                        \Log::info('Report mail not sent to user: ' . $user->id . ': email not verified' . json_encode($user));
+                        \Log::info('Report mail not sent to user: ' . $user->id . ': email not verified or missing data');
                     }
-                } catch (Exception $e) {
-                    \Log::critical('Node server is down at ' . now());
-                    \Log::critical($e);
+                } else {
+                    \Log::critical('Response not OK for assessment: ' . $assessment->id);
+                    \Log::critical($response);
                 }
-
-
+            } catch (Exception $e) {
+                \Log::critical('Error processing assessment ' . $assessment->id . ' at ' . now());
+                \Log::critical($e);
             }
         }
-        \Log::debug('User.php generateReportAndSendMail() end for user:' . $this->id);
-        return 1;
     }
+    
+    \Log::debug('User.php generateReportAndSendMail() end for user:' . $user_id . ', processed ' . $processedCount . ' reports');
+    return $processedCount;
+}
 
     /**
      * Checks if user account is organization (B2B) profile type

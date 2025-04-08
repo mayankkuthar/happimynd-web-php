@@ -57,61 +57,20 @@ class AssessmentController extends Controller
         );
     }
 
-    public function calculateAssessmentScore(Request $request)
+    public function calculateAssessmentScore(Request $request) //Calculate report scores post payments.
     {
 
         $assessmentId = $request->assessment_id;
         $assessment = Assessment::find($assessmentId);
         $user = User::where('id' , $assessment->user_id)->first();
-        // if($user->platform == 'mobile'){
-        //     if (is_null($assessment)) {
-        //         return response()->json(['status'=>'false' , 'message'=>'Invalid assessment id.']);
-        //     }
-        //     $this->assessmentService->forAssessment($assessmentId)->calculateScoreApp();
-        //     $WOL_object = [];
-        //     foreach ($this->assessmentService->scoreArray as $scoreArray) {
-        //         // if ($scoreArray['WOL_representation'] != 'none') {
-
-        //             if(array_key_exists('category_in_report' , $scoreArray) && array_key_exists('WOL_fill_color' , $scoreArray) && array_key_exists('WOL_fill_area' , $scoreArray) && array_key_exists('WOL_representation' , $scoreArray)){
-        //                 $category_in_report = $scoreArray['category_in_report'];
-        //                 $color = $scoreArray['WOL_fill_color'];
-        //                 $value = $scoreArray['WOL_fill_area'];
-        //                 array_push(
-        //                     $WOL_object,
-        //                     [
-        //                         'range' =>  $category_in_report, 'data' =>  [
-        //                             [
-        //                                 'category' => $category_in_report,
-        //                                 "value" => $value,
-        //                                 'color' =>  $color,
-        //                             ]
-        //                         ]
-        //                     ]
-        //                 );
-        //             }
-        //         // }
-        //     }
-        //     $data=ServiceImage::all();
-        //     $WOL_object = json_encode($WOL_object);
-        //     return view('Frontend/report/report_app')
-        //         ->with('score', $this->assessmentService->report['score'])
-        //         ->with('WOL_object', $WOL_object)
-        //         ->with('report', $this->assessmentService->report)->with('data',$data);
-        // }
-        
-
-
-
-        // $assessmentId = base64_decode($assessmentId);
         $assessmentId = $request->input('assessment_id');
         $assessment = Assessment::find($assessmentId);
         if (is_null($assessment)) {
-            return redirect(route('user.dashboard'));
+            return redirect(route('user.assessment'));
         }
         $this->assessmentService->forAssessment($assessmentId)->calculateScore();
         $WOL_object = [];
         foreach ($this->assessmentService->scoreArray as $scoreArray) {
-            // if ($scoreArray['WOL_representation'] != 'none') {
 
                 if(array_key_exists('category_in_report' , $scoreArray) && array_key_exists('WOL_fill_color' , $scoreArray) && array_key_exists('WOL_fill_area' , $scoreArray) && array_key_exists('WOL_representation' , $scoreArray)){
                     $category_in_report = $scoreArray['category_in_report'];
@@ -172,47 +131,5 @@ class AssessmentController extends Controller
         $user->addReportReadingToBitrix();
         return $this->apiResponse->success("Successfully, call time updated.!");
     }
-
-
-
-    // public function calculateAssessmentScoreApp(Request $request , $assessment_id)
-    // {
-    //     // $assessmentId = base64_decode($assessmentId);
-    //     $assessmentId = $assessment_id;
-    //     $assessment = Assessment::find($assessmentId);
-    //     if (is_null($assessment)) {
-    //         return redirect(route('user.dashboard'));
-    //     }
-    //     $this->assessmentService->forAssessment($assessmentId)->calculateScoreApp();
-    //     $WOL_object = [];
-    //     foreach ($this->assessmentService->scoreArray as $scoreArray) {
-    //         // if ($scoreArray['WOL_representation'] != 'none') {
-
-    //             if(array_key_exists('category_in_report' , $scoreArray) && array_key_exists('WOL_fill_color' , $scoreArray) && array_key_exists('WOL_fill_area' , $scoreArray) && array_key_exists('WOL_representation' , $scoreArray)){
-    //                 $category_in_report = $scoreArray['category_in_report'];
-    //                 $color = $scoreArray['WOL_fill_color'];
-    //                 $value = $scoreArray['WOL_fill_area'];
-    //                 array_push(
-    //                     $WOL_object,
-    //                     [
-    //                         'range' =>  $category_in_report, 'data' =>  [
-    //                             [
-    //                                 'category' => $category_in_report,
-    //                                 "value" => $value,
-    //                                 'color' =>  $color,
-    //                             ]
-    //                         ]
-    //                     ]
-    //                 );
-    //             }
-    //         // }
-    //     }
-    //     $data=ServiceImage::all();
-    //     $WOL_object = json_encode($WOL_object);
-    //     return view('Frontend/report/report_app')
-    //         ->with('score', $this->assessmentService->report['score'])
-    //         ->with('WOL_object', $WOL_object)
-    //         ->with('report', $this->assessmentService->report)->with('data',$data);
-    // }
 
 }

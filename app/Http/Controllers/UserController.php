@@ -465,7 +465,7 @@ class UserController extends Controller
     {
         $user = User::where('id', auth('user')->user()->id)->with('userToken')->first();
         $assessmentCompletedCount = Assessment::where('user_id', $user->id)->completedAssessment()->get()->count();
-        if ($assessmentCompletedCount > 0) {
+        if ($assessmentCompletedCount > 6) {
             return redirect(route('user.dashboard'));
         }
         $token = $user->userToken?$user->userToken->token:null;
