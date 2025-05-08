@@ -43,6 +43,7 @@ use App\Http\Controllers\Notification;
 use App\Http\Controllers\HappiselfController;
 use App\Http\Controllers\HappibuddyController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\SubscriptionController;
 use Illuminate\Support\Facades\Storage;
 
 use App\Http\Controllers\ChatBot\DiscussionTopicsController;
@@ -71,7 +72,8 @@ use App\Http\Controllers\ChatBot\ChatBotAssessmentController;
 
 
 
-
+Route::get('/subscribe', [SubscriptionController::class, 'showForm'])->name('subscription.form');
+Route::post('/subscribe', [SubscriptionController::class, 'process'])->name('subscription.process');
 
 
 Route::get('/', [UserController::class, 'landingPageView'])->name('landingPage');
