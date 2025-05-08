@@ -132,10 +132,12 @@ Route::group(['prefix' => 'v1',  'namespace' => 'api\v1'], function () {
 
         //Assessment
         Route::match(['GET' , 'POST'],'start-assessment', [UserAuthenticationController::class,'startAssessment']);
+        Route::match(['GET' , 'POST'],'checkifany', [UserAuthenticationController::class,'checkIfAnyAssessmentCompleted']);
         Route::match(['GET' , 'POST'],'save-option', [UserAuthenticationController::class,'saveOption']);
         Route::match(['GET' , 'POST'],'complete-assessment', [UserAuthenticationController::class,'completeAssessment']);
         Route::match(['GET' , 'POST'],'view-report', [UserAuthenticationController::class,'viewReport']);
         Route::match(['GET' , 'POST'],'get-report', [UserAuthenticationController::class,'getReport']);
+        Route::match(['GET' , 'POST'],'get-all-report', [UserAuthenticationController::class,'getAllReports']);
         Route::match(['GET' , 'POST'],'assessment-status', [UserControllerApi::class,'assessmentStatus']);
         Route::match(['GET' , 'POST'],'update-last-answer', [UserAuthenticationController::class,'updateLastAnswer']);
         Route::match(['GET' , 'POST'],'raise-query-app', [UserAuthenticationController::class,'raiseQueryApp']);

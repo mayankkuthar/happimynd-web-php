@@ -676,11 +676,27 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
 
     }
 
+    public function checkIfAnyAssessmentCompleted(Request $request)
+    {
+        $user_id = auth('user')->user()->id;
+
+        // Check if there's at least one completed assessment
+        $hasCompleted = Assessment::where('user_id', $user_id)
+                            ->whereNotNull('ended_at')
+                            ->exists();
+
+        if ($hasCompleted) {
+            return response()->json(['status' => 'success', 'message' => 'Yes']);
+        } else {
+            return response()->json(['status' => 'success', 'message' => 'No']);
+        }
+    }
+
+
 
 
 
     public function startAssessment(Request $request){
-        // return 4;
 
         $user_id =  auth('user')->user()->id;
 
@@ -690,16 +706,41 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
         }
         Assessment::where('user_id' , $user_id)->update(['platform' => $platform]);
 
+        //$is_already_assesment = Assessment::where('user_id',$user_id)->first();
+//
+        //if($is_already_assesment && $is_already_assesment->ended_at != null){
+        //    return response()->json(['status' => 'true' , 'message' => 'Your assessment is already completed.']);
+        //}
+//
+        //if($is_already_assesment && $is_already_assesment->ended_at == null){
+        //    $assessment_number = $is_already_assesment->id;
+        //}else{
+        //    $assessment_number =  $this->apiResponse->success([
+        //        'assessment_id' => $this->assessmentService
+        //            ->forUser(auth('user')->user()->id)
+        //            ->initiateAssessment()->assessmentId
+        //    ]);
+        //}
 
-        $is_already_assesment = Assessment::where('user_id',$user_id)->first();
 
-        if($is_already_assesment && $is_already_assesment->ended_at != null){
-            return response()->json(['status' => 'true' , 'message' => 'Your assessment is already completed.']);
+        // Fetch all assessments for the user
+        $allAssessments = Assessment::where('user_id', $user_id)->orderBy('id', 'desc')->get();
+
+        // Count how many are completed
+        $completedCount = $allAssessments->whereNotNull('ended_at')->count();
+
+        // Check if user already has 6 completed assessments
+        if ($completedCount >= 6) {
+            return response()->json(['status' => 'true', 'message' => 'You have already completed the maximum number of assessments.']);
         }
 
-        if($is_already_assesment && $is_already_assesment->ended_at == null){
-            $assessment_number = $is_already_assesment->id;
-        }else{
+        // Check if there's an incomplete one to resume
+        $incompleteAssessment = $allAssessments->whereNull('ended_at')->first();
+
+        if ($incompleteAssessment) {
+            $assessment_number = $incompleteAssessment->id;
+        } else {
+            // Start new one if less than 6 assessments
             $assessment_number =  $this->apiResponse->success([
                 'assessment_id' => $this->assessmentService
                     ->forUser(auth('user')->user()->id)
@@ -710,7 +751,7 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
 
         if($assessment_number){
 
-            $assessment = Assessment::where('user_id' , $user_id)->first();
+            $assessment = Assessment::where('user_id' , $user_id)->orderBy('id', 'desc')->first();
             $assessmentId = $assessment->id;
 
             $data = QuestionResource::collection(
@@ -748,7 +789,7 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
         }
 
 
-        $assessment_data = Assessment::where('user_id' , $user_id)->first();
+        $assessment_data = Assessment::where('user_id' , $user_id)->orderBy('id', 'desc')->first();
         $assessmentId = $assessment_data->id;
 
         $optionQuestionId = $request->option_question_id;
@@ -1038,11 +1079,39 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
         return response()->json(['status' => 'success' , 'link' => $link]);
     }
 
+    public function getAllReports(Request $request)
+    {
+        $user = Auth::user();
+
+        // Fetch all assessments with non-null reports for the logged-in user
+        $completedReports = Assessment::where('user_id', $user->id)
+                                    ->whereNotNull('report')
+                                    ->whereNotNull('ended_at')  // Only completed assessments
+                                    ->orderBy('id', 'desc')
+                                    ->get(['id', 'report', 'ended_at', 'created_at']); // return necessary fields
+
+        if ($completedReports->isEmpty()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No reports found for this user.'
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Reports fetched successfully.',
+            'data' => $completedReports
+        ]);
+    }
+
+
 
 
     public function getReport(Request $request){
         $user = Auth::user();
-        $assessment_details = Assessment::where('user_id' , $user->id)->first();
+        $assessment_details = Assessment::where('user_id', $user->id)
+                                ->orderBy('id', 'desc')
+                                ->first();
 
         // $is_payment_done = BundleStatus::where('user_id',$user->id)->where('plan_id' , 1)->first();
 
