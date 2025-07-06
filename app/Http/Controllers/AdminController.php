@@ -587,20 +587,37 @@ class AdminController extends Controller
     public function OrganizationDetail(Request $request)
     {
         $organizations = Organization::orderBy('name' , 'asc')->get();
+        $detailedOrganization = null;
+        $tokens = null;
+        $thriveCodes = null;
+        
         if ($request->input('organization_id')) {
-            $detailedOrganization = Organization::with(['token' => function ($query) {
-                $query->TokenUsed();
-            }, 'token.userToken.user', 'token.tokenMetaData', 'token.plans.plan.package', 'thriveCode' => function ($query) {
-                $query->ThriveUsed();
-            }, 'thriveCode.user'])->where('id', $request->input('organization_id'))->first();
+            $detailedOrganization = Organization::where('id', $request->input('organization_id'))->first();
         } else {
-            $detailedOrganization = Organization::orderBy('name' , 'asc')->with(['token' => function ($query) {
-                $query->TokenUsed();
-            }, 'token.userToken.user', 'token.tokenMetaData', 'token.plans.plan.package', 'thriveCode' => function ($query) {
-                $query->ThriveUsed();
-            }, 'thriveCode.user'])->first();
+            $detailedOrganization = Organization::orderBy('name' , 'asc')->first();
         }
-        return view('Backend/organizationDetail')->with('organizations', $organizations)->with('detailedOrganization', $detailedOrganization);
+        
+        if ($detailedOrganization) {
+            // Load tokens with pagination to avoid memory issues
+            $tokens = Token::where('organization_id', $detailedOrganization->id)
+                ->TokenUsed()
+                ->with(['userToken.user:id,username,email', 'tokenMetaData:id,organization_id,meta_data', 'plans.plan.package:id,name'])
+                ->paginate(50)
+                ->appends(['organization_id' => $detailedOrganization->id]);
+            
+            // Load thrive codes with pagination to avoid memory issues
+            $thriveCodes = ThriveCode::where('organization_id', $detailedOrganization->id)
+                ->ThriveUsed()
+                ->with(['user:id,username,email'])
+                ->paginate(50)
+                ->appends(['organization_id' => $detailedOrganization->id]);
+        }
+        
+        return view('Backend/organizationDetail')
+            ->with('organizations', $organizations)
+            ->with('detailedOrganization', $detailedOrganization)
+            ->with('tokens', $tokens)
+            ->with('thriveCodes', $thriveCodes);
     }
 
     public function addOrganization(AddOrganizationRequest $request)
