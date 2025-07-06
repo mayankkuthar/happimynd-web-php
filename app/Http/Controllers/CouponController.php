@@ -10,6 +10,7 @@ use App\Models\Plan;
 use App\Services\CouponService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class CouponController extends Controller
 {
@@ -214,11 +215,57 @@ class CouponController extends Controller
 
     public function viewCouponUser(Request $request)
     {
-        $coupon_receipts = CouponReceipt::whereHas('receipt', function ($query) {
-            $query->where('status', '=', '1');
-        })->orWhere('receipt_id', '=', null)->with('user', 'coupon', 'receipt')->get();
-        return view('Backend.coupon.coupon_user')
-            ->with('coupon_receipts', $coupon_receipts);
+        try {
+            // Check if table exists and has data
+            if (!\Schema::hasTable('coupon_receipts')) {
+                return back()->with('error', 'Coupon receipts table does not exist.');
+            }
+            
+            // Build query with search functionality and memory optimization
+            $query = CouponReceipt::select('coupon_receipts.*') // Select only necessary columns
+                ->with(['user:id,username,email', 'coupon:id,code,discount_percent', 'receipt:id,amount,status']) // Select only needed fields
+                ->where(function ($query) {
+                    $query->whereHas('receipt', function ($subQuery) {
+                        $subQuery->where('status', '=', '1');
+                    })->orWhereNull('receipt_id');
+                });
+            
+            // Add search filters if provided
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->whereHas('user', function ($q) use ($search) {
+                    $q->where('username', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%");
+                })->orWhereHas('coupon', function ($q) use ($search) {
+                    $q->where('code', 'like', "%{$search}%");
+                });
+            }
+            
+            // Use pagination with optimized query
+            try {
+                $coupon_receipts = $query->orderBy('created_at', 'desc')
+                    ->paginate(25) // Reduced to 25 records per page for better performance
+                    ->appends($request->query()); // Preserve search parameters in pagination
+                
+                \Log::info('Paginated coupon receipts: ' . $coupon_receipts->count() . ' of ' . $coupon_receipts->total());
+            } catch (\Exception $queryException) {
+                \Log::warning('Complex query failed, using simple pagination: ' . $queryException->getMessage());
+                
+                // Fallback to simple pagination without complex joins
+                $coupon_receipts = CouponReceipt::select('coupon_receipts.*')
+                    ->orderBy('created_at', 'desc')
+                    ->paginate(25)
+                    ->appends($request->query());
+            }
+            
+            return view('Backend.coupon.coupon_user')
+                ->with('coupon_receipts', $coupon_receipts)
+                ->with('search', $request->search);
+        } catch (\Exception $e) {
+            \Log::error('Error in viewCouponUser: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return back()->with('error', 'An error occurred while loading coupon users: ' . $e->getMessage());
+        }
     }
 
     public function couponExists(Request $request)

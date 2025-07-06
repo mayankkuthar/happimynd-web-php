@@ -42,7 +42,42 @@
               <div class="x_content">
                   <div class="row">
                       <div class="col-sm-12">
+                        <!-- Search Form -->
+                        <div class="card-box">
+                            <form method="GET" action="{{ route('admin.coupon.coupon-user') }}" class="form-inline">
+                                <div class="form-group mx-sm-3 mb-2">
+                                    <input type="text" class="form-control" name="search" placeholder="Search by username, email, or coupon code" value="{{ $search ?? '' }}">
+                                </div>
+                                <button type="submit" class="btn btn-primary mb-2">Search</button>
+                                @if($search)
+                                    <a href="{{ route('admin.coupon.coupon-user') }}" class="btn btn-secondary mb-2 ml-2">Clear</a>
+                                @endif
+                            </form>
+                        </div>
+                        
                         <div class="card-box table-responsive">
+                            <!-- Statistics -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <p class="text-muted" style="font-size: 14px; line-height: 1.6; margin: 0; padding: 8px 0;">
+                                        Showing 
+                                        <span style="font-weight: 600; color: #333;">{{ $coupon_receipts->firstItem() ?? 0 }}</span> 
+                                        to 
+                                        <span style="font-weight: 600; color: #333;">{{ $coupon_receipts->lastItem() ?? 0 }}</span> 
+                                        of 
+                                        <span style="font-weight: 600; color: #333;">{{ number_format($coupon_receipts->total()) }}</span> 
+                                        results
+                                    </p>
+                                </div>
+                                <div class="col-md-6 text-right">
+                                    <p class="text-muted" style="font-size: 14px; line-height: 1.6; margin: 0; padding: 8px 0;">
+                                        Page 
+                                        <span style="font-weight: 600; color: #333;">{{ $coupon_receipts->currentPage() }}</span> 
+                                        of 
+                                        <span style="font-weight: 600; color: #333;">{{ $coupon_receipts->lastPage() }}</span>
+                                    </p>
+                                </div>
+                            </div>
 
                 <table id="datatable-buttons" class="table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%">
                   <thead>
@@ -56,19 +91,79 @@
                     </tr>
                   </thead>
                   <tbody>
-                      @foreach($coupon_receipts as $coupon_receipt)
+                      @forelse($coupon_receipts as $coupon_receipt)
                         <tr>
-                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ $loop->iteration + (($coupon_receipts->currentPage() - 1) * $coupon_receipts->perPage()) }}</td>
                         <td>{{ $coupon_receipt->user->username ?? '-' }}</td>
                         <td>{{ $coupon_receipt->user->email ?? '-' }}</td>
                         <td>{{ $coupon_receipt->receipt->amount ?? 0 }}</td>
-                        <td>{{ $coupon_receipt->coupon->code}}({{ $coupon_receipt->coupon->discount_percent }} % off)</td>
-                        <td> {{ $coupon_receipt->created_at->format('M d,Y h:i a') ?? '-' }}</td>
+                        <td>{{ $coupon_receipt->coupon->code ?? '-' }}({{ $coupon_receipt->coupon->discount_percent ?? 0 }} % off)</td>
+                        <td>{{ $coupon_receipt->created_at ? $coupon_receipt->created_at->format('M d,Y h:i a') : '-' }}</td>
                         </tr>
-                        @endforeach
-                </div>
+                        @empty
+                        <tr>
+                            <td colspan="6" class="text-center">No coupon users found.</td>
+                        </tr>
+                        @endforelse
                   </tbody>
                 </table>
+                
+                <!-- Pagination -->
+                <div class="text-center mt-4" style="margin-top: 30px !important;">
+                    <style>
+                        .pagination {
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            gap: 8px;
+                            margin: 0;
+                            padding: 0;
+                        }
+                        .pagination li {
+                            list-style: none;
+                            margin: 0 2px;
+                        }
+                        .pagination a, .pagination span {
+                            display: inline-block;
+                            padding: 10px 15px;
+                            text-decoration: none;
+                            border: 1px solid #ddd;
+                            border-radius: 4px;
+                            color: #333;
+                            font-size: 14px;
+                            font-weight: 500;
+                            min-width: 40px;
+                            text-align: center;
+                            transition: all 0.3s ease;
+                        }
+                        .pagination a:hover {
+                            background-color: #f8f9fa;
+                            border-color: #007bff;
+                            color: #007bff;
+                        }
+                        .pagination .active span {
+                            background-color: #007bff;
+                            border-color: #007bff;
+                            color: white;
+                            font-weight: 600;
+                        }
+                        .pagination .disabled span {
+                            color: #6c757d;
+                            background-color: #f8f9fa;
+                            border-color: #dee2e6;
+                            cursor: not-allowed;
+                        }
+                    </style>
+                    {{ $coupon_receipts->links() }}
+                </div>
+                
+                <!-- Performance Note -->
+                <div class="text-center mt-3" style="margin-top: 20px !important;">
+                    <small class="text-muted" style="font-size: 12px; color: #6c757d; background-color: #f8f9fa; padding: 8px 16px; border-radius: 4px; display: inline-block;">
+                        <i class="fa fa-info-circle" style="margin-right: 5px;"></i>
+                        Showing {{ $coupon_receipts->perPage() }} records per page for optimal performance
+                    </small>
+                </div>
 
 
               </div>
