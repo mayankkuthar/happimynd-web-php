@@ -153,6 +153,51 @@ class UserController extends Controller
                 }
                 /** if user is not signup using happimyndCode.!! B2C*/
                 else {
+                    // Validate the form data including reCAPTCHA
+                    $validator = Validator::make($request->all(), [
+                        'nickname' => 'required|string|max:255|min:2',
+                        'user_profile_id' => 'required|exists:user_profiles,id',
+                        'age' => 'required|integer|min:1|max:120',
+                        'gender' => 'required|string|in:' . implode(',', config('constants.gender')),
+                        'username' => 'required|string|unique:users,username|max:255|min:3|alpha_dash',
+                        'password' => 'required|string|min:8|confirmed|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/',
+                        'password_confirmation' => 'required|string|min:8',
+                        'g-recaptcha-response' => ['required', new Recaptcha()],
+                        'signup_type' => 'nullable|string',
+                        'under_age' => 'nullable|boolean',
+                        'confirmcodeparent' => 'nullable|string',
+                        'sessionId' => 'nullable|string',
+                    ], [
+                        // Custom error messages
+                        'nickname.required' => 'Please enter a nickname.',
+                        'nickname.min' => 'Nickname must be at least 2 characters long.',
+                        'user_profile_id.required' => 'Please select a profile type.',
+                        'user_profile_id.exists' => 'Invalid profile type selected.',
+                        'age.required' => 'Please enter your age.',
+                        'age.integer' => 'Age must be a valid number.',
+                        'age.min' => 'Age must be at least 1.',
+                        'age.max' => 'Age cannot exceed 120.',
+                        'gender.required' => 'Please select your gender.',
+                        'gender.in' => 'Please select a valid gender option.',
+                        'username.required' => 'Please enter a username.',
+                        'username.unique' => 'This username is already taken. Please choose another one.',
+                        'username.min' => 'Username must be at least 3 characters long.',
+                        'username.alpha_dash' => 'Username can only contain letters, numbers, dashes and underscores.',
+                        'password.required' => 'Please enter a password.',
+                        'password.min' => 'Password must be at least 8 characters long.',
+                        'password.confirmed' => 'Password confirmation does not match.',
+                        'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, and one number.',
+                        'password_confirmation.required' => 'Please confirm your password.',
+                        'g-recaptcha-response.required' => 'Please complete the reCAPTCHA verification.',
+                    ]);
+
+                    // If validation fails, return back with errors
+                    if ($validator->fails()) {
+                        return redirect()->back()
+                            ->withErrors($validator)
+                            ->withInput()
+                            ->with('error', 'Please correct the errors below and try again.');
+                    }
                     /** Add user as a lead. */
                     $addLeadBitrixResponse  = $this->bitrix->addLead($formData, true);
                     if ($addLeadBitrixResponse->result) {
@@ -288,7 +333,7 @@ class UserController extends Controller
         return view('Frontend/signup/signup1')->with('organizations', $organizations)->with('userProfiles', $userProfiles);
     }
 
-    public function individualSignupView(Request $request)
+     public function individualSignupView(Request $request)
     {
         $userProfiles = UserProfile::orderBy('status', 'DESC')->get();
         return view('Frontend/signup/signup2')->with('userProfiles', $userProfiles);

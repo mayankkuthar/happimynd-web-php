@@ -14,7 +14,26 @@
     width: 100%;
     height: 100%;
 }
+.recaptcha-container {
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+}
+.recaptcha-error {
+    color: #dc3545;
+    font-size: 14px;
+    text-align: center;
+    margin-top: 10px;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    padding: 10px;
+}
 </style>
+
+<!-- Include Google reCAPTCHA script -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
 <div id="container1">
   @include('Frontend.includes.popups.ageverification.sendotp')
   @include('Frontend.includes.popups.ageverification.emailinput')
@@ -46,66 +65,127 @@
         </div>
         <div class="col-lg-5 col-md-6">
           <div class="signup_form signup_form-create-profile signup_form-create-profile-individual">
+            
+            {{-- Display general error messages --}}
+            @if(session('error'))
+              <div class="alert alert-danger" style="margin-bottom: 20px; padding: 10px; background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; color: #721c24;">
+                {{ session('error') }}
+              </div>
+            @endif
+
+            @if(session('success'))
+              <div class="alert alert-success" style="margin-bottom: 20px; padding: 10px; background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; color: #155724;">
+                {{ session('success') }}
+              </div>
+            @endif
+
             <form id="signupForm" method="post" action="{{ route('user.signup.post') }}">
                 @csrf
                 {{-- {{ below session varibale for campaign signups }} --}}
                 <input type="hidden" name="signup_type" value=@if(Session::get('signupType')) {{ "Campaign" }} @else {{ "individual" }} @endif>
+              
               <h1>Create Profile</h1>
+              
               <div class="signup_form__username">
                 <h2>Choose a Nick Name</h2>
-                <input type="text" placeholder="Choose a Nick Name" name="nickname" />
+                <input type="text" placeholder="Choose a Nick Name" name="nickname" value="{{ old('nickname') }}" />
+                @error('nickname')
+                  <div style="color: red; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+                @enderror
               </div>
+              
               <div class="signup_form__select">
                 <h2>Profile type</h2>
                 <select name="user_profile_id">
-                  <option>Select profile type</option>
+                  <option value="">Select profile type</option>
                   @foreach($userProfiles as $userprofile)
-                    <option value="{{ $userprofile->id }}" @if(!$userprofile->status) disabled @endif>{{ $userprofile->name }}</option>
+                    <option value="{{ $userprofile->id }}" 
+                      @if(old('user_profile_id') == $userprofile->id) selected @endif
+                      @if(!$userprofile->status) disabled @endif>
+                      {{ $userprofile->name }}
+                    </option>
                   @endforeach
                 </select>
+                @error('user_profile_id')
+                  <div style="color: red; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+                @enderror
               </div>
+              
               <div class="signup_form__age">
                 <h2>Age</h2>
-                <input type="number" placeholder="Age" name="age" oninput="inputAge()" />
+                <input type="number" placeholder="Age" name="age" value="{{ old('age') }}" oninput="inputAge()" />
+                @error('age')
+                  <div style="color: red; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+                @enderror
                 <div class="sendfull__report__checkbox__input signup_form__age__verifyage">
-                  <input class="qcheckbox" type="checkbox" id="confirmage" name="confirmage" onclick="onConfirmAge()">
+                  <input class="qcheckbox" type="checkbox" id="confirmage" name="confirmage" onclick="onConfirmAge()" @if(old('confirmage')) checked @endif>
                   <label for="confirmage"><span class ="parent_approval_label">Parents approval required</span></label>
-                  <input type="hidden" name="under_age" value="0" id="under_age">
-                  <input type="hidden" name="confirmcodeparent" id="confirmcodeparent">
-                  <input type="hidden" name="sessionId" id="sessionId">
+                  <input type="hidden" name="under_age" value="{{ old('under_age', '0') }}" id="under_age">
+                  <input type="hidden" name="confirmcodeparent" id="confirmcodeparent" value="{{ old('confirmcodeparent') }}">
+                  <input type="hidden" name="sessionId" id="sessionId" value="{{ old('sessionId') }}">
                 </div>
               </div>
+              
               <div class="signup_form__select">
                 <h2>Gender</h2>
                 <select name="gender">
-                  <option>Select Gender</option>
+                  <option value="">Select Gender</option>
                   @foreach(config('constants.gender') as $gender)
-                    <option value="{{ $gender }}">{{ Str::ucfirst($gender) }}</option>
+                    <option value="{{ $gender }}" @if(old('gender') == $gender) selected @endif>
+                      {{ Str::ucfirst($gender) }}
+                    </option>
                   @endforeach
                 </select>
+                @error('gender')
+                  <div style="color: red; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+                @enderror
               </div>
+              
               <div class="signup_form__username">
                 <h2>Username </h2>
-                <input type="text" placeholder="Username" name="username" value="{{ Session::get('username') ?? ''}}" @if (Session::get('username')) readonly @endif>
+                <input type="text" placeholder="Username" name="username" 
+                  value="{{ Session::get('username') ?? old('username') }}" 
+                  @if (Session::get('username')) readonly @endif>
                 @if (Session::get('username'))
                   <input type="hidden" name="username" value="{{ Session::get('username') }}" >
-                  @endif
+                @endif
+                @error('username')
+                  <div style="color: red; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+                @enderror
               </div>
+              
               <div class="signup_form__password">
                 <h2>Password</h2>
                 <input type="password" placeholder="Password" name="password" />
+                @error('password')
+                  <div style="color: red; font-size: 12px; margin-top: 5px;">{{ $message }}</div>
+                @enderror
               </div>
+              
               <div class="signup_form__password">
                 <h2>Confirm Password</h2>
                 <input type="password" placeholder="Confirm Password" name="password_confirmation" />
               </div>
+              
+              <!-- reCAPTCHA widget -->
+              <div class="recaptcha-container">
+                <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.site_key') }}"></div>
+              </div>
+              
+              <!-- Display reCAPTCHA error if exists -->
+              @if ($errors->has('g-recaptcha-response'))
+                <div class="recaptcha-error">
+                  {{ $errors->first('g-recaptcha-response') }}
+                </div>
+              @endif
+              
               <div class="signup_form__submitbtn">
-                <button type="submit">Start HappiLIFE Awareness</button>
+                <button type="submit" id="submitBtn">Start HappiLIFE Awareness</button>
               </div>
             </form>
-            <p>Click “Login/Continue” to agree to HappyMynd’s
+            <p>Click "Login/Continue" to agree to HappyMynd's
               <a href="{{ route('getTerms') }}">Terms of Service</a>
-              and acknowledge that Happimynd’s
+              and acknowledge that Happimynd's
               <a href="{{ route('privacy') }}">Privacy Policy</a> applies to you.
             </p>
           </div>
@@ -115,12 +195,12 @@
   </div>
 </div>
 @endsection
+
 <script src="{{ asset('assets/Frontend/js/verify-popups.js') }}"></script>
+
 @section('js')
 <script>
   /** Method for verifying OTP modal opens */
-
-
   function verifyOtp(type){
       var otp = $("#otp").val();
       var session_id = $("#sessionId").val();
@@ -149,7 +229,6 @@
           showToast(error['message'])
         }
       });
-
   }
 
   function generateOTP(){
@@ -172,6 +251,23 @@
           }
       });
     }
+  }
+
+  // Form submission validation to ensure reCAPTCHA is completed
+  document.getElementById('signupForm').addEventListener('submit', function(e) {
+    var recaptchaResponse = grecaptcha.getResponse();
+    if (recaptchaResponse.length === 0) {
+      e.preventDefault();
+      alert('Please complete the reCAPTCHA verification.');
+      return false;
+    }
+  });
+
+  // Function to show toast messages (if you have a toast function)
+  function showToast(message) {
+    // Implement your toast notification here
+    // For now, using alert as fallback
+    alert(message);
   }
 </script>
 <script src="{{ asset('assets/Frontend/js/prevent_CP.js') }}"></script>
