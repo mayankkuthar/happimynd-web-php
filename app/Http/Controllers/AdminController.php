@@ -698,7 +698,7 @@ class AdminController extends Controller
 
     public function notifyUserView(Request $request)
     {
-        $users = User::orderBy('created_at')->latest()->get();
+        $users = User::orderBy('created_at')->latest()->paginate(50);
         return view('Backend.notifyUserView')->with('users', $users);
     }
 
@@ -2547,7 +2547,7 @@ class AdminController extends Controller
 
 
     public function getRewardPointsInstanceList(Request $request){
-        $list = RewardPointInstance::get();
+        $list = RewardPointInstance::paginate(50);
         return view('Backend/reward_points')->with('list' , $list);
     }
 

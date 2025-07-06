@@ -37,16 +37,19 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @foreach($users->take(600) as $user)
+                    @foreach($users as $user)
                     <tr>
                       <td><input type="checkbox" class="checkboxes" data-user-id="{{ $user->id }}" ></td>
-                      <td>{{ $loop->iteration }}</td>
+                      <td>{{ $loop->iteration + (($users->currentPage() - 1) * $users->perPage()) }}</td>
                       <td>{{ $user->username }}</td>
                       <td><a href="{{ route('admin.getSendNotificationView',['user_id' => $user->id]) }}">Notify</a></td>
                     </tr>
                     @endforeach
                   </tbody>
                 </table>
+                <div class="text-center">
+                    {{ $users->links() }}
+                </div>
               </div>
             </div>
           </div>
