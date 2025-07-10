@@ -2510,7 +2510,11 @@ function init_DataTables() {
             className: "btn-sm"
           },
         ],
-        responsive: true
+        responsive: true,
+        paging: false, // Disable DataTables pagination
+        info: false,   // Disable DataTables info
+        searching: true, // Keep search functionality
+        ordering: true  // Keep sorting functionality
       });
     }
   };

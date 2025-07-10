@@ -128,9 +128,7 @@
                         </div>
                         </tbody>
                         </table>
-                        <div class="custompaginationbar">
-                            {{$scores->links()}}
-                        </div>
+                        <x-pagination-dropdown :paginator="$scores" />
                     </div>
                 </div>
             </div>

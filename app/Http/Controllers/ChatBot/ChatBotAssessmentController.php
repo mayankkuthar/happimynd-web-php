@@ -18,9 +18,11 @@ class ChatBotAssessmentController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $assessments  = ChatBotAssessment::with(['user'])->paginate(100);
+        $perPage = $request->get('per_page', 100);
+        $assessments  = ChatBotAssessment::with(['user'])->paginate($perPage)
+            ->appends($request->except('page'));
         return view('Backend.chat-bot.assessments.index', compact('assessments'));
     }
 

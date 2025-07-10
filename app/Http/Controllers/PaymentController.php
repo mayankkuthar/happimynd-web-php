@@ -746,7 +746,9 @@ class PaymentController extends Controller
     public function paymentDetail(Request $request)
     {
         // $reciepts = Receipt::latest()->with('plans.plan.package')->with('user')->get();
-        $reciepts = Receipt::where('marchant_name' , 'RazorPay')->latest()->with('plans.plan.package')->with('user')->paginate('10');
+        $perPage = $request->get('per_page', 10);
+        $reciepts = Receipt::where('marchant_name' , 'RazorPay')->latest()->with('plans.plan.package')->with('user')->paginate($perPage)
+            ->appends($request->except('page'));
 
         // dd(DB::getQueryLog());
         return view('Backend/paymentDetail')

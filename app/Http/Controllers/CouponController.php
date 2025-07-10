@@ -58,10 +58,12 @@ class CouponController extends Controller
         }
     }
 
-    public function showCoupons()
+    public function showCoupons(Request $request)
     {
         // $coupons = Coupon::with('couponPlan' , 'couponReceipt')->get();
-        $coupons = Coupon::with('couponPlan', 'couponReceipt')->latest()->paginate(2000);
+        $perPage = $request->get('per_page', 2000);
+        $coupons = Coupon::with('couponPlan', 'couponReceipt')->latest()->paginate($perPage)
+            ->appends($request->except('page'));
         
         // $coupons = Coupon::with('couponPlan')->with(['couponReceipt' => function ($query) {
         //     return $query->whereHas('receipt', function ($query) {
@@ -242,9 +244,10 @@ class CouponController extends Controller
             }
             
             // Use pagination with optimized query
+            $perPage = $request->get('per_page', 25);
             try {
                 $coupon_receipts = $query->orderBy('created_at', 'desc')
-                    ->paginate(25) // Reduced to 25 records per page for better performance
+                    ->paginate($perPage) // Use per_page parameter for better performance
                     ->appends($request->query()); // Preserve search parameters in pagination
                 
                 \Log::info('Paginated coupon receipts: ' . $coupon_receipts->count() . ' of ' . $coupon_receipts->total());
@@ -254,7 +257,7 @@ class CouponController extends Controller
                 // Fallback to simple pagination without complex joins
                 $coupon_receipts = CouponReceipt::select('coupon_receipts.*')
                     ->orderBy('created_at', 'desc')
-                    ->paginate(25)
+                    ->paginate($perPage)
                     ->appends($request->query());
             }
             

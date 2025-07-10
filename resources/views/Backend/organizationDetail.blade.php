@@ -255,9 +255,7 @@
                                     
                                     <!-- Pagination for tokens -->
                                     @if($tokens && $tokens->hasPages())
-                                    <div class="text-center mt-3">
-                                        {{ $tokens->links() }}
-                                    </div>
+                                    <x-pagination-dropdown :paginator="$tokens" />
                                     @endif
                                 </div>
                             </div>
@@ -320,9 +318,7 @@
                                     
                                     <!-- Pagination for thrive codes -->
                                     @if($thriveCodes && $thriveCodes->hasPages())
-                                    <div class="text-center mt-3">
-                                        {{ $thriveCodes->links() }}
-                                    </div>
+                                    <x-pagination-dropdown :paginator="$thriveCodes" />
                                     @endif
                                 </div>
                             </div>

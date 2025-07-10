@@ -96,17 +96,20 @@ class HappitalkController extends Controller
 
 
         $query = $request->get('query');
+        $perPage = $request->get('per_page', 10);
 
         if($query){
             $user_ids = User::where('username' , $query)->pluck('id');
 
             $booking = HappitalkSession::whereIn('user_id' , $user_ids)->orderBy('id','desc')
                                     ->with('psychologistDetail','userDetail' , 'userOpinion' , 'psychologistOpinion')
-                                    ->paginate('10');
+                                    ->paginate($perPage)
+                                    ->appends($request->except('page'));
         }else{
             $booking = HappitalkSession::orderBy('id','desc')->whereHas('userDetail')
                                     ->with('psychologistDetail','userDetail' , 'userOpinion' , 'psychologistOpinion')
-                                    ->paginate('10');
+                                    ->paginate($perPage)
+                                    ->appends($request->except('page'));
         }
 
 

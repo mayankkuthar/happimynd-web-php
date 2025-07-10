@@ -306,7 +306,9 @@ class AdminController extends Controller
             return redirect(route('admin.dashboard'));
         }
         // $users = User::latest()->with('profileType' , 'usersRating')->get();
-        $users = User::latest()->with('profileType' , 'usersRating')->paginate('10');
+        $perPage = $request->get('per_page', 10);
+        $users = User::latest()->with('profileType' , 'usersRating')->paginate($perPage)
+            ->appends($request->except('page'));
 
         return view('Backend/customerList')->with('users', $users);
     }
@@ -501,7 +503,13 @@ class AdminController extends Controller
             } elseif ($request->input('token_status') == 'all') {
                 //do nothing
             }
-            $tokens = $tokens->with('tokenMetaData')->get();
+            
+            // Add pagination to prevent memory issues with large datasets
+            $perPage = $request->get('per_page', 50);
+            $tokens = $tokens->with('tokenMetaData')
+                ->paginate($perPage)
+                ->appends($request->except('page'));
+                
             $metaData = TokenMetaData::where('organization_id', $request->organization_id)->get();
             $happiAppCount = 0;
             foreach ($metaData as $data) {
@@ -558,6 +566,7 @@ class AdminController extends Controller
 
     public function OrganizationView(Request $request)
     {
+        $perPage = $request->get('per_page', 5);
         $organizations = Organization::orderBy('name' , 'asc')->with('token.plans.plan.package')->withCount([
             'token',
             'token as active_token_count' => function ($query) {
@@ -580,7 +589,7 @@ class AdminController extends Controller
             'thriveCode as used_thriveCode_count' => function ($query) {
                 $query->ExpiredTokens();
             },
-        ])->paginate('5');
+        ])->paginate($perPage);
         return view('Backend/addOrganization')->with('organizations', $organizations);
     }
 
@@ -599,17 +608,18 @@ class AdminController extends Controller
         
         if ($detailedOrganization) {
             // Load tokens with pagination to avoid memory issues
+            $perPage = $request->get('per_page', 50);
             $tokens = Token::where('organization_id', $detailedOrganization->id)
                 ->TokenUsed()
                 ->with(['userToken.user:id,username,email', 'tokenMetaData:id,organization_id,meta_data', 'plans.plan.package:id,name'])
-                ->paginate(50)
+                ->paginate($perPage)
                 ->appends(['organization_id' => $detailedOrganization->id]);
             
             // Load thrive codes with pagination to avoid memory issues
             $thriveCodes = ThriveCode::where('organization_id', $detailedOrganization->id)
                 ->ThriveUsed()
                 ->with(['user:id,username,email'])
-                ->paginate(50)
+                ->paginate($perPage)
                 ->appends(['organization_id' => $detailedOrganization->id]);
         }
         
@@ -715,7 +725,9 @@ class AdminController extends Controller
 
     public function notifyUserView(Request $request)
     {
-        $users = User::orderBy('created_at')->latest()->paginate(50);
+        $perPage = $request->get('per_page', 50);
+        $users = User::orderBy('created_at')->latest()->paginate($perPage)
+            ->appends($request->except('page'));
         return view('Backend.notifyUserView')->with('users', $users);
     }
 
@@ -957,6 +969,7 @@ class AdminController extends Controller
     public function assesmentList(Request $request)
     {
         $query = $request->get('query');
+        $perPage = $request->get('per_page', 10);
         ini_set('memory_limit', '4096M');
 
         if($query){
@@ -964,15 +977,15 @@ class AdminController extends Controller
 
             $assessments = Assessment::whereIn('user_id' , $user_ids)->with(['user', 'score', 'batch.batchCategory' => function ($query) {
                 $query->withCount('questions');
-            }])->latest()->paginate(10);
+            }])->latest()->paginate($perPage);
         }else{
            $assessments = Assessment::with(['user', 'score', 'batch.batchCategory' => function ($query) {
                 $query->withCount('questions');
-            }])->latest()->paginate(10); 
+            }])->latest()->paginate($perPage); 
         }
         
 
-        $assessments->appends(['query'=> $query]);
+        $assessments->appends($request->except('page'));
 
         $organizations = Organization::orderBy('name')->withCount(['token as assessmentCount' => function ($query) {
             $query->whereHas('userToken.user.assessment');
@@ -1399,7 +1412,9 @@ class AdminController extends Controller
     public function blog(Request $request)
     {
         // $posts = Post::latest()->get();
-        $posts = Post::latest()->paginate('10');
+        $perPage = $request->get('per_page', 10);
+        $posts = Post::latest()->paginate($perPage)
+            ->appends($request->except('page'));
 
         // $users = User::all();
         // dd($users);
@@ -1836,10 +1851,12 @@ class AdminController extends Controller
 
     public function usersPlans(Request $request)
     {
+        $perPage = $request->get('per_page', 10);
         $users = User::with('profileType', 'bundleStatus.plans.package')
             ->latest()
             // ->get();
-            ->paginate('10');
+            ->paginate($perPage)
+            ->appends($request->except('page'));
         return view('Backend/plans/usersPlans')
             ->with('users', $users);
     }
@@ -2378,6 +2395,7 @@ class AdminController extends Controller
 
 
         $username = $request->get('username');
+        $perPage = $request->get('per_page', 10);
 
         if($username){
             // $users = User::where('username' ,$username)->orderBy('id','desc')->with('profileType')->paginate('10');
@@ -2389,7 +2407,8 @@ class AdminController extends Controller
                 ->groupBy('user_id')
                 ->orderBy('id' , 'desc')
                 ->with('user')
-                ->paginate('10');
+                ->paginate($perPage)
+                ->appends($request->except('page'));
         }else{
             // $chat_users_ids = GroupChat::distinct('user_id')->pluck('user_id');
             // $users = User::whereIn('id' ,$chat_users_ids)->orderBy('id','desc')->with('profileType')->paginate('10');
@@ -2398,7 +2417,8 @@ class AdminController extends Controller
                 ->groupBy('user_id')
                 ->orderBy('id' , 'desc')
                 ->with('user')
-                ->paginate('10');
+                ->paginate($perPage)
+                ->appends($request->except('page'));
 
         }
         
@@ -2564,7 +2584,9 @@ class AdminController extends Controller
 
 
     public function getRewardPointsInstanceList(Request $request){
-        $list = RewardPointInstance::paginate(50);
+        $perPage = $request->get('per_page', 50);
+        $list = RewardPointInstance::paginate($perPage)
+            ->appends($request->except('page'));
         return view('Backend/reward_points')->with('list' , $list);
     }
 

@@ -137,7 +137,7 @@
                       </div>
                     </div>
 
-                    {{$guide_session->links()}}
+                    <x-pagination-dropdown :paginator="$guide_session" />
                   </div>
                 </div>
               </div>

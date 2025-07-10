@@ -66,7 +66,7 @@
                       </tbody>
                     </table>
 
-                    {{$content->links()}}
+                    <x-pagination-dropdown :paginator="$content" />
                   </div>
                 </div>
               </div>

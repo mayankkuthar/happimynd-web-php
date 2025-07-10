@@ -108,62 +108,7 @@
                   </tbody>
                 </table>
                 
-                <!-- Pagination -->
-                <div class="text-center mt-4" style="margin-top: 30px !important;">
-                    <style>
-                        .pagination {
-                            display: flex;
-                            justify-content: center;
-                            align-items: center;
-                            gap: 8px;
-                            margin: 0;
-                            padding: 0;
-                        }
-                        .pagination li {
-                            list-style: none;
-                            margin: 0 2px;
-                        }
-                        .pagination a, .pagination span {
-                            display: inline-block;
-                            padding: 10px 15px;
-                            text-decoration: none;
-                            border: 1px solid #ddd;
-                            border-radius: 4px;
-                            color: #333;
-                            font-size: 14px;
-                            font-weight: 500;
-                            min-width: 40px;
-                            text-align: center;
-                            transition: all 0.3s ease;
-                        }
-                        .pagination a:hover {
-                            background-color: #f8f9fa;
-                            border-color: #007bff;
-                            color: #007bff;
-                        }
-                        .pagination .active span {
-                            background-color: #007bff;
-                            border-color: #007bff;
-                            color: white;
-                            font-weight: 600;
-                        }
-                        .pagination .disabled span {
-                            color: #6c757d;
-                            background-color: #f8f9fa;
-                            border-color: #dee2e6;
-                            cursor: not-allowed;
-                        }
-                    </style>
-                    {{ $coupon_receipts->links() }}
-                </div>
-                
-                <!-- Performance Note -->
-                <div class="text-center mt-3" style="margin-top: 20px !important;">
-                    <small class="text-muted" style="font-size: 12px; color: #6c757d; background-color: #f8f9fa; padding: 8px 16px; border-radius: 4px; display: inline-block;">
-                        <i class="fa fa-info-circle" style="margin-right: 5px;"></i>
-                        Showing {{ $coupon_receipts->perPage() }} records per page for optimal performance
-                    </small>
-                </div>
+                <x-pagination-dropdown :paginator="$coupon_receipts" />
 
 
               </div>

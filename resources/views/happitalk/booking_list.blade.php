@@ -139,7 +139,7 @@
                                  </div>
                               </div>
                            </div>
-                           {{$booking->links()}}
+                           <x-pagination-dropdown :paginator="$booking" />
                         </div>
                      </div>
                   </div>

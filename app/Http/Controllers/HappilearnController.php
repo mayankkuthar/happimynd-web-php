@@ -169,7 +169,9 @@ class HappilearnController extends Controller
 
     public function happiLearnContentList(Request $request){
         // $content = HappiLearnContent::orderBy('id','desc')->get();
-        $content = HappiLearnContent::where('is_deleted' , 0)->orderBy('id','desc')->paginate(10);
+        $perPage = $request->get('per_page', 10);
+        $content = HappiLearnContent::where('is_deleted' , 0)->orderBy('id','desc')->paginate($perPage)
+            ->appends($request->except('page'));
 
         return view('Backend.happilearn.happilearn_content_list')->with('content' , $content);
     }

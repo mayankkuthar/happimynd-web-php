@@ -84,7 +84,7 @@
                   </tbody>
                 </table>
 
-                 
+                <x-pagination-dropdown :paginator="$list" />
 
               </div>
             </div>

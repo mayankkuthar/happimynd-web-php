@@ -67,6 +67,9 @@
                           @endforeach
                         </tbody>
                       </table>
+                      
+                      <x-pagination-dropdown :paginator="$coupons" />
+                      
                     </div>
                   </div>
                 </div>

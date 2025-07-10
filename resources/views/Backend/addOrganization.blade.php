@@ -121,7 +121,7 @@
                         @endforeach
                       </tbody>
                     </table>
-                    {{$organizations->links()}}
+                    <x-pagination-dropdown :paginator="$organizations" />
 
                   </div>
                   </div>

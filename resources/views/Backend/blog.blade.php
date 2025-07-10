@@ -193,7 +193,7 @@ use Illuminate\Support\Str;
                       @endforeach
                     </tbody>
                   </table>
-                  {{$posts->links()}}
+                  <x-pagination-dropdown :paginator="$posts" />
                 </div>
                 </div>
               </div>

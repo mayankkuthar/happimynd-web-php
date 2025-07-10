@@ -190,7 +190,7 @@
                       </tbody>
                     </table>
 
-                    {{$assessments->links()}}
+                    <x-pagination-dropdown :paginator="$assessments" />
                   </div>
                 </div>
               </div>

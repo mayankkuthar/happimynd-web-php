@@ -57,7 +57,7 @@
                     </tbody>
                   </table>
 
-                  <div class="custompaginationbar"> {{$reciepts->links()}}</div>
+                  <x-pagination-dropdown :paginator="$reciepts" />
 
                 </div>
               </div>

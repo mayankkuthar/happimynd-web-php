@@ -127,9 +127,7 @@
                   </tbody>
                 </table>
 
-                <div class="custompaginationbar"> 
-                  {{$users->links()}}
-                </div>
+                <x-pagination-dropdown :paginator="$users" />
 
               </div>
             </div>

@@ -77,7 +77,7 @@
                   </tbody>
                 </table>
 
-                {{ $tokens->links() }}
+                <x-pagination-dropdown :paginator="$tokens" />
               </div>
             </div>
           </div>

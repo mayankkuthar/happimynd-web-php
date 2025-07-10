@@ -104,7 +104,7 @@
                   </div>
                   </div>
 
-                  {{$data->links()}}
+                  <x-pagination-dropdown :paginator="$data" />
  
         </div>
       </div>

@@ -87,9 +87,7 @@
                 </tbody>
               </table>
 
-              <div class="mt-3">
-                {{ $assessments->links() }}
-              </div>
+              <x-pagination-dropdown :paginator="$assessments" />
             </div>
           </div>
         </div>

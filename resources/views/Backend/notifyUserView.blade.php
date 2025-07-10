@@ -47,9 +47,7 @@
                     @endforeach
                   </tbody>
                 </table>
-                <div class="text-center">
-                    {{ $users->links() }}
-                </div>
+                <x-pagination-dropdown :paginator="$users" />
               </div>
             </div>
           </div>

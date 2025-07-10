@@ -55,16 +55,19 @@ class HappiguideController extends Controller
     public function happiguideSessionList(Request $request){
 
         $query = $request->get('query');
+        $perPage = $request->get('per_page', 10);
 
         if($query){
             $user_ids = User::where('username' , $query)->pluck('id');
             $guide_session = HappiguideSession::whereHas('userDetail')->whereIn('user_id' , $user_ids)->orderBy('id' , 'desc')
                                             ->with('userDetail','psychologistDetail' , 'userOpinion' , 'psychologistOpinion')
-                                            ->paginate('10');
+                                            ->paginate($perPage)
+                                            ->appends($request->except('page'));
         }else{
             $guide_session = HappiguideSession::whereHas('userDetail')->orderBy('id' , 'desc')
                                             ->with('userDetail','psychologistDetail' , 'userOpinion' , 'psychologistOpinion')
-                                            ->paginate('10');
+                                            ->paginate($perPage)
+                                            ->appends($request->except('page'));
         }
 
         

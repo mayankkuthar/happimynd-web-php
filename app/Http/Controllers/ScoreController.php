@@ -14,9 +14,11 @@ class ScoreController extends Controller
         //
     }
 
-    public function getScoreList()
+    public function getScoreList(Request $request)
     {
-        $scores = Score::latest()->whereHas('user')->with('user')->paginate('10');
+        $perPage = $request->get('per_page', 10);
+        $scores = Score::latest()->whereHas('user')->with('user')->paginate($perPage)
+            ->appends($request->except('page'));
 
         return view('Backend.score.all')->with('scores', $scores);
     }

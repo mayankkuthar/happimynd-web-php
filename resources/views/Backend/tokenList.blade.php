@@ -149,6 +149,9 @@
                     @endforeach
                   </tbody>
                 </table>
+                
+                <x-pagination-dropdown :paginator="$tokens" />
+                
               </div>
             </div>
           </div>
