@@ -43,6 +43,10 @@ class DataExportController extends Controller
     
     public function downloadXL(Request $request)
     {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
         $data = [
             'start_date' => $request->input('start_date'),
             'end_date' => $request->input('end_date'),

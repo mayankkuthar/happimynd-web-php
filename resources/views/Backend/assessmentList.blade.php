@@ -218,6 +218,10 @@
       }
 
       function validateDate(start,end){
+        if (!start.value || !end.value) {
+            alert("Please select both start and end dates.");
+            return false;
+        }
         const _MS_PER_DAY = 1000 * 60 * 60 * 24;
         const start_date = new Date('"'+start.value+'"'),
         end_date = new Date('"'+end.value+'"');
@@ -226,7 +230,7 @@
         if(Math.floor((utc2 - utc1) / _MS_PER_DAY)>31){
             alert("End Date must be atmost 30 days from start date");
             return(false);
-          }     
+        }     
       }
     </script>
   </x-slot>

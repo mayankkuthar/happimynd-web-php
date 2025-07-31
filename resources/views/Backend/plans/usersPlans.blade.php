@@ -134,7 +134,7 @@
 
               </table>
 
-             <x-pagination-dropdown :paginator="$users" />
+             <div class="custompaginationbar"> {{$users->links()}}</div>
 
               
             </div>
