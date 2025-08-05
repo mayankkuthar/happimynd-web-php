@@ -349,7 +349,7 @@ class AdminController extends Controller
 
     public function deleteAdmin($id)
     {
-        if (!auth('admin')->user()->hasAnyRole(['super-admin', 'admin'])) {
+        if (!auth('admin')->user()->hasAnyRole(['super-admin', 'admin',])) {
             return redirect(route('admin.dashboard'));
         }
 
@@ -362,7 +362,7 @@ class AdminController extends Controller
 
     public function generateTokenView(Request $request)
     {
-        if (!auth('admin')->user()->hasAnyRole(['super-admin', 'admin'])) {
+        if (!auth('admin')->user()->hasAnyRole(['super-admin', 'admin', 'happimynd-code'])) {
             return redirect(route('admin.dashboard'));
         }
         $organizations = Organization::AvaliableOrganization()->get();
@@ -2610,26 +2610,3 @@ class AdminController extends Controller
 
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

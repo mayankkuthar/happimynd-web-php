@@ -62,6 +62,7 @@
                     <th>B2B / B2C</th>
                     <th>Organization</th>
                     <th>No. of Plans Bought</th>
+                    <th>Purchase Date</th>
                     @for($i=0 ; $i < $plan_col_limit ; $i++)
                       <th>Plans</th>
                     @endfor
@@ -89,6 +90,13 @@
                       </td>
                       <td>
                         {{ $user->bundleStatus->count() }}
+                      </td>
+                      <td>
+                        @if($user->bundleStatus->count() > 0)
+                          {{ $user->bundleStatus->sortByDesc('created_at')->first()->created_at->format('M d, Y') }}
+                        @else
+                          -
+                        @endif
                       </td>
                       <!-- <td>fsfs</td> -->
                      <!-- <td>
@@ -134,7 +142,7 @@
 
               </table>
 
-             <div class="custompaginationbar"> {{$users->links()}}</div>
+             <x-pagination-dropdown :paginator="$users" />
 
               
             </div>
