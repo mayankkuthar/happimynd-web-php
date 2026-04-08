@@ -7,242 +7,219 @@ use Illuminate\Http\Request;
 use App\Models\HappiLearnContent;
 use App\Models\LikeHappiLearnContent;
 use App\Models\RecentlyViewedHappiLearnContent;
-use Auth;
-use Validator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Cache;
 
 class HappiLearnController extends Controller
 {
-    public function HappiLearnContent(Request $request){
-
+    public function HappiLearnContent(Request $request)
+    {
         $user = Auth::user();
 
-        $content_type = $request->content_type;
-        $explode_content_type = explode(',',$content_type);
+        $content_type = $request->content_type ? explode(',', $request->content_type) : [];
+        $profile = $request->profile ? explode(',', $request->profile) : [];
+        $parameters = $request->parameters ? explode(',', $request->parameters) : [];
+        $language = $request->language ? explode(',', $request->language) : ['english'];
 
-        
-        $profile = $request->profile;
-        $explode_profile = explode(',',$profile);
+        $cacheKey = 'happi_content_' . md5(json_encode($request->all()) . '_' . $user->id);
 
-        $parameters = $request->parameters;
-        $explode_parameters = explode(',',$parameters);
+        $data = Cache::remember($cacheKey, 60, function () use ($request, $content_type, $profile, $parameters, $language) {
 
+            $query = HappiLearnContent::query()
+                ->select('*') // ✅ FULL DATA (fix images/content)
+                ->where('is_deleted', 0)
+                ->withCount('likes');
 
-        $language = $request->language;
-        $explode_language = explode(',', $language);
-
-        if($language == null){
-            $explode_language = ['english'];
-        }
-
-        if($request->search){
-
-            $data = HappiLearnContent::where('keywords', 'like', '%'. $request->search . '%')
-                        ->where('is_deleted' , 0)
-                        ->orderBy('id' , 'desc')
-                        ->withCount('likes');
-
-            if($content_type){
-                $data = $data->whereIn('type' , $explode_content_type);
+            if ($request->search) {
+                $query->where('keywords', 'like', '%' . $request->search . '%');
             }
-            if($explode_language){
-                        $data = $data->whereIn('language' , $explode_language);
+
+            if (!empty($content_type)) {
+                $query->whereIn('type', $content_type);
             }
-            if($profile){
-                $data->where(function($query) use($explode_profile) {
-                        foreach($explode_profile as $single_profile_name) {
-                            $query->orWhere('profile', 'like', "%$single_profile_name%");
-                        };
+
+            if (!empty($language)) {
+                $query->whereIn('language', $language);
+            }
+
+            if (!empty($profile)) {
+                $query->where(function ($q) use ($profile) {
+                    foreach ($profile as $p) {
+                        $q->orWhere('profile', 'like', $p . '%');
+                    }
                 });
             }
-            if($parameters){
-                $data->where(function($query) use($explode_parameters) {
-                        foreach($explode_parameters as $single_parameter_name) {
-                            $query->orWhere('parameters', 'like', "%$single_parameter_name%");
-                        };
+
+            if (!empty($parameters)) {
+                $query->where(function ($q) use ($parameters) {
+                    foreach ($parameters as $param) {
+                        $q->orWhere('parameters', 'like', $param . '%');
+                    }
                 });
             }
-        }
-        else{
 
-            $data = HappiLearnContent::orderBy('id','desc') 
-                        ->where('is_deleted' , 0)
-                        ->withCount('likes');
-
-            if($content_type){ 
-                $data->whereIn('type',$explode_content_type);
-            }
-            if($explode_language){
-                $data->whereIn('language' , $explode_language);
-            }
-            if($profile){
-                $data->where(function($query) use($explode_profile) {
-                        foreach($explode_profile as $single_profile_name) {
-                            $query->orWhere('profile', 'like', "%$single_profile_name%");
-                        };
-                });
-            }
-            if($parameters){
-                $data->where(function($query) use($explode_parameters) {
-                        foreach($explode_parameters as $single_parameter_name) {
-                            $query->orWhere('parameters', 'like', "%$single_parameter_name%");
-                        };
-                });
-            }
-        }
-
-                        
-        $data = $data->paginate(10);
-
-        $recently_viewed_content = RecentlyViewedHappiLearnContent::select('happi_learn_content_id')->where('user_id' , $user->id)->with('HappiLearnContent')->orderBy('id' , 'desc')->paginate(10);
-
-        return response()->json(['status' => 'success' , 'message' => 'Content get successfully.' , 'data' => $data , 'recently_viewed' => $recently_viewed_content]);
-        // return response()->json(['status' => 'success' , 'message' => 'Content get successfully.' , 'data' => $data]);
-
-    }
-
-
-
-
-
-
-    public function HappiLearnContentById(Request $request){
-        $user = Auth::user();
-
-        $message = [
-            'content_id.required'      =>  'Please enter content ID',
-            'content_id.exists'      =>  'Please enter valid content ID',
-        ];
-        $validator = Validator::make($request->all(), [
-            'content_id'   => 'required|exists:happi_learn_contents,id',
-
-        ],$message);
-
-        if($validator->fails()) {
-            return response()->json(["message" => $validator->errors()->first()],400);
-        }
-
-        $data = HappiLearnContent::where('id',$request->content_id)->withCount('likes')->first();
-
-        $delete_From_recently_viewed  = RecentlyViewedHappiLearnContent::where(['user_id' => $user->id , 'happi_learn_content_id' => $request->content_id])->delete();
-        $insert_in_recent_viewed_table = RecentlyViewedHappiLearnContent::create(['user_id' => $user->id , 'happi_learn_content_id' => $request->content_id]);
-
-
-        $profiles_of_content  = $data->profile;
-        $explode_profiles_of_content = explode(',' , $profiles_of_content);
-        $suggestion_based_on_profile = HappiLearnContent::where('is_deleted' , 0)->where('language' , $data->language)->where('id' , '!=' , $request->content_id)->orderBy('id' , 'desc');
-        $suggestion_based_on_profile->where(function($query) use($explode_profiles_of_content) {
-                foreach($explode_profiles_of_content as $single_profile_name) {
-                    $query->orWhere('profile', 'like', "%$single_profile_name%");
-                };
+            return $query->orderBy('id', 'desc')->simplePaginate(10);
         });
-        $suggestion_based_on_profile = $suggestion_based_on_profile->withCount('likes')->get(5);
 
+        // Safety fallback
+        $data->getCollection()->transform(function ($item) {
+            $item->keywords = $item->keywords ?? '';
+            return $item;
+        });
 
-        return response()->json(['status' => 'success' , 'message' => 'Content get successfully.' , 'data' => $data , 'suggested_content' => $suggestion_based_on_profile]);
-        // return response()->json(['status' => 'success' , 'message' => 'Content get successfully.' , 'data' => $data]);
+        // Recently Viewed (FULL DATA)
+        $recentlyViewedRaw = RecentlyViewedHappiLearnContent::where('user_id', $user->id)
+            ->with(['HappiLearnContent']) // ✅ FULL RELATION
+            ->orderBy('id', 'desc')
+            ->limit(10)
+            ->get();
 
+        $recentlyViewedRaw->transform(function ($item) {
+            if ($item->HappiLearnContent) {
+                $item->HappiLearnContent->keywords = $item->HappiLearnContent->keywords ?? '';
+            }
+            return $item;
+        });
 
+        $recentlyViewed = [
+            'data' => $recentlyViewedRaw
+        ];
 
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Content fetched successfully.',
+            'data' => $data,
+            'recentlyViewed' => $recentlyViewed
+        ]);
     }
 
 
-
-    public function likeHappiLearnPost(Request $request){
-
+    public function HappiLearnContentById(Request $request)
+    {
         $user = Auth::user();
 
-        $message = [
-            'happi_learn_content_id.required'      =>  'Please enter content ID',
-            'happi_learn_content_id.exists'      =>  'Please enter valid content ID',
-        ];
         $validator = Validator::make($request->all(), [
-            'happi_learn_content_id'   => 'required|exists:happi_learn_contents,id',
+            'content_id' => 'required|exists:happi_learn_contents,id',
+        ]);
 
-        ],$message);
-
-        if($validator->fails()) {
-            return response()->json(["message" => $validator->errors()->first()],400);
+        if ($validator->fails()) {
+            return response()->json(["message" => $validator->errors()->first()], 400);
         }
 
-        $data = [
+        $cacheKey = 'content_' . $request->content_id;
+
+        $data = Cache::remember($cacheKey, 300, function () use ($request) {
+            return HappiLearnContent::select('*') // ✅ FULL DATA
+                ->withCount('likes')
+                ->find($request->content_id);
+        });
+
+        if ($data) {
+            $data->keywords = $data->keywords ?? '';
+        }
+
+        // Recently viewed update
+        RecentlyViewedHappiLearnContent::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'happi_learn_content_id' => $request->content_id
+            ]
+        );
+
+        // Suggestions (FULL DATA)
+        $profiles = explode(',', $data->profile);
+
+        $suggested = HappiLearnContent::select('*') // ✅ FULL DATA
+            ->where('is_deleted', 0)
+            ->where('language', $data->language)
+            ->where('id', '!=', $request->content_id)
+            ->where(function ($q) use ($profiles) {
+                foreach ($profiles as $p) {
+                    $q->orWhere('profile', 'like', $p . '%');
+                }
+            })
+            ->withCount('likes')
+            ->limit(5)
+            ->get();
+
+        $suggested->transform(function ($item) {
+            $item->keywords = $item->keywords ?? '';
+            return $item;
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Content fetched successfully.',
+            'data' => $data,
+            'suggested_content' => $suggested
+        ]);
+    }
+
+
+    public function likeHappiLearnPost(Request $request)
+    {
+        $user = Auth::user();
+
+        $validator = Validator::make($request->all(), [
+            'happi_learn_content_id' => 'required|exists:happi_learn_contents,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(["message" => $validator->errors()->first()], 400);
+        }
+
+        $exists = LikeHappiLearnContent::where([
             'user_id' => $user->id,
-            'happi_learn_content_id' => $request->happi_learn_content_id,
-        ];
+            'happi_learn_content_id' => $request->happi_learn_content_id
+        ])->exists();
 
-        $is_already_like = LikeHappiLearnContent::where('user_id',$user->id)
-                                ->where('happi_learn_content_id',$request->happi_learn_content_id)
-                                ->first();
-
-        if($is_already_like){
-            return response()->json(['status' => 'success' , 'message' => 'Post already liked.']);
-        }else{
-            LikeHappiLearnContent::create($data);
-            return response()->json(['status' => 'success' , 'message' => 'Post like successfully.']);
+        if ($exists) {
+            return response()->json(['status' => 'success', 'message' => 'Already liked']);
         }
-        
 
+        LikeHappiLearnContent::create([
+            'user_id' => $user->id,
+            'happi_learn_content_id' => $request->happi_learn_content_id
+        ]);
+
+        return response()->json(['status' => 'success', 'message' => 'Liked successfully']);
     }
 
 
-    public function unLikeHappiLearnPost(Request $request){
-        
+    public function unLikeHappiLearnPost(Request $request)
+    {
         $user = Auth::user();
 
-        $message = [
-            'happi_learn_content_id.required'      =>  'Please enter content ID',
-            'happi_learn_content_id.exists'      =>  'Please enter valid content ID',
-        ];
         $validator = Validator::make($request->all(), [
-            'happi_learn_content_id'   => 'required|exists:happi_learn_contents,id',
+            'happi_learn_content_id' => 'required|exists:happi_learn_contents,id',
+        ]);
 
-        ],$message);
-
-        if($validator->fails()) {
-            return response()->json(["message" => $validator->errors()->first()],400);
+        if ($validator->fails()) {
+            return response()->json(["message" => $validator->errors()->first()], 400);
         }
 
-        $is_liked = LikeHappiLearnContent::where('user_id',$user->id)
-                             ->where('happi_learn_content_id',$request->happi_learn_content_id)
-                             ->first();
-        if($is_liked){
-            $is_liked->delete();
-            return response()->json(['status' => 'success' , 'message' => 'Post unlike successfully.']);
-        }else{
-            return response()->json(['status' => 'success' , 'message' => 'Post already unlike.']);
-        }
+        LikeHappiLearnContent::where([
+            'user_id' => $user->id,
+            'happi_learn_content_id' => $request->happi_learn_content_id
+        ])->delete();
 
+        return response()->json(['status' => 'success', 'message' => 'Unliked successfully']);
     }
 
 
-
-    public function searchParameters(Request $request){
-        $parameters = [
-                'Stress',
-                'Anxiety',
-                'Depression',
-                'Burn Out',
-                'Happiness',
-                'Internet Addiction',
-                'Personality',
-                'Self Esteem',
-                'Resilience',
-                'Job Satisfaction',
-                'Substance Abuse',
-                'Emotional Regulation',
-                'Peer Pressure',
-                'Group Conformity',
-                'Gaming Disorder',
-                'Attention and Concentration',
-                'Relationship Issues',
-                'Body Image',
-                'Well Being',
-        ];
-
-        return response()->json(['message' => 'Parameters get sucessfully.' , 'data' => $parameters]);
+    public function searchParameters()
+    {
+        return response()->json([
+            'message' => 'Parameters fetched successfully.',
+            'data' => [
+                'Stress','Anxiety','Depression','Burn Out','Happiness',
+                'Internet Addiction','Personality','Self Esteem','Resilience',
+                'Job Satisfaction','Substance Abuse','Emotional Regulation',
+                'Peer Pressure','Group Conformity','Gaming Disorder',
+                'Attention and Concentration','Relationship Issues',
+                'Body Image','Well Being'
+            ]
+        ]);
     }
-
-
 }
-
-
-
