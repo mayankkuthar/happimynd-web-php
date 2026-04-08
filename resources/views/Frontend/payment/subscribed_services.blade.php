@@ -29,15 +29,15 @@
         <div class="bundles__content">
           @foreach($packages as $package)
 
-            <?php  
+            <?php
               $name = $package->name;
               if($name == 'HappiLIFE Summary Reading'){
                   $name = 'HappiLEARN';
-              } 
+              }
               if($name == 'HappiLIFE Screening'){
                   $name = 'HappiLIFE Awareness Tool';
-              } 
-            ?>  
+              }
+            ?>
 
             @if(strtolower($name) != strtolower('HappiAPP') && strtolower($name) != strtolower('HappiBUDDY+ HappiAPP'))
             <div class="bundles__content__paymentoptions" id="{{$package->id}}">
@@ -96,7 +96,7 @@
                                 @endif
                               @else
 
-                              <?php 
+                              <?php
 
                                 if($package->name == 'HappiLIFE Screening'){
                                   $duration_name = 'Single Report Fees';
@@ -124,16 +124,16 @@
                                 }
                                 else if($package->name == 'HappiLEARN + HappiBUDDY + HappiSELF'){
                                   $duration_name = 'Annual Subscription';
-                                } 
+                                }
                                 else{
                                   $duration_name = $plan->duration->name;
                                 }
 
                               ?>
 
- 
+
                               {{ ' '.$duration_name }}
-                              
+
                               @endif
                             </span>
                             {{-- Show and hide this h4 tag when coupon applied or not --}}
@@ -290,7 +290,7 @@
 
 
 <div class="modal fade" id="downlaod-popup" tabindex="-1" data-show="true" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog sendfullreport__popup">
+  <div class="modal-dialog modal-dialog-centered sendfullreport__popup">
     <div class="modal-content" style="text-align: center;">
       <div class="sendfullreport__popup__close" data-dismiss="modal">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -315,7 +315,7 @@
             </a>
           </div>
 
-  
+
       </div>
     </div>
   </div>

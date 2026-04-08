@@ -10,7 +10,7 @@
 }
 
 .download__terms a {
-  background: #FFFFFF;
+  background: hsl(240 4% 95%);
   border: 1px solid #CED4DA;
   box-sizing: border-box;
   border-radius: 16px;

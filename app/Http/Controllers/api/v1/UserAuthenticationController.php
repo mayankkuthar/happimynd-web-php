@@ -697,31 +697,13 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
 
 
     public function startAssessment(Request $request){
-
-        $user_id =  auth('user')->user()->id;
+        $user_id = auth('user')->user()->id;
 
         $platform = $request->platform;
         if($platform == null){
             $platform = 'website';
         }
-        Assessment::where('user_id' , $user_id)->update(['platform' => $platform]);
-
-        //$is_already_assesment = Assessment::where('user_id',$user_id)->first();
-//
-        //if($is_already_assesment && $is_already_assesment->ended_at != null){
-        //    return response()->json(['status' => 'true' , 'message' => 'Your assessment is already completed.']);
-        //}
-//
-        //if($is_already_assesment && $is_already_assesment->ended_at == null){
-        //    $assessment_number = $is_already_assesment->id;
-        //}else{
-        //    $assessment_number =  $this->apiResponse->success([
-        //        'assessment_id' => $this->assessmentService
-        //            ->forUser(auth('user')->user()->id)
-        //            ->initiateAssessment()->assessmentId
-        //    ]);
-        //}
-
+        Assessment::where('user_id', $user_id)->update(['platform' => $platform]);
 
         // Fetch all assessments for the user
         $allAssessments = Assessment::where('user_id', $user_id)->orderBy('id', 'desc')->get();
@@ -737,17 +719,29 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
         // Check if there's an incomplete one to resume
         $incompleteAssessment = $allAssessments->whereNull('ended_at')->first();
 
+        // Check if the most recent assessment was completed within the last minute
+        // This prevents creating a new assessment immediately after completion
+        $recentlyCompletedAssessment = $allAssessments->whereNotNull('ended_at')->first();
+        $preventNewAssessment = false;
+        
+        if ($recentlyCompletedAssessment && $recentlyCompletedAssessment->ended_at) {
+            $completedTime = Carbon::parse($recentlyCompletedAssessment->ended_at);
+            $preventNewAssessment = $completedTime->diffInMinutes(Carbon::now()) < 1;
+        }
+
         if ($incompleteAssessment) {
             $assessment_number = $incompleteAssessment->id;
+        } else if ($preventNewAssessment) {
+            // If assessment was just completed, don't create a new one
+            return response()->json(['status' => 'success', 'message' => 'Assessment was recently completed. Please wait before starting a new one.']);
         } else {
-            // Start new one if less than 6 assessments
-            $assessment_number =  $this->apiResponse->success([
+            // Start new one if less than 6 assessments and not recently completed
+            $assessment_number = $this->apiResponse->success([
                 'assessment_id' => $this->assessmentService
                     ->forUser(auth('user')->user()->id)
                     ->initiateAssessment()->assessmentId
             ]);
         }
-        
 
         if($assessment_number){
 
@@ -765,8 +759,6 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
             return response()->json(['status' => 'success' , 'message' => 'Questions get sucessfully.' , 'questions' => $data , 'overview' => $additional_data]);
         }
         return response()->json(['status' => 'success' , 'message' => 'Invalid assessment']);
-
-
     }
 
 
@@ -806,19 +798,23 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
 
     public function completeAssessment(Request $request){
         $user = Auth::user();
-        $reward_points = RewardPointInstance::where('action_performed' , 'When HappiLIFE Assessment is taken up')->first();
-        $points_to_be_added_to_user = $reward_points->points_to_be_given;
-        $user_id = $user->id;
-        $task_performed = 'Complete HappiLIFE screening';
-        $this->rewardPointToUser()->addRewardToUser($user_id , $points_to_be_added_to_user , $task_performed);
-        // $reward_data = [
-        //     'user_id' => $user->id,
-        //     'points_earned' => $points_to_be_added_to_user,
-        //     'task_performed' => 'Complete HappiLIFE screening',
-        // ];
-        // UserRewardPointRecord::create($reward_data);
+        
+        // Check if the user already has an incomplete assessment
+        $hasIncompleteAssessment = Assessment::where('user_id', $user->id)
+            ->whereNull('ended_at')
+            ->exists();
+        
+        // Only add reward points if there's no incomplete assessment
+        // This prevents creating a new assessment right after completion
+        if (!$hasIncompleteAssessment) {
+            $reward_points = RewardPointInstance::where('action_performed', 'When HappiLIFE Assessment is taken up')->first();
+            $points_to_be_added_to_user = $reward_points->points_to_be_given;
+            $user_id = $user->id;
+            $task_performed = 'Complete HappiLIFE screening';
+            $this->rewardPointToUser()->addRewardToUser($user_id, $points_to_be_added_to_user, $task_performed);
+        }
 
-        return response()->json(['status' => 'success' , "message" => "Screening has been completed successfully."]);
+        return response()->json(['status' => 'success', "message" => "Screening has been completed successfully."]);
     }
 
 

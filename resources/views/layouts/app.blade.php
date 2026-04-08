@@ -6,7 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="p:domain_verify" content="1537664bb82efdd62d8e8c7d51d32a85"/>
-        
+
         <meta name="facebook-domain-verification" content="h4zd8pmpramc122gdr4gjxvt3t3k2b"/>
         <!-- Meta Pixel Code -->
         <script>
@@ -71,7 +71,7 @@
         @endif
         <meta name="description" content="@yield('description')" />
         <meta name="keywords" content="@yield('keywords')" />
-        
+
         <title>@yield('title')</title>
 
         {{-- <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap"> --}}
@@ -79,34 +79,54 @@
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <!-- Styles -->
         {{-- <link rel="stylesheet" href="{{ asset('css/app.css') }}"> --}}
+
+        @php
+            /**
+             * Cache-busting helper.
+             * Returns the asset URL with ?v= set to the file's last-modified
+             * Unix timestamp.  The browser re-fetches the file automatically
+             * whenever it changes on disk — no hard refresh needed by users.
+             */
+            function vAsset(string $relativePath): string {
+                $fullPath = public_path($relativePath);
+                $version  = file_exists($fullPath) ? filemtime($fullPath) : time();
+                return asset($relativePath) . '?v=' . $version;
+            }
+        @endphp
+
+        {{-- Vendor / CDN assets — versioned by the CDN itself, no fingerprint needed --}}
         <link href="{{ asset('assets/Backend/css/plugins/bootstrap.min.css') }}" rel="stylesheet">
         <link href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css" rel="stylesheet">
         <link href="{{ asset('assets/Backend/css/plugins/font-awesome.min.css') }}" rel="stylesheet">
         {{-- <link href="{{ asset('assets/css/plugins/aos.css') }}" rel="stylesheet"> --}}
         <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
-
         <link href="{{ asset('assets/css/plugins/owl.carousel.min.css') }}" rel="stylesheet">
         <link href="{{ asset('assets/css/plugins/owl.theme.default.min.css') }}" rel="stylesheet">
-        <link href="{{ asset('assets/Frontend/css/landing.css') }}" rel="stylesheet">
-        <link href="{{ asset('assets/Frontend/css/account.css') }}" rel="stylesheet">
-        <link href="{{ asset('assets/Frontend/css/terms.css') }}" rel="stylesheet">
-        <link href="{{ asset('assets/Frontend/css/ourteam.css') }}" rel="stylesheet">
-        <link href="{{ asset('assets/Frontend/css/popups.css') }}" rel="stylesheet">
-        <link href="{{ asset('assets/Frontend/css/dashboard.css') }}" rel="stylesheet">
-        <link href="{{ asset('assets/Frontend/css/exploreservices.css') }}" rel="stylesheet">
-        <link href="{{ asset('assets/Frontend/css/downloadreport.css') }}" rel="stylesheet">
-        <link href="{{ asset('assets/Frontend/css/assessment.css') }}" rel="stylesheet">
-        <link href="{{ asset('assets/Frontend/css/errors.css') }}" rel="stylesheet">
-        <link href="{{ asset('assets/Frontend/css/organisation.css') }}" rel="stylesheet">
-        <link href="{{ asset('assets/Frontend/css/report.css') }}" rel="stylesheet">
-        <link href="{{ asset('assets/Frontend/css/payment_bundles.css') }}" rel="stylesheet">
-        <link href="{{ asset('assets/Frontend/css/blog.css') }}" rel="stylesheet">
-        <link href="{{ asset('assets/Frontend/css/psychologist.css') }}" rel="stylesheet">
-        <link href="{{ asset('assets/Frontend/css/services.css') }}" rel="stylesheet">
-        <link href="{{ asset('assets/Frontend/css/main.css') }}" rel="stylesheet">
+
+        {{-- Custom CSS — fingerprinted so browsers pick up changes instantly --}}
+        <link href="{{ vAsset('assets/Frontend/css/landing.css') }}" rel="stylesheet">
+        <link href="{{ vAsset('assets/Frontend/css/account.css') }}" rel="stylesheet">
+        <link href="{{ vAsset('assets/Frontend/css/terms.css') }}" rel="stylesheet">
+        <link href="{{ vAsset('assets/Frontend/css/ourteam.css') }}" rel="stylesheet">
+        <link href="{{ vAsset('assets/Frontend/css/popups.css') }}" rel="stylesheet">
+        <link href="{{ vAsset('assets/Frontend/css/dashboard.css') }}" rel="stylesheet">
+        <link href="{{ vAsset('assets/Frontend/css/exploreservices.css') }}" rel="stylesheet">
+        <link href="{{ vAsset('assets/Frontend/css/downloadreport.css') }}" rel="stylesheet">
+        <link href="{{ vAsset('assets/Frontend/css/assessment.css') }}" rel="stylesheet">
+        <link href="{{ vAsset('assets/Frontend/css/errors.css') }}" rel="stylesheet">
+        <link href="{{ vAsset('assets/Frontend/css/organisation.css') }}" rel="stylesheet">
+        <link href="{{ vAsset('assets/Frontend/css/report.css') }}" rel="stylesheet">
+        <link href="{{ vAsset('assets/Frontend/css/payment_bundles.css') }}" rel="stylesheet">
+        <link href="{{ vAsset('assets/Frontend/css/blog.css') }}" rel="stylesheet">
+        <link href="{{ vAsset('assets/Frontend/css/psychologist.css') }}" rel="stylesheet">
+        <link href="{{ vAsset('assets/Frontend/css/services.css') }}" rel="stylesheet">
+        <link href="{{ vAsset('assets/Frontend/css/main.css') }}" rel="stylesheet">
+
         {{-- Jqurey Datepicker theme CSS --}}
         <link href="https://code.jquery.com/ui/1.12.1/themes/redmond/jquery-ui.css" rel="stylesheet">
         <link href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/redmond/jquery-ui.css" rel="stylesheet">
+
+        {{-- JS vendors --}}
         <script src="{{ asset('assets/Backend/js/plugins/jquery.min.js') }}"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
         <!-- Scripts -->
@@ -258,6 +278,7 @@
           AOS.init();
         </script>
         @yield('js')
+        {{-- Contact Us floating button, modal form, and related JS hidden --
         <div id="contact-modal" class="modal" style="display: none;">
             <div class="modal-content">
                 <h2>Contact Us</h2>
@@ -294,12 +315,12 @@
                 <button id="close-modal" class="close-btn">Close</button>
             </div>
         </div>
-        <div 
+        <div
             style="position: fixed; bottom: 20px; right: 20px; z-index: 1000; width: 60px; height: 60px;">
             <a href="javascript:void(0)" id="contact-now-btn">
-            <img 
-                src="https://www.pngfind.com/pngs/m/671-6712663_png-logo-of-contact-us-transparent-png.png" 
-                alt="Contact Us" 
+            <img
+                src="https://www.pngfind.com/pngs/m/671-6712663_png-logo-of-contact-us-transparent-png.png"
+                alt="Contact Us"
                 style="width: 100%; height: 100%; border-radius: 50%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); cursor: pointer;">
             </a>
         </div>
@@ -366,5 +387,6 @@
         });
 
         </script>
+        --}}
     </body>
 </html>

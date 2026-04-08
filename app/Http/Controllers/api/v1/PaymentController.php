@@ -362,7 +362,7 @@ class PaymentController extends Controller
     {
         Log::info('mySubscribedServices');
 
-        $user = auth::user();
+        $user = Auth::user();
 
         $user_subscribed_plans = BundleStatus::where('user_id', $user->id)->pluck('plan_id');
         $packages_based_on_plan_ids = Plan::whereIn('id', $user_subscribed_plans)->pluck('package_id')->toArray();

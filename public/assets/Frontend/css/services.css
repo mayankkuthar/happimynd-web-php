@@ -14,7 +14,7 @@
 
 .educationalservices__card,
 .otherservices__card {
-  background: linear-gradient(180deg, #FFFFFF 0%, #EFFBF9 100%);
+  background: linear-gradient(180deg, hsl(240 4% 95%) 0%, #EFFBF9 100%);
   box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.15);
   border-radius: 8px;
   padding: 16px;

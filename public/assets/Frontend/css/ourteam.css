@@ -61,7 +61,7 @@
 }
 
 .ourteam__sec3 {
-  background: #E9FFFE;
+  background: hsl(240 4% 95%);
 }
 
 .ourteam__sec2__content h1,
@@ -111,7 +111,7 @@
 }
 
 .ourteam__sec2__content__detail__img {
-  background-color: #FFFFFF;
+  background-color: hsl(240 4% 95%);
 }
 
 .ourteam__sec2__content__detail__img,
@@ -250,7 +250,7 @@
 .ourteam__sec5__content__linkedin {
   width: 32px;
   height: 32px;
-  background-color: #FFFFFF;
+  background-color: hsl(240 4% 95%);
   border-radius: 8px;
   position: absolute;
   top: 68px;
@@ -286,7 +286,7 @@
 
 .ourteam__sec3__content__detail__hover:hover,
 .ourteam__sec5__content__teammembers__info:hover {
-  background-color: #EBF4F9;
+  background-color: hsl(240 4% 95%);
   border-radius: 8px;
 }
 

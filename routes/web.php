@@ -410,6 +410,7 @@ Route::prefix('admin')->name('admin.')->middleware(['jwt.verify:admin'])->group(
     Route::get('addUser', [AdminController::class, 'getAddAdminView'])->name('addAdminView');
     Route::get('/list/customers', [AdminController::class, 'getCustomerList'])->name('customerListView');
     Route::any('download-user-list-xl', [AdminController::class, 'downloadUserListXL'])->name('downloadUserListXL');
+    // Removed downloadAllUserPlans route in favor of date-wise filtering with downloadUserPlanXL
 
     Route::get('/view-user-mood/{user_id}', [AdminController::class, 'viewUserMood'])->name('viewUserMood');
     Route::get('/view-user-rewards/{user_id}', [AdminController::class, 'viewUserRewards'])->name('viewUserRewards');
@@ -540,6 +541,7 @@ Route::prefix('admin')->name('admin.')->middleware(['jwt.verify:admin'])->group(
     Route::get('/all-booking-dates', [AdminController::class, 'showAllBookings'])->name('allBookedDate.get');
     Route::get('/booking-dates', [AdminController::class, 'showAllBookingsPost'])->name('allBookedDate.post');
     Route::get('/users-plans', [AdminController::class, 'usersPlans'])->name('usersPlans.get');
+    
     Route::any('download-user-plan-xl', [AdminController::class, 'downloadUserPlanXL'])->name('downloadUserPlanXL');
 
     Route::get('/users-additional-plans', [AdminController::class, 'usersAdditionalPlans'])->name('usersPlans.additional.get');

@@ -68,7 +68,7 @@
 .error401__text a:hover,
 .error500__text a:hover {
   text-decoration: none;
-  background: #A3E8E5;
+  background: hsl(240 4% 95%);
   color: #FFFFFF;
 }
 

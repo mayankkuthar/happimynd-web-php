@@ -104,7 +104,7 @@
 .signup_form__age input,
 .signup_form__select select,
 .signup_form__hmcode input {
-  background: #FFFFFF;
+  background: hsl(240 4% 95%);
   border: 1px solid #CED4DA;
   box-sizing: border-box;
   border-radius: 4px;
@@ -201,7 +201,7 @@
   font-size: 0.875rem;
   line-height: 24px;
   color: #000;
-  background: #A3E8E5;
+  background: #e9d5ff;
   border-radius: 8px;
   border: 0;
   padding: 8px;
@@ -212,7 +212,7 @@
 .login_form__submitbtn button:hover,
 .signup_form__submitbtn button:hover,
 .editprofile__submitbtn button:hover {
-  background: #58C4CB;
+  background: #dcbbff;
 }
 
 .editprofile__submitbtn {
@@ -223,7 +223,7 @@
 }
 
 .signup_form__cancelbtn button {
-  background: #FFFFFF;
+  background: #e9d5ff;
   border: 1px solid #3C92C6;
   box-sizing: border-box;
   border-radius: 8px;
@@ -269,7 +269,7 @@
   font-size: 0.875rem;
   line-height: 24px;
   color: #111010;
-  background: #A3E8E5;
+  background: #e9d5ff;
   border-radius: 8px;
   border: 0;
   padding: 8px;
@@ -373,12 +373,17 @@
   padding-bottom: 40px;
 }
 
+.signup_img img {
+  border-radius: 10px;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.15);
+}
+
 /** Edit Profile end **/
 
 @media screen and (min-width: 992px) {
   .login,
   .signup {
-    padding-top: 0px;
+    padding-top: 60px;
   }
 }
 

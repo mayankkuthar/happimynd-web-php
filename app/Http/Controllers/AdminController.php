@@ -100,6 +100,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 use App\Exports\UserListDateWiseExport;
 use App\Exports\UserPlanDateWiseExport;
+use App\Exports\AllUserPlansExport;
 use App\Exports\FeedbackExport;
 
 use App\Models\AssignPsyToPlan;
@@ -1873,6 +1874,21 @@ class AdminController extends Controller
         ];
 
         return Excel::download(new UserPlanDateWiseExport($data), 'User Plan ' . Carbon::now()->format('d-M-Y g-i a') . '.xlsx');
+    }
+    
+    public function downloadAllUserPlans()
+    {
+        $filename = 'All User Plans ' . Carbon::now()->format('d-M-Y g-i a') . '.xlsx';
+        
+        // Store the file in the exports disk
+        return Excel::store(
+            new AllUserPlansExport(), 
+            $filename, 
+            'exports', 
+            \Maatwebsite\Excel\Excel::XLSX
+        )
+        ? response()->download(storage_path('app/exports/' . $filename))->deleteFileAfterSend(true)
+        : back()->with('error', 'There was a problem generating the export.');
     }
 
 

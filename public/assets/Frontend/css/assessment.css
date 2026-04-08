@@ -9,7 +9,7 @@
   line-height: 140%;
   text-align: center;
   letter-spacing: -0.02em;
-  color: #58C4CB;
+  color: #c187ff;
   padding-bottom: 26px;
 }
 
@@ -20,7 +20,7 @@
 
 .assessment__content__progress-bar {
   height: 10px;
-  background-color: #FFFFFF;
+  background-color: #dcbbff;
   border-radius: 5px;
   width: 100%;
 }
@@ -37,7 +37,7 @@
 
 .assessment__content__progress-bar__fill {
   height: 10px;
-  background: #FFFFFF;
+  background-color: #c187ff;
   border-radius: 5px;
 }
 
@@ -46,12 +46,12 @@
   font-weight: 500;
   font-size: 0.75rem;
   line-height: 18px;
-  color: #FFFFFF;
+  color: #9e44ff;
   padding-bottom: 2px;
 }
 
 .assessment__content__progress__tooltip-text {
-  background: #98E3E1;
+  background: #dcbbff;
   border-radius: 20px;
   border-top-left-radius: 0;
   max-width: 223px;
@@ -144,7 +144,7 @@
   margin: 0;
   width: 100%;
   padding: 12px 16px;
-  background: #EBF4F9;
+  background: #e9d5ff;
   border-radius: 8px;
   margin: 16px 0;
   font-weight: 500;
@@ -158,7 +158,7 @@
   content:'';
   -webkit-appearance: none;
   background-color: transparent;
-  border: 2px solid #58C4CB;
+  border: 2px solid #c187ff;
   border-radius: 50%;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), inset 0px -15px 10px -12px rgba(0, 0, 0, 0.05);
   padding: 10px;
@@ -178,7 +178,7 @@
   left: 24.5px;
   width: 6px;
   height: 12px;
-  border: solid #58C4CB;
+  border: solid #c187ff;
   border-width: 0 2.5px 2.5px 0;
   transform: rotate(45deg);
   transition: .3s;
@@ -186,14 +186,14 @@
 }
 
 .question__checkbox input:checked + label:before {
-  background:#FFFFFF;
+  background: hsl(240 4% 95%);
   border-radius: 50%;
   border: 2px solid #ffffff;
   transition: .3s;
 }
 
 .question__checkbox input:checked + label {
-  background: #58C4CB;
+  background: #c187ff;
   color: #FFFFFF;
 }
 
@@ -202,7 +202,7 @@
 }
 
 .assessment__question__nextbtn button {
-  background: #58C4CB;
+  background: #c187ff;
   border-radius: 12px;
   font-weight: 600;
   font-size: 1rem;
@@ -215,7 +215,7 @@
 }
 
 .assessment__question__nextbtn button:hover {
-  background: #98E3E1;
+  background: #dcbbff;
 }
 
 .assessment__question__nextbtn button:focus {

@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PsychologistController;
 use App\Http\Controllers\Admin\AuthController;
+use App\Http\Controllers\ContactController;
 
 use App\Http\Controllers\api\v1\UserAuthenticationController;
 use App\Http\Controllers\api\v1\PsychologistAuthenticationController;
@@ -55,6 +56,8 @@ Route::post('forget-password-reset/', [UserController::class, 'forgetPasswordRes
 
 
 
+
+Route::post('v1/submit-contact', [ContactController::class, 'store'])->name('api.submit.contact');
 
 Route::group(['prefix' => 'v1',  'namespace' => 'api\v1'], function () {
 
@@ -386,12 +389,3 @@ Route::group(['prefix' => 'v1',  'namespace' => 'api\v1'], function () {
 
     //});
 });
-
-
-
-
-
-
-
-
-

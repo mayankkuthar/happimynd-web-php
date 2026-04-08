@@ -1,5 +1,5 @@
 <div class="modal fade" id="usercheck" tabindex="-1" data-show="true" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog sendfullreport__popup">
+  <div class="modal-dialog modal-dialog-centered sendfullreport__popup">
     <div class="modal-content">
       <div class="sendfullreport__popup__close" data-dismiss="modal">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

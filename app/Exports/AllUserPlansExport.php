@@ -8,41 +8,22 @@ use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\View\View;
-use Maatwebsite\Excel\Concerns\FromView;
+use Illuminate\Database\Query\Builder;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Illuminate\Database\Eloquent\Builder;
 
 use App\Models\User;
 
 
-class UserPlanDateWiseExport implements FromQuery, WithHeadings, ShouldAutoSize, WithChunkReading, WithMapping
+class AllUserPlansExport implements FromQuery, WithHeadings, ShouldAutoSize, WithChunkReading, WithMapping
 {
-    /**
-    * @return \Illuminate\Support\Collection
-    */
-
-
-    protected $start;
-    protected $end;
-    public function __construct($data)
-    {
-        if (isset($data['start_date'])) {
-            $this->start = $data['start_date'];
-            $this->end = $data['end_date'];
-        } 
-    }
-
-
-    
     /**
     * @return \Illuminate\Database\Query\Builder
     */
     public function query()
     {
         return User::with('profileType', 'bundleStatus.plans.package')
-            ->whereBetween('created_at', [$this->start, $this->end])
             ->latest();
     }
     
@@ -85,7 +66,14 @@ class UserPlanDateWiseExport implements FromQuery, WithHeadings, ShouldAutoSize,
             'purchase_date' => $purchase_date,
             'plans' => implode(" || ", $plans_array),
         ];
-
+    }
+    
+    /**
+    * @return int
+    */
+    public function chunkSize(): int
+    {
+        return 500; // Adjust this value based on your server's memory capacity
     }
 
     public function headings(): array
@@ -95,18 +83,10 @@ class UserPlanDateWiseExport implements FromQuery, WithHeadings, ShouldAutoSize,
          'Username',
          'Email',
          'B2B / B2C',
-         'Organization.',
+         'Organization',
          'No. of Plans Bought',
          'Purchase Date',
          'Plans',
        ];
-    }
-    
-    /**
-    * @return int
-    */
-    public function chunkSize(): int
-    {
-        return 500; // Process 500 records at a time
     }
 }

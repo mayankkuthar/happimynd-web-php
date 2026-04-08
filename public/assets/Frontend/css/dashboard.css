@@ -11,7 +11,7 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: #ebf4f9;
+    background-color: #e9d5ff;
     cursor: pointer;
     outline: 0 none;
     position: relative;
@@ -273,7 +273,7 @@
     letter-spacing: -0.01em;
     color: #ffffff;
     padding: 4px 12px;
-    background: #A3E8E5;
+    background: #c187ff;
     border-radius: 0px 24px 24px 16px;
     text-decoration: none;
     margin-top: 15px;
@@ -281,7 +281,7 @@
 }
 
 .dashboard__headtext a:hover {
-    background: #58C4CB;
+    background: #c187ff;
 }
 
 .dashboard h1 {
@@ -415,7 +415,7 @@
 
 .dashboard__marquee a {
     text-decoration: none;
-    color: #58C4CB;
+    color: #c187ff;
     font-size: 1rem;
 }
 

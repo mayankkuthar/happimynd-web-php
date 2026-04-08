@@ -75,7 +75,7 @@
     font-size: 2rem;
     line-height: 130%;
     text-align: center;
-    color: #58C4CB;
+    color: #c187ff;
     margin: 0;
     padding-bottom: 22px;
 }
@@ -100,7 +100,7 @@
 .alreadypaid__popup__content button,
 .login__popup__content a,
 .discountcoupon__popup__content button {
-    background: #58C4CB;
+    background: #c187ff;
     border-radius: 16px;
     border: 0;
     transition: 0.3s;
@@ -211,7 +211,7 @@
 .raisequery__popup__content__form select:focus,
 .raisequery__popup__content__form textarea:focus {
     outline: 0 none;
-    border: 1px solid #58C4CB;
+    border: 1px solid #c187ff;
     box-shadow: 0 0 0 2px rgba(177, 211, 232, 0.5);
 }
 
@@ -229,14 +229,14 @@
     font-size: 0.875rem;
     line-height: 24px;
     color: #ffffff;
-    background: #58C4CB;
-    border: 2px solid #58C4CB;
+    background: #c187ff;
+    border: 2px solid #c187ff;
     margin-right: 24px;
 }
 
 .raisequery__popup__content__form__btn__submit:hover {
-    background: #58C4CB;
-    border: 2px solid #58C4CB;
+    background: #c187ff;
+    border: 2px solid #c187ff;
 }
 
 .raisequery__popup__content__form__btn__submit,
@@ -257,9 +257,9 @@
     font-weight: 500;
     font-size: 0.875rem;
     line-height: 24px;
-    color: #58C4CB;
+    color: #c187ff;
     background: #ffffff;
-    border: 2px solid #58C4CB;
+    border: 2px solid #c187ff;
     box-sizing: border-box;
 }
 
@@ -321,7 +321,7 @@
     font-size: 1.5rem;
     line-height: 22px;
     text-align: center;
-    color: #58C4CB;
+    color: #c187ff;
     display: block;
     width: 40px;
     height: 40px;
@@ -368,7 +368,7 @@
 
 .assessment__popup__content__button button {
     padding: 4px 12px;
-    background: #58C4CB;
+    background: #c187ff;
     border-radius: 24px;
     font-weight: 600;
     font-size: 0.875rem;
@@ -380,7 +380,7 @@
 }
 
 .assessment__popup__content__button button:hover {
-    background: #98E3E1;
+    background: #dcbbff;
 }
 
 .assessment__popup {
@@ -468,7 +468,7 @@
     font-weight: bold;
     font-size: 2rem;
     line-height: 138.5%;
-    color: #58C4CB;
+    color: #c187ff;
     margin: 0;
     padding-bottom: 8px;
     text-align: center;
@@ -556,7 +556,7 @@
 .calltime__popup__form__input input:focus,
 .discountcoupon__popup__form__input input:focus {
     outline: 0 none;
-    border: 1px solid #58C4CB;
+    border: 1px solid #c187ff;
     box-shadow: 0 0 0 2px rgba(177, 211, 232, 0.5);
 }
 
@@ -578,7 +578,7 @@
 .confirmcode__popup__form__button button,
 .calltime__popup__form__button button,
 .reportreview__popup__content__text__btn__proceed button {
-    background-color: #58C4CB;
+    background-color: #c187ff;
     border-radius: 8px;
     border: 0;
     padding: 8px 10px;
@@ -597,14 +597,14 @@
 .confirmcode__popup__form__button button:hover,
 .calltime__popup__form__button button:hover,
 .reportreview__popup__content__text__btn__proceed button:hover {
-    background-color: #A3E8E5;
+    background-color: hsl(240 4% 95%);
 }
 
 .reportreading__popup__form__button__later,
 .verifyaccount__popup__content button,
 .reportreview__popup__content__text__btn__nothanks button {
     background: #ffffff;
-    border: 1px solid #58C4CB;
+    border: 1px solid #c187ff;
     box-sizing: border-box;
     border-radius: 8px;
     font-weight: 500;
@@ -612,7 +612,7 @@
     line-height: 24px;
     text-align: center;
     padding: 8px 10px;
-    color: #58C4CB;
+    color: #c187ff;
     width: 100%;
     margin-top: 16px;
     transition: 0.3s;
@@ -637,7 +637,7 @@
     font-weight: 500;
     font-size: 0.875rem;
     line-height: 24px;
-    color: #58C4CB;
+    color: #c187ff;
     padding-top: 16px;
 }
 
@@ -651,7 +651,7 @@
     font-weight: 500;
     font-size: 0.875rem;
     line-height: 24px;
-    color: #58C4CB;
+    color: #c187ff;
     padding-top: 16px;
     cursor: pointer;
 }
@@ -717,7 +717,7 @@
 }
 
 .sendfull__report__checkbox__input input:checked + label:before {
-    background: #58C4CB;
+    background: #c187ff;
     border-radius: 50%;
     border: 2px solid #ffffff;
     transition: 0.3s;
@@ -750,7 +750,7 @@
     letter-spacing: -0.01em;
     color: #000000;
     padding: 6px 10px;
-    background-color: #ebf4f9;
+    background-color: #e9d5ff;
     border-radius: 24px;
     display: inline-block;
     margin-right: 5px;
@@ -760,7 +760,7 @@
 }
 
 .calltime__popup__form__input__time__content button.active {
-    background-color: #58C4CB;
+    background-color: #c187ff;
     color: #ffffff;
 }
 
@@ -900,7 +900,7 @@
     font-size: 0.875rem;
     line-height: 24px;
     text-align: center;
-    color: #58C4CB;
+    color: #c187ff;
     padding: 16px 0 0 0;
 }
 
@@ -908,7 +908,7 @@
 .forget__password button:hover {
     background: transparent;
     outline: 0 none;
-    color: #A3E8E5;
+    color: #e9d5ff;
 }
 
 .send__otp {
@@ -923,9 +923,9 @@
     line-height: 24px;
     width: 100%;
     text-align: center;
-    color: #58C4CB;
+    color: #c187ff;
     background-color: transparent;
-    border: 1px solid #58C4CB;
+    border: 1px solid #c187ff;
     border-radius: 8px;
     padding: 8px;
 }
