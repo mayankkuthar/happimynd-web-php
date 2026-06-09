@@ -191,6 +191,7 @@ class PsychologistAuthenticationController extends Controller
             'age' => $request->age,
             'gender' => $request->gender,
             'highest_qualification' => $request->highest_qualification,
+            'meet_link' => $request->meet_link,
         ];
 
         if($request->internation_cert){

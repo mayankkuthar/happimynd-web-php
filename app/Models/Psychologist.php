@@ -53,6 +53,7 @@ class Psychologist extends Authenticatable implements JWTSubject
         'email',
         'password',
         'device_token',
+        'meet_link',
         'commission_percentage',
         'price_per_session',
     ];
