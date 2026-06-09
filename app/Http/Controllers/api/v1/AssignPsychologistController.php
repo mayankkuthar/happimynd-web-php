@@ -711,10 +711,3 @@ class AssignPsychologistController extends Controller
 
 
 }
-
-
-
-
-
-
-
