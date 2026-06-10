@@ -56,7 +56,7 @@ class HappitalkSession extends Model
 
 
     public function psychologistDetail(){
-        return $this->belongsTo(Psychologist::class , 'psychologist_id')->select('id','first_name','last_name','username','email','profile_picture' , 'device_token');
+        return $this->belongsTo(Psychologist::class , 'psychologist_id')->select('id','first_name','last_name','username','email','profile_picture' , 'device_token', 'meet_link');
     }
 
 

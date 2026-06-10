@@ -1403,65 +1403,24 @@ class HappiTalkController extends Controller
             return response()->json(["message" => $validator->errors()->first()],400);
         }
 
-        $twilioAccountSid = getenv('TWILIO_ACCOUNT_SID');
-        $twilioApiKey = getenv('TWILIO_API_KEY');
-        $twilioApiSecret = getenv('TWILIO_API_KEY_SECRET');
-
-        $session_details = HappitalkSession::where('id' , $request->session_id)->first();
+        $session_details = HappitalkSession::where('id' , $request->session_id)->with('psychologistDetail')->first();
         if($session_details->is_end == '1'){
             return response()->json(['status' => 'error' , 'message' => 'This session has ended.']);
         }
 
-
-        if(!$session_details->room_id  ){
-            $createRoom = $this->createTwillioRoom()->createRoom();
-
-            $session_details->room_id = $createRoom->sid;
-            $session_details->save();
-
-            $roomName = $createRoom->sid;
-        }else{
-            // Required for Video grant
-            $roomName = $session_details->room_id;
+        $meetLink = $session_details->psychologistDetail->meet_link ?? null;
+        if(!$meetLink){
+            return response()->json(['status' => 'error' , 'message' => 'Meeting link not set by psychologist.'], 400);
         }
-
-
-
-        
-        // An identifier for your app - can be anything you'd like
-        $identity =  $user->username;
-
-        // Create access token, which we will serialize and send to the client
-        $token = new AccessToken(
-            $twilioAccountSid,
-            $twilioApiKey,
-            $twilioApiSecret,
-            3600,
-            $identity
-        );
-
-        // Create Video grant
-        $videoGrant = new VideoGrant();
-        $videoGrant->setRoom($roomName);
-
-        // Add grant to token
-        $token->addGrant($videoGrant);
-
-        // render token to string
-        // echo $token->toJWT();
-
 
         $session_details->is_user_join = 1;
         $session_details->save();
-        
 
-        return response()->json(['status' => 'success' , 'message' => 'Token get sucessfully.' , 'token' => $token->toJWT()]);
+        return response()->json(['status' => 'success' , 'message' => 'Meeting link retrieved successfully.' , 'meet_link' => $meetLink]);
 
     }
 
     public function joinTalkRoomPsy(Request $request){
-
-
 
         $psy = Auth::guard('psychologist')->user();
 
@@ -1477,51 +1436,15 @@ class HappiTalkController extends Controller
             return response()->json(["message" => $validator->errors()->first()],400);
         }
 
-        $twilioAccountSid = getenv('TWILIO_ACCOUNT_SID');
-        $twilioApiKey = getenv('TWILIO_API_KEY');
-        $twilioApiSecret = getenv('TWILIO_API_KEY_SECRET');
-
         $session_details = HappitalkSession::where('id' , $request->session_id)->with('userDetail', 'psychologistDetail')->first();
         if($session_details->is_end == '1'){
             return response()->json(['status' => 'error' , 'message' => 'This session has ended.']);
         }
 
-        if(!$session_details->room_id  ){
-            $createRoom = $this->createTwillioRoom()->createRoom();
-
-            $session_details->room_id = $createRoom->sid;
-            $session_details->save();
-
-            $roomName = $createRoom->sid;
-        }else{
-            // Required for Video grant
-            $roomName = $session_details->room_id;
+        $meetLink = $session_details->psychologistDetail->meet_link ?? null;
+        if(!$meetLink){
+            return response()->json(['status' => 'error' , 'message' => 'Meeting link not set by psychologist.'], 400);
         }
-
-
-        
-        // An identifier for your app - can be anything you'd like
-        $identity =  $psy->username;
-
-        // Create access token, which we will serialize and send to the client
-        $token = new AccessToken(
-            $twilioAccountSid,
-            $twilioApiKey,
-            $twilioApiSecret,
-            3600,
-            $identity
-        );
-
-        // Create Video grant
-        $videoGrant = new VideoGrant();
-        $videoGrant->setRoom($roomName);
-
-        // Add grant to token
-        $token->addGrant($videoGrant);
-
-        // render token to string
-        // echo $token->toJWT();
-
 
         // Notification to user
         if($session_details->is_psy_join == 0){
@@ -1556,7 +1479,7 @@ class HappiTalkController extends Controller
         $session_details->psy_joined_time = $current_time;
         $session_details->save();
 
-        return response()->json(['status' => 'success' , 'message' => 'Token get sucessfully.' , 'token' => $token->toJWT()]);
+        return response()->json(['status' => 'success' , 'message' => 'Meeting link retrieved successfully.' , 'meet_link' => $meetLink]);
 
     }
 
