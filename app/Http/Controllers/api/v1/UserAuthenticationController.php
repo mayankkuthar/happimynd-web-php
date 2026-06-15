@@ -20,6 +20,7 @@ use App\Models\NotificationMessage;
 use App\Models\AssessmentAnswer;
 use App\Models\RaiseQuery;
 use App\Models\VerifyGuardian;
+use App\Models\MobileOtp;
 use App\Models\Feedback;
 use App\Models\UserMood;
 use App\Models\MoodMeterEmoji;
@@ -47,6 +48,7 @@ use JWTAuth;
 use DB;
 use Auth;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Crypt;
 use Carbon\Carbon;
 use Twilio\Rest\Client;
 
@@ -181,6 +183,18 @@ class UserAuthenticationController extends Controller
         }
 
 
+        if ($request->mobile && $request->mobile_verified_token) {
+            try {
+                $decrypted = json_decode(Crypt::decryptString($request->mobile_verified_token), true);
+                if (!$decrypted || $decrypted['exp'] < Carbon::now()->timestamp || $decrypted['mobile'] != $request->mobile) {
+                    return response()->json(['status' => 'error', 'message' => 'Invalid or expired mobile verification.'], 400);
+                }
+            } catch (\Exception $e) {
+                return response()->json(['status' => 'error', 'message' => 'Invalid or expired mobile verification.'], 400);
+            }
+        }
+
+
         try {
             DB::beginTransaction();
             $formData = $request->all();
@@ -276,6 +290,14 @@ class UserAuthenticationController extends Controller
                     Arr::except($formData, ['profession'])
                 );
             }
+
+            if ($request->mobile && $request->mobile_verified_token) {
+                VerifyUser::updateOrCreate(
+                    ['user_id' => $user->id],
+                    ['mobile_verify' => 1]
+                );
+            }
+
             if (isset($formData['signup_type']) && $formData['signup_type'] == 'organization' && !(new TokenService)->assignToken($request->input('happimyndCode'), $user->id)) {
                 return response()->json(['message' => 'error expiring Token for user_id=' . $user->id . ' with code=' . $request->input('happimyndCode') . ';']);
             }
@@ -976,6 +998,116 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
     }
 
 
+
+    public function sendLoginOtp(Request $request)
+    {
+        $message = [
+            'mobile.required' => 'Please enter mobile number.',
+            'type.required'   => 'Please enter type.',
+        ];
+
+        $validator = Validator::make($request->all(), [
+            'mobile' => 'required',
+            'type'   => 'required',
+        ], $message);
+
+        if ($validator->fails()) {
+            return response()->json(["message" => $validator->errors()->first()], 400);
+        }
+
+        $mobile = $request->mobile;
+        $country_code = $request->country_code;
+        $otp = rand(111111, 999999);
+
+        MobileOtp::updateOrCreate(
+            ['mobile' => $mobile],
+            [
+                'otp' => $otp,
+                'country_code' => $country_code,
+                'expires_at' => Carbon::now()->addMinutes(10),
+                'verified_token' => null,
+                'verified_at' => null,
+            ]
+        );
+
+        try {
+            Http::get('https://enterprise.smsgupshup.com/GatewayAPI/rest', [
+                'method' => 'SendMessage',
+                'send_to' => $country_code ? $country_code . $mobile : $mobile,
+                'msg' => str_replace('<OTP>', $otp, self::MOBILE_OTP_TEMPLATE),
+                'msg_type' => 'TEXT',
+                'userid' => env('GUPSUP_USER_ID'),
+                'auth_scheme' => 'plain',
+                'password' => env('GUPSUP_PASSWORD'),
+                'v' => 1.1,
+                'format' => 'text'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Failed to send OTP.'], 500);
+        }
+
+        return response()->json(['status' => 'success', 'message' => 'OTP has been sent to your mobile number.']);
+    }
+
+    public function verifyLoginOtp(Request $request)
+    {
+        $message = [
+            'mobile.required' => 'Please enter mobile number.',
+            'otp.required'    => 'Please enter otp.',
+        ];
+
+        $validator = Validator::make($request->all(), [
+            'mobile' => 'required',
+            'otp'    => 'required',
+        ], $message);
+
+        if ($validator->fails()) {
+            return response()->json(["message" => $validator->errors()->first()], 400);
+        }
+
+        $mobileOtp = MobileOtp::where('mobile', $request->mobile)
+            ->where('otp', $request->otp)
+            ->whereNull('verified_at')
+            ->where('expires_at', '>=', Carbon::now())
+            ->first();
+
+        if (!$mobileOtp) {
+            return response()->json(['status' => 'error', 'message' => 'Invalid OTP or OTP has expired.']);
+        }
+
+        $payload = json_encode([
+            'mobile' => $request->mobile,
+            'country_code' => $request->country_code,
+            'exp' => Carbon::now()->addMinutes(30)->timestamp,
+        ]);
+        $verifiedToken = Crypt::encryptString($payload);
+
+        $mobileOtp->update([
+            'verified_token' => $verifiedToken,
+            'verified_at' => Carbon::now(),
+        ]);
+
+        $user = User::where('mobile', $request->mobile)->first();
+
+        if ($user) {
+            if (! $data = JWTAuth::fromUser($user)) {
+                return response()->json(['status' => 'error', 'message' => 'Unable to login. Please try again.'], 401);
+            }
+            User::where('id', $user->id)->update(['device_token' => $request->device_token]);
+
+            return response()->json([
+                'status' => 'success',
+                'access_token' => $data,
+                'token_type' => 'bearer',
+                'user' => $user,
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'register',
+            'mobile_verified_token' => $verifiedToken,
+        ]);
+    }
 
     public function verifyOtp(Request $request)
     {
