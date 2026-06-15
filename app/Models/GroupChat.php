@@ -26,7 +26,7 @@ class GroupChat extends Model
 
     public function getTypeAttribute(){
         $user_detail = User::where('id' ,  $this->user_id)->first();
-        if($user_detail->isOrganizationUser()){
+        if($user_detail && $user_detail->isOrganizationUser()){
             return 'B2B';
         }else{
             return 'B2C';
@@ -36,7 +36,7 @@ class GroupChat extends Model
 
     public function getOrganizationAttribute(){
         $user_detail = User::where('id' ,  $this->user_id)->first();
-        if($user_detail->isOrganizationUser()){
+        if($user_detail && $user_detail->isOrganizationUser()){
             return $user_detail->userToken->token->organization()->withTrashed()->first()->name;
         }else{
             return 'Individual';
