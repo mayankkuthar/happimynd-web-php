@@ -538,10 +538,12 @@ class AssignPsychologistController extends Controller
         $message = [
             'user_id.required'      =>  'Please enter user ID',
             'group_id.required'      =>  'Please enter group ID',
+            'message.required'       =>  'Please enter message',
         ];
         $validator = Validator::make($request->all(), [
             'user_id'   => 'required',
             'group_id'   => 'required',
+            'message'    => 'required',
         ],$message);
 
         if($validator->fails()) {
@@ -555,6 +557,10 @@ class AssignPsychologistController extends Controller
         ];
 
         $user_details = User::where('id' , $request->user_id)->first();
+
+        if (!$user_details) {
+            return response()->json(['status' => 'error' , 'message' => 'User not found.'], 404);
+        }
 
         $check_group_detail = GroupChat::where($where)->orderBy('id' , 'desc')->first();
 
@@ -570,7 +576,9 @@ class AssignPsychologistController extends Controller
             $device_token = $user_details->device_token;
             $message = $request->message;
 
-            $this->sendNotification($from , $device_token,$message);
+            if ($device_token) {
+                $this->sendNotification($from , $device_token,$message);
+            }
 
             return response()->json(['status' => 'success' , 'message' => 'Message has been sent successfully to user.']);
         }   else{
@@ -624,25 +632,27 @@ class AssignPsychologistController extends Controller
 
 
     public function sendNotification($from , $deviceToken , $message){
+        try {
+            $apiURL = 'https://exp.host/--/api/v2/push/send';
+            $postInput = [
+                'to' => $deviceToken,
+                'title' => $from,
+                'body' => $message,
+            ];
 
-        $apiURL = 'https://exp.host/--/api/v2/push/send';
-        $postInput = [
-            'to' => $deviceToken,
-            'title' => $from,
-            'body' => $message,
-        ];
+            $headers = [
+                'Content-Type: application/json'
+            ];
 
-        $headers = [
-            'Content-Type: application/json'
-        ];
+            $response = Http::withHeaders($headers)->post($apiURL, $postInput);
 
-        $response = Http::withHeaders($headers)->post($apiURL, $postInput);
-
-        $statusCode = $response->status();
-        $responseBody = json_decode($response->getBody(), true);
-     
-        // dd($responseBody);
-        return $responseBody;
+            $responseBody = json_decode($response->getBody(), true);
+         
+            return $responseBody;
+        } catch (\Exception $e) {
+            \Log::error('sendNotification failed: ' . $e->getMessage());
+            return null;
+        }
 
     }
 
