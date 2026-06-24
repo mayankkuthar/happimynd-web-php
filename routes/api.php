@@ -76,6 +76,10 @@ Route::group(['prefix' => 'v1',  'namespace' => 'api\v1'], function () {
     Route::match(['GET' , 'POST'],'login-with-code', [UserAuthenticationController::class,'loginWithCode']);
     Route::match(['GET' , 'POST'],'forgot-password', [UserAuthenticationController::class,'forgotPassword']);
     Route::match(['GET' , 'POST'],'verify-otp', [UserAuthenticationController::class,'verifyOtp']);
+    Route::match(['GET' , 'POST'],'send-verification-otp', [UserControllerApi::class,'sendVerificationOtp']);
+
+
+
     Route::match(['GET' , 'POST'],'reset-password', [UserAuthenticationController::class,'resetPassword']);
     Route::match(['GET' , 'POST'],'guardian-verification', [UserAuthenticationController::class,'gurdianVerification']);
     Route::match(['GET' , 'POST'],'verify-guardian-otp', [UserAuthenticationController::class,'verifyGuardianOtp']);
@@ -117,8 +121,6 @@ Route::group(['prefix' => 'v1',  'namespace' => 'api\v1'], function () {
 
 
         Route::match(['GET' , 'POST'],'logout', [UserAuthenticationController::class,'logout']);
-        Route::match(['GET' , 'POST'],'send-verification-otp', [UserControllerApi::class,'sendVerificationOtp']);
-
         Route::match(['GET' , 'POST'],'delete-account', [UserAuthenticationController::class,'deleteAccount']);
 
         Route::match(['GET' , 'POST'],'my-referral-code', [UserAuthenticationController::class,'myReferralCode']);

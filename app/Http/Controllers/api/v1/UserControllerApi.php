@@ -62,92 +62,91 @@ class UserControllerApi extends Controller
 
             if ($type == 'mobile') {
 
-                $check_mobile_already_exist_or_not = User::where('mobile', $request->mobile)->where('id', '!=', $user->id)->first();
-                if ($check_mobile_already_exist_or_not) {
-                    return response()->json(['status' => 'error', 'message' => 'Mobile number is already exist.'], 400);
-                }
-
                 $phone = $request->mobile;
                 $country_code = $request->input('country_code', null);
                 logger($country_code);
 
                 $this->sendSMS($otp, $user, $phone, $country_code);
 
-                if ($user->mobile == null) {
-                    $reward_points = RewardPointInstance::where('action_performed', 'When gives phone number')->first();
-                    $points_to_be_added_to_user = $reward_points->points_to_be_given;
-                    $user_id = $user->id;
-                    $task_performed = 'Gives phone number';
-                    $this->rewardPointToUser()->addRewardToUser($user_id, $points_to_be_added_to_user, $task_performed);
-
-                    // $reward_data = [
-                    //     'user_id' => $user->id,
-                    //     'points_earned' => $points_to_be_added_to_user,
-                    //     'task_performed' => 'Gives phone number',
-                    // ];
-                    // UserRewardPointRecord::create($reward_data);
+                if (!$user) {
+                    $user = User::where('mobile', $request->mobile)->first();
                 }
 
+                if ($user) {
+                    $check_mobile_already_exist_or_not = User::where('mobile', $request->mobile)->where('id', '!=', $user->id)->first();
+                    if ($check_mobile_already_exist_or_not) {
+                        return response()->json(['status' => 'error', 'message' => 'Mobile number is already exist.'], 400);
+                    }
 
-                User::where('id', $user->id)->update(['mobile' => $request->mobile]);
+                    if ($user->mobile == null) {
+                        $reward_points = RewardPointInstance::where('action_performed', 'When gives phone number')->first();
+                        $points_to_be_added_to_user = $reward_points->points_to_be_given;
+                        $user_id = $user->id;
+                        $task_performed = 'Gives phone number';
+                        $this->rewardPointToUser()->addRewardToUser($user_id, $points_to_be_added_to_user, $task_performed);
+                    }
 
-                $data = [
-                    'mobile_otp' => $otp,
-                    'user_id' => $user->id,
-                ];
 
-                $check_alreday_have_entry = VerifyUser::where('user_id', $user->id)->first();
+                    User::where('id', $user->id)->update(['mobile' => $request->mobile]);
 
-                if ($check_alreday_have_entry) {
-                    VerifyUser::where('user_id', $user->id)->update($data);
-                } else {
-                    VerifyUser::create($data);
+                    $data = [
+                        'mobile_otp' => $otp,
+                        'user_id' => $user->id,
+                    ];
+
+                    $check_alreday_have_entry = VerifyUser::where('user_id', $user->id)->first();
+
+                    if ($check_alreday_have_entry) {
+                        VerifyUser::where('user_id', $user->id)->update($data);
+                    } else {
+                        VerifyUser::create($data);
+                    }
                 }
 
                 return response()->json(['status' => 'success', "message" => "OTP has been sent to given mobile number."]);
             } else if ($type == 'email') {
 
-                $check_email_already_exist_or_not = User::where('email', $request->email)->where('id', '!=', $user->id)->first();
+                if (!$user) {
+                    $user = User::where('email', $request->email)->first();
+                }
+
+                $check_email_already_exist_or_not = User::where('email', $request->email)->when($user, function ($query) use ($user) {
+                    return $query->where('id', '!=', $user->id);
+                })->first();
                 if ($check_email_already_exist_or_not) {
                     return response()->json(['status' => 'error', 'message' => 'Email address is already exist.'], 400);
                 }
 
                 $mailDetails = [
-                    'username' => $user->username,
-                    'email' => $user->email,
-                    'nickname' => $user->nickname,
+                    'username' => $user ? $user->username : '',
+                    'email' => $user ? $user->email : '',
+                    'nickname' => $user ? $user->nickname : '',
                     'otp' => $otp,
                 ];
                 Mail::to($request->email)->send(new OtpEmail($mailDetails));
 
-                if ($user->email == null) {
+                if ($user && $user->email == null) {
                     $reward_points = RewardPointInstance::where('action_performed', 'When gives email ID')->first();
                     $points_to_be_added_to_user = $reward_points->points_to_be_given;
                     $user_id = $user->id;
                     $task_performed = 'Gives email ID';
                     $this->rewardPointToUser()->addRewardToUser($user_id, $points_to_be_added_to_user, $task_performed);
-
-                    // $reward_data = [
-                    //     'user_id' => $user->id,
-                    //     'points_earned' => $points_to_be_added_to_user,
-                    //     'task_performed' => 'Gives email ID',
-                    // ];
-                    // UserRewardPointRecord::create($reward_data);
                 }
 
+                if ($user) {
+                    User::where('id', $user->id)->update(['email' => $request->email]);
+                    $data = [
+                        'email_otp' => $otp,
+                        'user_id' => $user->id,
+                    ];
 
-                User::where('id', $user->id)->update(['email' => $request->email]);
-                $data = [
-                    'email_otp' => $otp,
-                    'user_id' => $user->id,
-                ];
+                    $check_alreday_have_entry = VerifyUser::where('user_id', $user->id)->first();
 
-                $check_alreday_have_entry = VerifyUser::where('user_id', $user->id)->first();
-
-                if ($check_alreday_have_entry) {
-                    VerifyUser::where('user_id', $user->id)->update($data);
-                } else {
-                    VerifyUser::create($data);
+                    if ($check_alreday_have_entry) {
+                        VerifyUser::where('user_id', $user->id)->update($data);
+                    } else {
+                        VerifyUser::create($data);
+                    }
                 }
 
                 return response()->json(['status' => 'success', "message" => "OTP has been sent to your registered email address."]);
