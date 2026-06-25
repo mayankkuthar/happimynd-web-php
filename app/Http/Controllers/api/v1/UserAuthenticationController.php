@@ -1135,7 +1135,7 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
 
         }else{
             $user_Detail = User::where('mobile' , $request->mobile)->with('verifyUser')->first();
-            if($user_Detail->verifyUser->mobile_otp == $request->otp){
+            if($user_Detail && $user_Detail->verifyUser && $user_Detail->verifyUser->mobile_otp == $request->otp){
                 VerifyUser::where('user_id' , $user_Detail->id)->update(['mobile_verify' => 1]);
                 return response()->json(['status' => 'success' , 'message' => 'OTP is verified']);
             }else{
