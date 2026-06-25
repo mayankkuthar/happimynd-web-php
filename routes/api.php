@@ -81,7 +81,7 @@ Route::group(['prefix' => 'v1',  'namespace' => 'api\v1'], function () {
     Route::match(['GET' , 'POST'],'verify-guardian-otp', [UserAuthenticationController::class,'verifyGuardianOtp']);
     Route::match(['GET' , 'POST'],'send-login-otp', [UserAuthenticationController::class,'sendLoginOtp']);
     Route::match(['GET' , 'POST'],'verify-login-otp', [UserAuthenticationController::class,'verifyLoginOtp']);
-
+    Route::match(['GET' , 'POST'],'send-verification-otp', [UserControllerApi::class,'sendVerificationOtp']);
 
 
 
@@ -119,7 +119,6 @@ Route::group(['prefix' => 'v1',  'namespace' => 'api\v1'], function () {
 
 
         Route::match(['GET' , 'POST'],'logout', [UserAuthenticationController::class,'logout']);
-        Route::match(['GET' , 'POST'],'send-verification-otp', [UserControllerApi::class,'sendVerificationOtp']);
 
         Route::match(['GET' , 'POST'],'delete-account', [UserAuthenticationController::class,'deleteAccount']);
 
