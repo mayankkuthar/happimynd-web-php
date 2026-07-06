@@ -499,6 +499,8 @@ class AssignPsychologistController extends Controller
         $current_date_time = Date('d-m-Y h:i:s');
 
         if($check_group_detail){
+            $lastMessageAt = $check_group_detail->last_message_deliver_at;
+
             $check_group_detail->last_message_deliver_at = $current_date_time;
             $check_group_detail->psychologist_unread_message = $check_group_detail->psychologist_unread_message+1;
 
@@ -510,6 +512,10 @@ class AssignPsychologistController extends Controller
 
             $this->sendNotification($from , $device_token , $message);
 
+            $now = \Carbon\Carbon::now();
+            if (!$lastMessageAt || $now->diffInMinutes($lastMessageAt) >= 30) {
+                \Mail::to($psychologist_detail->email)->send(new \App\Mail\HappiBuddyChatMail($psychologist_detail, $user->name));
+            }
 
             $reward_points = RewardPointInstance::where('action_performed' , 'When message is shared in HappiBUDDY')->first();
             $points_to_be_added_to_user = $reward_points->points_to_be_given;

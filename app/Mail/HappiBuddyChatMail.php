@@ -6,29 +6,23 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class NewBookingMail extends Mailable
+class HappiBuddyChatMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public $psychologist;
     public $userName;
-    public $date;
-    public $time;
-    public $type;
 
-    public function __construct($psychologist, $userName, $date, $time, $type = 'HappiTALK')
+    public function __construct($psychologist, $userName)
     {
         $this->psychologist = $psychologist;
         $this->userName = $userName;
-        $this->date = $date;
-        $this->time = $time;
-        $this->type = $type;
     }
 
     public function build()
     {
-        return $this->subject('New ' . $this->type . ' Session Booking')
+        return $this->subject('New HappiBUDDY Chat Request')
                     ->from(env('MAIL_FROM_ADDRESS'))
-                    ->view('emails.new_booking');
+                    ->view('emails.happi_buddy_chat');
     }
 }

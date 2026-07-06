@@ -593,6 +593,8 @@ class HappiguideController extends Controller
             $this->pushNotification()->sendNotification($psy_device_token,$message, $title);
         }
 
+        \Mail::to($psy_details->email)->send(new \App\Mail\NewBookingMail($psy_details, $user_detail->name, $request->date, $request->time, 'HappiGUIDE'));
+
         return response()->json(['status' => 'success' , 'message' => "HappiGUIDE session avail successfully."]);
 
     }

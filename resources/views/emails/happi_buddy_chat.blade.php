@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <title>New {{ $type }} Booking</title>
+  <title>New HappiBUDDY Chat Request</title>
 </head>
 <body>
   <div style="max-width:472px; margin:0 auto;background:#fff;font-family: Montserrat, sans-serif;">
@@ -13,11 +13,8 @@
           Dear {{ $psychologist->first_name }} {{ $psychologist->last_name }},
         </p>
         <p style="font-family: Montserrat-Light, sans-serif; font-size: 12px;color: #787878;letter-spacing: 0;line-height: 20px;margin:0px;margin-top:0px;">
-          You have a new {{ $type }} session booking.
+          {{ $userName }} wants to chat with you on HappiBUDDY.
         </p>
-        <h4>Booking Details:</h4>
-        <p><strong>Date:</strong> {{ $date }}</p>
-        <p><strong>Time:</strong> {{ $time }}</p>
       </div>
     </div>
   </div>
