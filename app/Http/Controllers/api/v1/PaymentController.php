@@ -762,6 +762,8 @@ class PaymentController extends Controller
             $this->pushNotification()->sendNotification($device_token, $message);
         }
 
+        \Mail::to($psy_details->email)->send(new \App\Mail\NewBookingMail($psy_details, $user_detail->name, $date, $exact_time));
+
         return view('payment/payment-success-page');
     }
 

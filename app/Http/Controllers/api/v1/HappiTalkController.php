@@ -583,6 +583,8 @@ class HappiTalkController extends Controller
             $this->sendNotification($device_token,$message);
         }
 
+        \Mail::to($psychologist_details->email)->send(new \App\Mail\NewBookingMail($psychologist_details, $user->name, $request->date, $request->time));
+
         return response()->json(['status' => 'success' , 'message' => "Session request sent to psychologist. We will let you know once accepted." , 'details' => $data]);
     }
 
@@ -1624,6 +1626,8 @@ class HappiTalkController extends Controller
         if($device_token && strlen($device_token) > 20){
             $this->pushNotification()->sendNotification($device_token,$message);
         }
+
+        \Mail::to($psy_details->email)->send(new \App\Mail\NewBookingMail($psy_details, $user->name, $date, $time));
         
         return response()->json(['status' => 'success' , 'message' => 'Your HappiTALK session has been booked successfully.']);
 
