@@ -514,7 +514,7 @@ class AssignPsychologistController extends Controller
 
             $now = \Carbon\Carbon::now();
             if (!$lastMessageAt || $now->diffInMinutes($lastMessageAt) >= 30) {
-                \Mail::to($psychologist_detail->email)->send(new \App\Mail\HappiBuddyChatMail($psychologist_detail, $user->name));
+                \Mail::to($psychologist_detail->email)->send(new \App\Mail\HappiBuddyChatMail($psychologist_detail, $user->username));
             }
 
             $reward_points = RewardPointInstance::where('action_performed' , 'When message is shared in HappiBUDDY')->first();
