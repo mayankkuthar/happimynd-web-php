@@ -27,6 +27,7 @@ use App\Http\Controllers\api\v1\PromptController;
 use App\Http\Controllers\api\v1\ScoreController;
 use App\Http\Controllers\api\v1\ChatBot\ChatBotController;
 use App\Http\Controllers\api\v1\ChatBot\ChatBotAssessmentController;
+use App\Http\Controllers\api\v1\WebsiteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -58,6 +59,28 @@ Route::post('forget-password-reset/', [UserController::class, 'forgetPasswordRes
 
 
 Route::post('v1/submit-contact', [ContactController::class, 'store'])->name('api.submit.contact');
+
+Route::get('v1/packages', [PaymentController::class, 'packages'])->name('api.packages');
+
+//Website (React frontend) public content
+Route::group(['prefix' => 'v1/website'], function () {
+    Route::get('landing-page', [WebsiteController::class, 'landingPage'])->name('api.website.landing');
+    Route::get('service-buttons', [WebsiteController::class, 'serviceButtons'])->name('api.website.serviceButtons');
+    Route::get('services', [WebsiteController::class, 'services'])->name('api.website.services');
+    Route::get('explore-services', [WebsiteController::class, 'exploreServices'])->name('api.website.exploreServices');
+    Route::get('educational-services', [WebsiteController::class, 'educationalServices'])->name('api.website.educationalServices');
+    Route::get('other-services', [WebsiteController::class, 'otherServices'])->name('api.website.otherServices');
+    Route::get('other-services/{id}', [WebsiteController::class, 'otherServiceDetail'])->name('api.website.otherServiceDetail');
+    Route::get('blog', [WebsiteController::class, 'blogs'])->name('api.website.blogs');
+    Route::get('blog/{slug}', [WebsiteController::class, 'blog'])->name('api.website.blog');
+    Route::get('all-blog/{slug}', [WebsiteController::class, 'allBlog'])->name('api.website.allBlog');
+    Route::get('our-team', [WebsiteController::class, 'ourTeam'])->name('api.website.ourTeam');
+    Route::get('organisation', [WebsiteController::class, 'organisation'])->name('api.website.organisation');
+    Route::get('happispace-form', [WebsiteController::class, 'happispaceForm'])->name('api.website.happispaceForm');
+    Route::get('faq', [WebsiteController::class, 'faq'])->name('api.website.faq');
+    Route::post('other-services-signup', [WebsiteController::class, 'otherServicesSignup'])->name('api.website.otherServicesSignup');
+    Route::get('psychologists', [WebsiteController::class, 'psychologists'])->name('api.website.psychologists');
+});
 
 Route::group(['prefix' => 'v1',  'namespace' => 'api\v1'], function () {
 
@@ -109,6 +132,9 @@ Route::group(['prefix' => 'v1',  'namespace' => 'api\v1'], function () {
 
     Route::group(['middleware' => 'auth:api'], function () {
         Route::match(['GET' , 'POST'],'check', [UserAuthenticationController::class,'check']);
+
+        //Website (React frontend) user dashboard
+        Route::get('website/dashboard', [WebsiteController::class, 'dashboard'])->name('api.website.dashboard');
 
         //Authentication
         Route::match(['GET' , 'POST'],'change-password', [UserAuthenticationController::class,'changePassword']);

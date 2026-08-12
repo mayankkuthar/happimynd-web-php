@@ -119,6 +119,89 @@ class PaymentController extends Controller
         return response()->json(['status' => 'success', 'message' => 'Packages get successfully.', 'data' => $packages]);
     }
 
+    /**
+     * Website packages/bundles listing.
+     * Mirrors the web route GET /buy-bundles but returns JSON for the React frontend.
+     * Auth optional - when a user is logged in, is_subscribed flags are populated.
+     */
+    public function packages(Request $request)
+    {
+        $user = Auth::guard('api')->user();
+
+        $un_sorted_packages = null;
+        if ($user && $user->isOrganizationUser()) {
+            $un_sorted_packages = Package::where('bundle', 0)->with(['plan' => function ($query) {
+                return $query->withMax('offer', 'discount')->with('duration')->orderBy('offer_max_discount', 'ASC')->with('expertLevel');
+            }])->get();
+        } else {
+            $un_sorted_packages = Package::with(['plan' => function ($query) {
+                return $query->withMax('offer', 'discount')->with('duration')->orderBy('offer_max_discount', 'ASC')->with('expertLevel');
+            }])->get();
+        }
+
+        $sortOrder = ["HappiLIFE Screening", "HappiLIFE Summary Reading", "HappiGUIDE", "HappiBUDDY", "HappiSELF", "HappiTALK", "HappiSELF + HappiGUIDE", "HappiLEARN + HappiBUDDY", "HappiBUDDY + HappiSELF", "HappiLEARN + HappiBUDDY + HappiSELF"];
+
+        $packages = $un_sorted_packages->sortBy(function ($item) use ($sortOrder) {
+            $index = array_search(ucfirst($item['name']), $sortOrder);
+            return $index === false ? count($sortOrder) : $index;
+        })->values()->all();
+
+        foreach ($packages as $key => $package) {
+            if ($package->name == "HappiTALK") {
+                $packages[$key]->setRelation('plan', collect([$package->getMinimumPricePlan()]));
+            }
+        }
+
+        $subscribedPlanIds = [];
+        if ($user) {
+            $subscribedPlanIds = BundleStatus::where('user_id', $user->id)->pluck('plan_id')->toArray();
+        }
+
+        $response = [];
+        foreach ($packages as $package) {
+            $plans = [];
+            foreach ($package->plan as $plan) {
+                if (!$plan) {
+                    continue;
+                }
+                $sellingPrice = $plan->getSellingPrice();
+                $plans[] = [
+                    'id' => $plan->id,
+                    'package_id' => $plan->package_id,
+                    'price' => (float)$plan->price,
+                    'selling_price' => (float)$sellingPrice,
+                    'per_session_selling_price' => ($plan->duration && $plan->duration->frequency) ? (int)($sellingPrice / $plan->duration->frequency) : null,
+                    'offer' => $plan->offer ? [
+                        'price' => (float)$plan->offer->price,
+                        'discount' => $plan->offer->discount,
+                    ] : null,
+                    'offer_max_discount' => $plan->offer_max_discount,
+                    'duration' => $plan->duration ? [
+                        'id' => $plan->duration->id,
+                        'name' => $plan->duration->name,
+                        'type' => $plan->duration->type,
+                        'value' => $plan->duration->value,
+                        'frequency' => $plan->duration->frequency,
+                    ] : null,
+                    'expert_level' => $plan->expertLevel ? $plan->expertLevel->name : null,
+                    'is_subscribed' => $user ? in_array($plan->id, $subscribedPlanIds) : false,
+                ];
+            }
+            $response[] = [
+                'id' => $package->id,
+                'name' => $package->name,
+                'description' => $package->description,
+                'bundle' => $package->bundle,
+                'is_subscribed' => $user ? collect($package->plan)->contains(function ($plan) use ($subscribedPlanIds) {
+                    return $plan && in_array($plan->id, $subscribedPlanIds);
+                }) : false,
+                'plans' => $plans,
+            ];
+        }
+
+        return response()->json(['status' => 'success', 'message' => 'Packages get successfully.', 'data' => $response]);
+    }
+
 
     public function payment(Request $request)
     {
