@@ -627,8 +627,8 @@ class WebsiteController extends Controller
         }
 
         $raisedQuery = \App\Models\RaiseQuery::create([
-            'category' => $request->category,
-            'query' => $request->query,
+            'category' => $request->input('category'),
+            'query' => $request->input('query'),
             'user_id' => $user->id,
             'status' => 0,
             'platform' => 'website',
