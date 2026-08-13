@@ -79,6 +79,7 @@ Route::group(['prefix' => 'v1/website'], function () {
     Route::get('happispace-form', [WebsiteController::class, 'happispaceForm'])->name('api.website.happispaceForm');
     Route::get('faq', [WebsiteController::class, 'faq'])->name('api.website.faq');
     Route::post('other-services-signup', [WebsiteController::class, 'otherServicesSignup'])->name('api.website.otherServicesSignup');
+    Route::post('raise-query', [WebsiteController::class, 'raiseQuery'])->name('api.website.raiseQuery');
     Route::get('psychologists', [WebsiteController::class, 'psychologists'])->name('api.website.psychologists');
 });
 
@@ -135,6 +136,7 @@ Route::group(['prefix' => 'v1',  'namespace' => 'api\v1'], function () {
 
         //Website (React frontend) user dashboard
         Route::get('website/dashboard', [WebsiteController::class, 'dashboard'])->name('api.website.dashboard');
+        Route::get('website/subscribed-services', [WebsiteController::class, 'subscribedServices'])->name('api.website.subscribedServices');
 
         //Authentication
         Route::match(['GET' , 'POST'],'change-password', [UserAuthenticationController::class,'changePassword']);

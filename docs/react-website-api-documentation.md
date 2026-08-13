@@ -11,7 +11,7 @@ This document describes the JSON API endpoints provided for the **React frontend
   { "status": "success", "message": "...", "data": { ... } }
   ```
   Errors: `{ "status": "error", "message": "...", "data": null }` with an appropriate HTTP status (400/404/422).
-- **Auth:** Only `GET /api/v1/website/dashboard` requires a logged-in user (`Authorization: Bearer <JWT>`). All other `/website/*` endpoints are public. `GET /api/v1/packages` works anonymously and additionally returns `is_subscribed` flags when a Bearer token is supplied.
+- **Auth:** `GET /api/v1/website/dashboard`, `GET /api/v1/website/subscribed-services` and `POST /api/v1/website/raise-query` require a logged-in user (`Authorization: Bearer <JWT>`). All other `/website/*` endpoints are public. `GET /api/v1/packages` works anonymously and additionally returns `is_subscribed` flags when a Bearer token is supplied.
 - **Images/media:** Model-level accessors such as `getImageWithS3Url(...)` / `getContentWithS3Url(...)` are applied where the web pages use them, so URLs are already absolute S3 URLs.
 - **CORS:** The API is open (`allowed_origins: *`) in `config/cors.php`. Lock `allowed_origins` to the real React domain before production.
 
@@ -174,6 +174,39 @@ Replaces `GET /dashboard` (`UserController@dashboard`). **Requires `Authorizatio
   - `booked_dates`, `disable_dates` — assessment booking / availability dates
   - `show_blinking_text`, `blinking_text` — one of `screening`, `summary_reading`, `happiapp`
 
+### `GET /api/v1/website/subscribed-services` — My subscribed services
+
+Replaces `GET /subscribedservices` (`PaymentController@subscribedServices`). **Requires `Authorization: Bearer <JWT>`.**
+The existing mobile `GET /api/v1/my-subscribed-services` only returns bare Package rows; this endpoint mirrors the full web page instead.
+
+- **Behavior:** same filtering as the web page — packages sorted by `$sortOrder`, HappiTALK shows only its minimum-price plan, bundle deals hidden for org users, and multi-plan packages keep only the plans the user/org is subscribed to.
+- **Response `data`:**
+  - `packages` — `{ id, name, description, bundle, is_subscribed, plans[] }`; each plan is `{ id, package_id, price, selling_price, per_session_selling_price, offer, offer_max_discount, duration, is_subscribed }`
+  - `assessment` — the user's latest completed assessment (or `null`); web page shows the 1-year validity based on `ended_at`
+  - `user_id`
+  - `subscribed_plan_ids` — plan ids from the user's `BundleStatus`
+  - `organization_plan_ids` — plan ids subscribed by the user's organization (empty for individual users)
+
+### `POST /api/v1/website/raise-query` — Raise a query (floating support form)
+
+Replaces the "Raise a Query" popup (`POST /raise-query`, `UserController@postRaiseQuery`). **Requires `Authorization: Bearer <JWT>.`**
+The existing mobile `POST /api/v1/raise-query-app` does **not** notify the support mailbox; this endpoint does.
+
+- **Body (JSON):** `category` (required — e.g. `screening`, `payment`, `service`, `others`), `query` (required).
+- **Behavior:** creates a `RaiseQuery` row (`platform = "website"`) and emails `SUPPORT_MAIL` via the `QueryRaisedToAdmin` mailable, matching the web form.
+- **Response:** `{ "status": "success", "message": "Query has been raised successfully." }`
+
+---
+
+## Already covered (no new endpoint needed)
+
+| Request | Web route | Existing API |
+|---|---|---|
+| Support page / contact form | `POST /submit-contact` (`ContactController@store`) | `POST /api/v1/submit-contact` |
+| Sponsor signup page data (`/sponsersignup`) | `UserController@sponserSignupView` | `GET/POST /api/v1/organizer-list` + `/api/v1/user-profile` |
+| Individual signup page data (`/individualsignup`) | `UserController@individualSignupView` | `GET/POST /api/v1/user-profile` |
+| Sponsor/individual account creation | `POST /signup` | `POST /api/v1/signup` (use `signup_type` = `organization` / `individual`; org requires `happimyndCode`) |
+
 ---
 
 ## Mapping to Existing Web Pages (quick reference)
@@ -196,6 +229,10 @@ Replaces `GET /dashboard` (`UserController@dashboard`). **Requires `Authorizatio
 | `/faq` | `GET /api/v1/website/faq` |
 | `/psychologist` + `/api/get-psychologists/` | `GET /api/v1/website/psychologists` |
 | `/dashboard` | `GET /api/v1/website/dashboard` (auth) |
+| `/subscribedservices` | `GET /api/v1/website/subscribed-services` (auth) |
+| `POST /raise-query` (floating "Raise a Query") | `POST /api/v1/website/raise-query` (auth) |
+| `POST /submit-contact` (support/contact form) | `POST /api/v1/submit-contact` (already existed) |
+| `/sponsersignup`, `/individualsignup` | `GET/POST /api/v1/organizer-list`, `/api/v1/user-profile`, `/api/v1/signup` (already existed) |
 
 ---
 

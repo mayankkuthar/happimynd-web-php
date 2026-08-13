@@ -609,4 +609,156 @@ class WebsiteController extends Controller
             ],
         ]);
     }
+
+    public function raiseQuery(Request $request)
+    {
+        $user = Auth::guard('api')->user();
+        if (!$user) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthenticated.', 'data' => null], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'category' => 'required|string',
+            'query' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => 'error', 'message' => $validator->errors()->first(), 'data' => null], 400);
+        }
+
+        $raisedQuery = \App\Models\RaiseQuery::create([
+            'category' => $request->category,
+            'query' => $request->query,
+            'user_id' => $user->id,
+            'status' => 0,
+            'platform' => 'website',
+        ]);
+
+        $query = \App\Models\RaiseQuery::with('user')->find($raisedQuery->id);
+        $mailDetails = [
+            'username' => $query->user->username,
+            'email' => $query->user->email,
+            'query' => [
+                'description' => $query->query,
+                'category' => $query->category,
+            ],
+        ];
+
+        try {
+            \Illuminate\Support\Facades\Mail::to(env('SUPPORT_MAIL'))->queue(new \App\Mail\QueryRaisedToAdmin($mailDetails));
+        } catch (\Throwable $e) {
+        }
+
+        return response()->json(['status' => 'success', 'message' => 'Query has been raised successfully.', 'data' => null]);
+    }
+
+    public function subscribedServices(Request $request)
+    {
+        $user = Auth::guard('api')->user();
+        if (!$user) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthenticated.', 'data' => null], 401);
+        }
+
+        $un_sorted_packages = \App\Models\Package::with(['plan' => function ($query) {
+            return $query->withMax('offer', 'discount')->with('duration')->orderBy('offer_max_discount', 'ASC');
+        }])->get();
+
+        $sortOrder = ["HappiLIFE Screening", "HappiLIFE Summary Reading", "HappiGUIDE", "HappiBUDDY", "HappiSELF", "HappiTALK", "HappiSELF + HappiGUIDE", "HappiLEARN + HappiBUDDY", "HappiBUDDY + HappiSELF", "HappiLEARN + HappiBUDDY + HappiSELF"];
+
+        $packages = \Illuminate\Support\Collection::make($un_sorted_packages)->sortBy(function ($item) use ($sortOrder) {
+            $index = array_search(ucfirst($item['name']), $sortOrder);
+            return $index === false ? count($sortOrder) : $index;
+        })->values()->all();
+
+        foreach ($packages as $key => $package) {
+            if ($package->name == "HappiTALK") {
+                $packages[$key]->setRelation('plan', collect([$package->getMinimumPricePlan()]));
+            }
+        }
+
+        $assessment = $user->assessment()->completedAssessment()->latest('ended_at')->first();
+
+        $subscribedPlans = $user->bundleStatus;
+        $subscribedPlanIds = $subscribedPlans->pluck('plan_id')->toArray() ?? [];
+
+        $organizationPackages = null;
+        $organizationPlanIds = [];
+        if ($user->isOrganizationUser()) {
+            $organizationPackages = $user->userToken->token->tokenPlans()->with('bundleStatus')->get();
+        }
+        if ($organizationPackages != null) {
+            $organizationPlanIds = $organizationPackages->pluck('plan_id')->toArray();
+        }
+
+        foreach ($packages as $packageKey => $package) {
+            if ($package->bundle == 1 && $user->isOrganizationUser()) {
+                unset($packages[$packageKey]);
+                continue;
+            }
+
+            if ($package->plan->count() > 1) {
+                $intersectUser = array_intersect($subscribedPlanIds, $package->plan->pluck('id')->toArray());
+                $intersectOrg = ($organizationPackages != null) ? array_intersect($organizationPlanIds, $package->plan->pluck('id')->toArray()) : [];
+                $plan_id = array_merge($intersectUser, $intersectOrg);
+                if (count($plan_id) > 0) {
+                    foreach ($package->plan as $planKey => $plan) {
+                        if (!in_array($plan->id, $plan_id)) {
+                            $packages[$packageKey]->plan->forget($planKey);
+                        }
+                    }
+                }
+            }
+        }
+
+        $response = [];
+        foreach ($packages as $package) {
+            $plans = [];
+            foreach ($package->plan as $plan) {
+                if (!$plan) {
+                    continue;
+                }
+                $sellingPrice = $plan->getSellingPrice();
+                $plans[] = [
+                    'id' => $plan->id,
+                    'package_id' => $plan->package_id,
+                    'price' => (float)$plan->price,
+                    'selling_price' => (float)$sellingPrice,
+                    'per_session_selling_price' => ($plan->duration && $plan->duration->frequency) ? (int)($sellingPrice / $plan->duration->frequency) : null,
+                    'offer' => $plan->offer ? [
+                        'price' => (float)$plan->offer->price,
+                        'discount' => $plan->offer->discount,
+                    ] : null,
+                    'offer_max_discount' => $plan->offer_max_discount,
+                    'duration' => $plan->duration ? [
+                        'id' => $plan->duration->id,
+                        'name' => $plan->duration->name,
+                        'type' => $plan->duration->type,
+                        'value' => $plan->duration->value,
+                        'frequency' => $plan->duration->frequency,
+                    ] : null,
+                    'is_subscribed' => in_array($plan->id, $subscribedPlanIds) || in_array($plan->id, $organizationPlanIds),
+                ];
+            }
+            $response[] = [
+                'id' => $package->id,
+                'name' => $package->name,
+                'description' => $package->description,
+                'bundle' => $package->bundle,
+                'is_subscribed' => collect($plans)->contains('is_subscribed', true),
+                'plans' => $plans,
+            ];
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Subscribed services.',
+            'data' => [
+                'packages' => array_values($response),
+                'assessment' => $assessment,
+                'user_id' => $user->id,
+                'subscribed_plan_ids' => $subscribedPlanIds,
+                'organization_plan_ids' => $organizationPlanIds,
+            ],
+        ]);
+    }
 }
