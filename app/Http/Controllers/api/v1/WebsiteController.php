@@ -513,11 +513,11 @@ class WebsiteController extends Controller
         $booked_dates = \App\Models\AssessmentApprove::select('available_date')->whereNotNull('available_date')->get();
         $disableDates = \App\Models\Availability::select('date')->get();
 
-        $bundleStatus = \App\Models\BundleStatus::where('user_id', $user->id)->where('valid', true)->orderBy('plan_id', 'DESC')->first();
+        $bundleStatus = \App\Models\BundleStatus::where('user_id', $user->id)->Valid()->orderBy('plan_id', 'DESC')->first();
         $plan_id = ($bundleStatus) ? $bundleStatus->plan_id : 0;
 
-        $summaryReadingPlanStatus = (\App\Models\BundleStatus::where('user_id', $user->id)->where('plan_id', 2)->first()) ? false : true;
-        $happiAPPPlanStatus = (\App\Models\BundleStatus::where('user_id', $user->id)->where('plan_id', 5)->first()) ? false : true;
+        $summaryReadingPlanStatus = (\App\Models\BundleStatus::where('user_id', $user->id)->where('plan_id', 2)->NotExpired()->first()) ? false : true;
+        $happiAPPPlanStatus = (\App\Models\BundleStatus::where('user_id', $user->id)->where('plan_id', 5)->NotExpired()->first()) ? false : true;
 
         $showBlinkingText = false;
         $blinkingText = '';
@@ -678,7 +678,7 @@ class WebsiteController extends Controller
 
         $assessment = $user->assessment()->completedAssessment()->latest('ended_at')->first();
 
-        $subscribedPlans = $user->bundleStatus;
+        $subscribedPlans = $user->bundleStatus()->NotExpired()->get();
         $subscribedPlanIds = $subscribedPlans->pluck('plan_id')->toArray() ?? [];
 
         $organizationPackages = null;

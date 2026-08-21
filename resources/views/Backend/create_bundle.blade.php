@@ -6,13 +6,24 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link href="cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css">
     <link href="{{ asset('assets/Backend/css/plugins/dataTables.bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/Backend/css/plugins/select2.min.css') }}" rel="stylesheet">
   </x-slot>
   <x-slot name="js">
+      <script src="{{ asset('assets/Backend/js/plugins/select2.full.min.js') }}"></script>
       <script src="{{ asset('assets/Backend/js/plugins/jquery.dataTables.min.js') }}"></script>
       <script src="{{ asset('assets/Backend/js/plugins/dataTables.bootstrap.min.js') }}"></script>
       <script src="{{ asset('assets/Backend/js/plugins/dataTables.keyTable.min.js') }}"></script>
       <script src="{{ asset('assets/Backend/js/plugins/dataTables.responsive.min.js') }}"></script>
       <script src="{{ asset('assets/Backend/js/plugins/dataTables.scroller.min.js') }}"></script>
+      <script>
+        $(document).ready(function () {
+          $(".select2_multiple").select2("destroy").select2({
+            maximumSelectionLength: -1,
+            placeholder: "Select plans",
+            allowClear: true
+          });
+        });
+      </script>
   </x-slot>
   <x-slot name="content">
     <div class="right_col" role="main">
@@ -88,7 +99,11 @@
                   <label>Discounted Price</label>
                   <input type="text" class="form-control" name="discounted_price" required>
                   <br> 
- 
+
+                  <label>Validity (in days)</label>
+                  <input type="number" class="form-control" name="validity" min="1" placeholder="e.g. 30 for 1 month. Leave blank for lifetime">
+                  <br> 
+  
                   <br>
                   <br>
 

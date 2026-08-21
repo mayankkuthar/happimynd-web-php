@@ -80,7 +80,7 @@ class PaymentController extends Controller
         Log::info('buyPlan');
         $user = Auth::user();
 
-        $user_subscribed_plans = BundleStatus::where('user_id', $user->id)->pluck('plan_id');
+        $user_subscribed_plans = BundleStatus::where('user_id', $user->id)->NotExpired()->pluck('plan_id');
         $packages_based_on_plan_ids = Plan::whereIn('id', $user_subscribed_plans)->pluck('package_id')->toArray();
 
         $packages = Package::where('id', 1)
@@ -154,7 +154,7 @@ class PaymentController extends Controller
 
         $subscribedPlanIds = [];
         if ($user) {
-            $subscribedPlanIds = BundleStatus::where('user_id', $user->id)->pluck('plan_id')->toArray();
+            $subscribedPlanIds = BundleStatus::where('user_id', $user->id)->NotExpired()->pluck('plan_id')->toArray();
         }
 
         $response = [];
@@ -447,7 +447,7 @@ class PaymentController extends Controller
 
         $user = Auth::user();
 
-        $user_subscribed_plans = BundleStatus::where('user_id', $user->id)->pluck('plan_id');
+        $user_subscribed_plans = BundleStatus::where('user_id', $user->id)->NotExpired()->pluck('plan_id');
         $packages_based_on_plan_ids = Plan::whereIn('id', $user_subscribed_plans)->pluck('package_id')->toArray();
 
         $packages = Package::whereIn('id', $packages_based_on_plan_ids)->get();

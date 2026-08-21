@@ -41,7 +41,7 @@ class HappiLearnContent extends Model
     public function getIsSubscribeAttribute(){
         $user = Auth::user();
         if($user){
-            $is_user_subscribe_learn = BundleStatus::where('user_id' ,$user->id)->where('plan_id' , 2)->first();
+            $is_user_subscribe_learn = BundleStatus::where('user_id' ,$user->id)->where('plan_id' , 2)->NotExpired()->first();
             if($is_user_subscribe_learn){
                 return 1;
             }else{

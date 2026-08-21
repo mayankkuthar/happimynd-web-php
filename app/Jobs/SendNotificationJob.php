@@ -79,7 +79,7 @@ class SendNotificationJob implements ShouldQueue
         if($type == 'happiself_subscribed_serives'){
             $package = Package::where('name' , 'HappiSELF')->with('mobilePlans')->first();
             $plan_id = $package->mobilePlans['0']['id'];
-            $user_id_who_buy_happiself = BundleStatus::where('plan_id' , $plan_id)->pluck('user_id');
+            $user_id_who_buy_happiself = BundleStatus::where('plan_id' , $plan_id)->NotExpired()->pluck('user_id');
             $users = User::where('device_token' , '!=' ,null)->orderBy('id' , 'desc')->whereIn('id' , $user_id_who_buy_happiself)->get();
         }
 

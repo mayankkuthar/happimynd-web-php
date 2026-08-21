@@ -889,6 +889,7 @@ class AdminController extends Controller
                 'name' => $request->name,
                 'description' => $request->description,
                 'bundle' => 1,
+                'validity' => $request->validity !== '' && $request->validity !== null ? (int)$request->validity : null,
             ];
             $create_package = Package::create($package_data);
 
@@ -936,7 +937,7 @@ class AdminController extends Controller
 
     public function bundleDetail(Request $request)
     {
-        $packages = Plan::with('duration')->with(['offer' => function ($query) {
+        $packages = Plan::with('duration')->with('package')->with(['offer' => function ($query) {
             $query->where('valid', true)->orderBy('created_at', 'desc');
         }])->get();
         return view('Backend/bundle')
@@ -951,6 +952,15 @@ class AdminController extends Controller
         $inoffer_price = $request->inoffer_price;
         $plan = Plan::where('id', $id)->update(['price' => $price]);
         $offer = Offer::where('plan_id', $id)->update(['discount' => $discount, 'price' => $inoffer_price]);
+
+        $foundPlan = Plan::find($id);
+        if ($foundPlan) {
+            $validity = $request->validity;
+            Package::where('id', $foundPlan->package_id)->update([
+                'validity' => $validity !== '' && $validity !== null ? (int)$validity : null,
+            ]);
+        }
+
         if ($plan == 1 && $offer == 1) {
             $notifyMsg = 'Price Updated Successfully';
             $responseMsg = 'Price for the selected bundle has been updated successfully';

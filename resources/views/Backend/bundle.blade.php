@@ -36,6 +36,7 @@
                           <th>Regular Price</th>
                           <th>Discount</th>
                           <th>in-offer Price</th>
+                          <th>Validity (days)</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -64,7 +65,7 @@
                                 <td>{{ $name }}</td>
                                 <td>{{ $package->package->description }}</td>
                                 <td>{{ $package->duration->name }}</td>
-                                <td>{{ $package->price }}&nbsp;&nbsp<button type="button" onclick="OpenBundlePriceUpdateModal({{ $package->id }},{{ $package->price }},{{ $package->offer->discount }},{{ $package->offer->price }})" style="border:0px;"><i class="fa fa-edit" style="font-size:16px;color:red;"></i></button></td>
+                                <td>{{ $package->price }}&nbsp;&nbsp<button type="button" onclick="OpenBundlePriceUpdateModal({{ $package->id }},{{ $package->price }},{{ $package->offer->discount }},{{ $package->offer->price }},{{ $package->package->validity ? $package->package->validity : 0 }})" style="border:0px;"><i class="fa fa-edit" style="font-size:16px;color:red;"></i></button></td>
                                 @if($package->offer)
                                 <td> {{ $package->offer->discount }}</td>
                                 <td>{{ $package->offer->price }}</td>
@@ -72,6 +73,7 @@
                                 <td>No Offer</td>
                                 <td>{{ $package->price }}</td>
                                 @endif
+                                <td>{{ $package->package->validity ? $package->package->validity . ' days' : 'Lifetime' }}</td>
                               </tr>
                             @endif
                             
@@ -115,28 +117,34 @@
                  <input type="number" class="form-control" name="inofferprice" oninput="validateInput(reg_price,discount,inofferprice)" id="inofferprice" value="" required>
                  <div id="inoffer_vali" style="color:red;"></div>
             </div>
+            <div class="form-group">
+                 <label for="validity">Validity (in days) — blank = lifetime</label>
+                 <input type="number" class="form-control" name="validity" min="1" id="validity" value="">
+            </div>
 
           </div>
           <div class="update-price">
-            <button type="button" data-dismiss="modal" id="update-price-button" class="btn btn-primary" style="margin-left:15px;" onclick="updatePrice(reg_price,discount,inofferprice)">Update Price</button>
+            <button type="button" data-dismiss="modal" id="update-price-button" class="btn btn-primary" style="margin-left:15px;" onclick="updatePrice(reg_price,discount,inofferprice,validity)">Update Price</button>
           </div>
         </form>
       </div>
     </div>
   </div>
   <script>
-  function OpenBundlePriceUpdateModal(package_id,reg_price,discount,inofferprice){
+  function OpenBundlePriceUpdateModal(package_id,reg_price,discount,inofferprice,validity){
     $("#UpdatePrice").modal("show");
     $("#reg_price").attr("value",reg_price);
     $("#discount").attr("value",discount);
     $("#inofferprice").attr("value",inofferprice);
+    $("#validity").attr("value",validity ? validity : "");
     sessionStorage.setItem("package_id",package_id);
   }
-  function updatePrice(regular_price,discount,inofferprice){
+  function updatePrice(regular_price,discount,inofferprice,validity){
     var $package_id=sessionStorage.getItem("package_id");
     var $regular_price=regular_price.value;
     var $discount=discount.value;
     var $inofferprice=inofferprice.value;
+    var $validity=validity.value;
     if ($regular_price <0 ||$regular_price=='') {
       alert("Regular Price must be filled and greater than 0");
       return false;
@@ -149,6 +157,10 @@
       alert("In Offer Price must be filled and greater than or equal to 0");
       return false;
     }
+    if ($validity!='' && ($validity<1 || isNaN($validity))) {
+      alert("Validity must be a positive number of days, or left blank for lifetime");
+      return false;
+    }
 
     $.ajax({
       type: "post",
@@ -157,7 +169,8 @@
         'id':$package_id,
         'regular_price':$regular_price,
         'discount':$discount,
-        'inoffer_price':$inofferprice
+        'inoffer_price':$inofferprice,
+        'validity':$validity
       },
       dataType: "json",
       success: function(result) {

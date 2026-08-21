@@ -29,11 +29,26 @@ class BundleStatus extends Model
         'percentage_covered',
         'user_id',
         'plan_id',
-        'receipt_id'
+        'receipt_id',
+        'expires_at'
     ];
     protected $casts = [
-        'valid' => 'boolean'
+        'valid' => 'boolean',
+        'expires_at' => 'datetime'
     ];
+
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            if ($model->expires_at) {
+                return;
+            }
+            $plan = Plan::with('package')->find($model->plan_id);
+            if ($plan && $plan->package && $plan->package->validity) {
+                $model->expires_at = now()->addDays((int)$plan->package->validity);
+            }
+        });
+    }
 
     public function user()
     {
@@ -62,7 +77,19 @@ class BundleStatus extends Model
 
     public function scopeValid($query)
     {
-        return $query->where('valid', true);
+        return $query->where('valid', true)->NotExpired();
+    }
+
+    public function scopeNotExpired($query)
+    {
+        return $query->where(function ($query) {
+            $query->whereNull('expires_at')->orWhere('expires_at', '>', now());
+        });
+    }
+
+    public function isExpired()
+    {
+        return $this->expires_at !== null && $this->expires_at <= now();
     }
     public function scopeHappimyndApp($query)
     {

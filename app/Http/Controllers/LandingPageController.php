@@ -169,7 +169,7 @@ class LandingPageController extends Controller
     }
 
     public function getPackage(){
-        $bundles = Auth()->user()->bundleStatus;
+        $bundles = Auth()->user()->bundleStatus()->NotExpired()->get();
         if(!empty($bundles)){
             foreach ($bundles as $bundle){
                 if($bundle->valid){

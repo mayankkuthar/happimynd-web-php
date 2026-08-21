@@ -368,15 +368,15 @@ class UserController extends Controller
 
         $disableDates = Availability::select('date')->get();
 
-        $bundleStatus = BundleStatus::where('user_id', auth('user')->user()->id)->where('valid', true)->orderBy('plan_id', 'DESC')->first(); //TODO : remove if another packages are activated // Hardcoded...
+        $bundleStatus = BundleStatus::where('user_id', auth('user')->user()->id)->Valid()->orderBy('plan_id', 'DESC')->first(); //TODO : remove if another packages are activated // Hardcoded...
         $plan_id = ($bundleStatus) ? $bundleStatus->plan_id : 0;
 
         //check if user bought summary reading plan or not
         //TODO: check logic if multiple assessments are enabled
         $summaryReadingPlanStatus = (BundleStatus::where('user_id', auth('user')->user()->id)
-            ->where('plan_id', 2)->first()) ? false : true;
+            ->where('plan_id', 2)->NotExpired()->first()) ? false : true;
         $happiAPPPlanStatus = (BundleStatus::where('user_id', auth('user')->user()->id)
-            ->where('plan_id', 5)->first()) ? false : true;
+            ->where('plan_id', 5)->NotExpired()->first()) ? false : true;
         $showBlinkingText = false;
         $blinkingText = "";
         if (!$assessment_complete_status) {

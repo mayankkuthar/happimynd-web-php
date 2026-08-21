@@ -798,9 +798,9 @@ class PaymentController extends Controller
         $assessment = auth('user')->user()->assessment()->completedAssessment()->latest('ended_at')->first();
         $tokenPlans = null;
         // $subscribedPlans = User::where('id', auth('user')->user()->id)->with(['bundleStatus.tokenPlan'])->get()->pluck('bundleStatus')[0] ?? null;
-        $subscribedPlans = $user->bundleStatus;
+        $subscribedPlans = $user->bundleStatus()->NotExpired()->get();
         $subscribedPlanIds = $subscribedPlans->pluck('plan_id')->toArray() ?? null;
-        $subscribedPlans = $user->bundleStatus->keyBy('plan_id');
+        $subscribedPlans = $subscribedPlans->keyBy('plan_id');
         $organizationPackages = null;
         $organizationPlanIds = [];
         if (auth('user')->user()->isOrganizationUser()) {

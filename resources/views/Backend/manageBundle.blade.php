@@ -33,6 +33,7 @@
                           <th>Package Number</th>
                           <th>Valid</th>
                           <th>Percentage Covered</th>
+                          <th>Expires At</th>
                           <th>Payment Id</th>
                         </tr>
                       </thead>
@@ -46,6 +47,14 @@
                           </td>
                           <td>{{ $bStatus->valid }}</td>
                           <td>{{ $bStatus->percentage_covered }}</td>
+                          <td>
+                            @if($bStatus->expires_at)
+                              {{ $bStatus->expires_at }}
+                              @if(\Carbon\Carbon::parse($bStatus->expires_at)->isPast())<span class="text-danger"> (Expired)</span>@endif
+                            @else
+                              Lifetime
+                            @endif
+                          </td>
                           <td>
                           @if($bStatus->receipt_id)
                             <a href="{{ route('admin.paymentDetail') }}">{{ $bStatus->receipt_id }}</a>

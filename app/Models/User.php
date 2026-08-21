@@ -306,7 +306,7 @@ class User extends Authenticatable implements JWTSubject
     
     public function showReport()
     {
-        $bundleStatuses = $this->bundleStatus()->with('plans.package')->latest()->where('valid', 1)->where('percentage_covered', 100.00)->get();
+        $bundleStatuses = $this->bundleStatus()->with('plans.package')->latest()->Valid()->where('percentage_covered', 100.00)->get();
         foreach ($bundleStatuses as $bundleStatus) {
             if ($bundleStatus->plans->package->name == "HappiLIFE Screening") {
                 return true;
@@ -514,7 +514,7 @@ class User extends Authenticatable implements JWTSubject
     public function getSubscribedPlans()
     {
         $this->load(['bundleStatus' => function ($query) {
-            $query->ActivePlan()->with('plans.package');
+            $query->ActivePlan()->NotExpired()->with('plans.package');
         }]);
         return $this->bundleStatus->pluck('plans');
     }
@@ -552,7 +552,9 @@ class User extends Authenticatable implements JWTSubject
 
     public function isSubscribedTo($plan)
     {
-        $this->load('bundleStatus.plans.package');
+        $this->load(['bundleStatus' => function ($query) {
+            $query->NotExpired()->with('plans.package');
+        }]);
         foreach ($this->bundleStatus as $bundleStatus) {
             if ($bundleStatus->plans->package->name == $plan->package->name) {
                 return true;

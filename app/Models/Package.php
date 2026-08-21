@@ -29,7 +29,8 @@ class Package extends Model
         'bundle',
         'duration_id',
         'regular_price',
-        'package_id'
+        'package_id',
+        'validity'
     ];
 
     public function plan()

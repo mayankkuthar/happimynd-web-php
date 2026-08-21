@@ -187,6 +187,8 @@ The existing mobile `GET /api/v1/my-subscribed-services` only returns bare Packa
   - `subscribed_plan_ids` — plan ids from the user's `BundleStatus`
   - `organization_plan_ids` — plan ids subscribed by the user's organization (empty for individual users)
 
+**Validity / expiry:** Packages/bundles can have a `validity` (in days) set in the admin panel (Create Bundles form, or the Validity field in Bundles Detail → edit modal). On purchase, the subscription's `expires_at` is snapshotted as purchase date + validity. `is_subscribed` (and `subscribed_plan_ids`) only include **non-expired** subscriptions; expired bundles/plans report `is_subscribed: false`. `validity = null`/blank means lifetime (no expiry), which is the default for all pre-existing packages.
+
 ### `POST /api/v1/website/raise-query` — Raise a query (floating support form)
 
 Replaces the "Raise a Query" popup (`POST /raise-query`, `UserController@postRaiseQuery`). **Requires `Authorization: Bearer <JWT>.`**

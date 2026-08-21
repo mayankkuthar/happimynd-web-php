@@ -67,7 +67,7 @@
             <li><a><i class="fa fa-dollar"></i>Plans <span class="fa fa-chevron-down"></span></a>
                 <ul class="nav child_menu">
 
-                    <!-- @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'plans']))<li><a href="{{ route('admin.createBundle') }}">Create Bundles</a></li> @endif -->
+                    @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'plans']))<li><a href="{{ route('admin.createBundle') }}">Create Bundles</a></li> @endif
 
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'plans']))<li><a href="{{ route('admin.bundleDetail') }}">Bundles Detail</a></li> @endif
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'plans']))<li><a href="{{ route('admin.paymentDetail') }}">Payment Detail</a></li> @endif
