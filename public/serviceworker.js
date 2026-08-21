@@ -28,15 +28,21 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Serve from Cache
+// Serve from Network first, fallback to Cache (so updated files are picked up)
 self.addEventListener("fetch", event => {
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then(response => {
-        return response || fetch(event.request);
+        if (response && response.status === 200 && event.request.method === 'GET') {
+          const responseCopy = response.clone();
+          caches.open(staticCacheName).then(cache => {
+            cache.put(event.request, responseCopy);
+          });
+        }
+        return response;
       })
       .catch(() => {
-        return caches.match('offline');
+        return caches.match(event.request);
       })
   )
 });

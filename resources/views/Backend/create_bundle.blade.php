@@ -16,13 +16,13 @@
       <script src="{{ asset('assets/Backend/js/plugins/dataTables.responsive.min.js') }}"></script>
       <script src="{{ asset('assets/Backend/js/plugins/dataTables.scroller.min.js') }}"></script>
       <script>
-        $(document).ready(function () {
-          $(".select2_multiple").select2("destroy").select2({
-            maximumSelectionLength: -1,
-            placeholder: "Select plans",
-            allowClear: true
-          });
-        });
+        function validatePlans() {
+          if (document.querySelectorAll('input[name="plans[]"]:checked').length === 0) {
+            alert("Please select at least one plan to map.");
+            return false;
+          }
+          return true;
+        }
       </script>
   </x-slot>
   <x-slot name="content">
@@ -53,7 +53,7 @@
 
                   <div class="x_content">
                       
-          <form method="POST" id="validate-form" enctype="multipart/form-data">
+          <form method="POST" id="validate-form" enctype="multipart/form-data" onsubmit="return validatePlans()">
           @csrf
           <div class="row">
             <div class="col-md-12 col-sm-12 ">
@@ -70,18 +70,23 @@
 
 
                   <label>Plan to be mapped</label>
-                  <select class="select2_multiple form-control"  multiple="multiple" tabindex="-1" name="plans[]" required>
-                        @foreach($single_plans as $row)
-
+                  <div class="form-group" style="border:1px solid #e6e6e6; padding:10px 15px; border-radius:4px;">
+                    @foreach($single_plans as $row)
+                      @if(count($row->plan))
                         <?php
                         $name = $row->name;
                         if($name == "HappiLIFE Summary Reading"){
                           $name = "HappiLEARN";
                         }
-                        ?> 
-                        <option value="{{ $row->plan[0]->id }}" >{{ $name }}</option>
-                        @endforeach
-                      </select>
+                        ?>
+                        <div class="checkbox">
+                          <label style="font-weight:normal;">
+                            <input type="checkbox" name="plans[]" value="{{ $row->plan[0]->id }}"> {{ $name }}
+                          </label>
+                        </div>
+                      @endif
+                    @endforeach
+                  </div>
                   <br>
  
 

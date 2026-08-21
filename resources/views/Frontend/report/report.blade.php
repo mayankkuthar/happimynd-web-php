@@ -1,4 +1,4 @@
-<?php $curentPageUrl = $_SERVER['REQUEST_URI'] ?>
+<?php $curentPageUrl = $_SERVER['REQUEST_URI']; $reportLogoV = @filemtime(public_path('assets/Frontend/images/report_logo_img.png')); ?>
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -72,7 +72,7 @@
                 </div>
                 <div class="col-lg-6 col-md-6 col-sm-6 col-6">
                   <div class="text-right">
-                    <img src="{{ asset('assets/Frontend/images/report_logo_img.png') }}" />
+                    <img src="{{ asset('assets/Frontend/images/report_logo_img.png') }}?v={{ $reportLogoV }}" />
                   </div>
                 </div>
               </div>
@@ -138,7 +138,7 @@
           <div class="">
             <div class="report__content__tabs__text__withlogo">
               <div class="text-right">
-                <img src="{{ asset('assets/Frontend/images/report_logo_img.png') }}" />
+                <img src="{{ asset('assets/Frontend/images/report_logo_img.png') }}?v={{ $reportLogoV }}" />
               </div>
               @foreach($tempScore as $name => $s)
 
@@ -169,7 +169,7 @@
             <div class="">
               <div class="report__content__tabs__text__withlogo report__content__tabs__text__withlogo--last">
                 <div class="text-right">
-                  <img src="{{ asset('assets/Frontend/images/report_logo_img.png') }}" />
+                  <img src="{{ asset('assets/Frontend/images/report_logo_img.png') }}?v={{ $reportLogoV }}" />
                 </div>
                 @foreach($tempScore as $name => $s)
                 <div class="report__content__tabs__text">
@@ -189,7 +189,7 @@
       <div class="report__content">
         <div class="report__content__tabs__last report__content__tabs__text__withlogo">
           <div class="text-right">
-            <img src="{{ asset('assets/Frontend/images/report_logo_img.png') }}" />
+            <img src="{{ asset('assets/Frontend/images/report_logo_img.png') }}?v={{ $reportLogoV }}" />
           </div>
           <div class="report__content__donext-parent">
             <div class="report__content__donext">
