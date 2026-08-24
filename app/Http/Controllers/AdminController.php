@@ -876,7 +876,7 @@ class AdminController extends Controller
     {
         
         if($request->isMethod('GET')){
-            $single_plans = Package::where('bundle' , '!=' , 1)->where('deleted_at' , null)->where('name' , '!=' , 'happiTALK')->where('name' , '!=' , 'happiGUIDE')->with('plan')->get();
+            $single_plans = Package::where('bundle' , '!=' , 1)->where('deleted_at' , null)->with('plan')->get();
 
             return view('Backend/create_bundle')
             ->with('single_plans', $single_plans);
@@ -896,13 +896,15 @@ class AdminController extends Controller
             
             //Map plan with package
             $plan_ids = $request->plans;
+            $plan_sessions = $request->plan_sessions ?? [];
             foreach($plan_ids as $plan) {
                 $data = [
                     'package_id' => $create_package->id,
                     'plan_id' => $plan,
+                    'sessions' => isset($plan_sessions[$plan]) && $plan_sessions[$plan] !== '' ? (int)$plan_sessions[$plan] : null,
 
                 ];
-                DynamicBundlePlan::create($data);   
+                DynamicBundlePlan::create($data);
             }
 
 

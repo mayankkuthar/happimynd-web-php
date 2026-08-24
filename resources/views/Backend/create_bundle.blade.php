@@ -21,7 +21,25 @@
             alert("Please select at least one plan to map.");
             return false;
           }
+          var talkSessionsInput = document.getElementById('talk_sessions');
+          if (talkSessionsInput && talkSessionsInput.disabled === false && (talkSessionsInput.value === '' || parseInt(talkSessionsInput.value) < 1)) {
+            alert("Please enter the number of Happi Talk sessions for this bundle.");
+            return false;
+          }
           return true;
+        }
+
+        function toggleTalkSessions(checkbox) {
+          var wrap = document.getElementById('talk_sessions_wrap');
+          var input = document.getElementById('talk_sessions');
+          if (checkbox.checked) {
+            wrap.style.display = '';
+            input.disabled = false;
+          } else {
+            wrap.style.display = 'none';
+            input.disabled = true;
+            input.value = '';
+          }
         }
       </script>
   </x-slot>
@@ -78,11 +96,20 @@
                         if($name == "HappiLIFE Summary Reading"){
                           $name = "HappiLEARN";
                         }
+                        if(strtolower($name) == "happiguide"){
+                          $name = "Solv";
+                        }
                         ?>
                         <div class="checkbox">
                           <label style="font-weight:normal;">
-                            <input type="checkbox" name="plans[]" value="{{ $row->plan[0]->id }}"> {{ $name }}
+                            <input type="checkbox" name="plans[]" value="{{ $row->plan[0]->id }}" @if(strtolower($row->name) == 'happitalk') onchange="toggleTalkSessions(this)" @endif> {{ $name }}
                           </label>
+                          @if(strtolower($row->name) == 'happitalk')
+                            <span id="talk_sessions_wrap" style="display:none; margin-left:25px;">
+                              <label style="font-weight:normal;">Number of sessions</label>
+                              <input type="number" class="form-control" name="plan_sessions[{{ $row->plan[0]->id }}]" id="talk_sessions" min="1" placeholder="e.g. 5" style="width:150px; display:inline-block;" disabled>
+                            </span>
+                          @endif
                         </div>
                       @endif
                     @endforeach

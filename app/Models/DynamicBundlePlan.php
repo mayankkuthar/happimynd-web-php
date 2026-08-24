@@ -12,6 +12,7 @@ class DynamicBundlePlan extends Model
     protected $fillable = [
         'package_id',
         'plan_id',
+        'sessions',
     ];
 
 }
