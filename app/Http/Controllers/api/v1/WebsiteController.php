@@ -26,6 +26,12 @@ use App\Models\ServiceType;
 use Razorpay\Api\Api;
 use Illuminate\Support\Facades\Validator;
 
+use App\Models\UserToken;
+use App\Models\Token;
+use App\Models\Organization;
+use App\Models\AssignPsyToOrgForTalk;
+use App\Models\AssignPsyToPlan;
+
 class WebsiteController extends Controller
 {
     public function landingPage()
@@ -595,12 +601,43 @@ class WebsiteController extends Controller
             });
         }
 
+        $user = Auth::guard('api')->user();
+        $userType = 'individual';
+        $organizationName = null;
+
+        if ($user) {
+            $userToken = UserToken::where('user_id', $user->id)->first();
+            if ($userToken) {
+                $token = Token::where('id', $userToken->token_id)->first();
+                $organization = $token ? Organization::where('id', $token->organization_id)->first() : null;
+
+                if ($organization) {
+                    $orgPsyIds = AssignPsyToOrgForTalk::where('organization_id', $token->organization_id)
+                        ->pluck('psychologist_id');
+                    $query->whereIn('id', $orgPsyIds)->whereNotNull('slot1');
+
+                    $totalSessions = $user->getOrganizationHappiTalkSessions();
+                    if ($totalSessions > 0 && !\App\Models\HappitalkBooking::where('user_id', $user->id)->exists()) {
+                        $userType = 'organization';
+                        $organizationName = $organization->name;
+                    }
+                }
+            } else {
+                $talkPsyIds = AssignPsyToPlan::where('plan_name', 'HappiTalk')->pluck('psychologist_id')->toArray();
+                $query->whereIn('id', $talkPsyIds)->whereNotNull('slot1');
+            }
+        }
+
         $psychologists = $query->with('customPrice')->where('deleted_at', null)->take($request->get('limit', 10))->get();
 
         return response()->json([
             'status' => 'success',
             'message' => 'Psychologists.',
             'data' => \App\Http\Resources\PsychoLogistResource::collection($psychologists),
+            'user_detail' => [
+                'user_from' => $userType,
+                'organization_name' => $organizationName,
+            ],
             'filters' => [
                 'specializations' => \App\Models\Specialization::all(),
                 'expert_levels' => \App\Models\ExpertLevel::all(),
