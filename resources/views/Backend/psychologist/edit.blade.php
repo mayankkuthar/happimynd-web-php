@@ -98,13 +98,24 @@
                     </div>
                   </div>
                   <div class="form-group row">
-                    <label class="control-label col-md-3 col-sm-3 ">Expert Level</label>
+                    <label class="control-label col-md-3 col-sm-3 ">Grade</label>
                     <div class="col-md-9 col-sm-9 ">
                       <select class="form-control" name="expert_level_id" required>
                         <option></option>
                         @foreach($expertLevels as $expertLevel)
                         <option value="{{ $expertLevel->id }}" @if($expertLevel->id == $psychologist->expert_level_id) selected @endif>{{ $expertLevel->name }}</option>
                         @endforeach
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label class="control-label col-md-3 col-sm-3 ">Expert Category</label>
+                    <div class="col-md-9 col-sm-9 ">
+                      <select class="form-control" name="expert_category">
+                        <option value="None" @if($psychologist->expert_category == 'None') selected @endif>None</option>
+                        <option value="Clinical Psychologist (RCI Registered)" @if($psychologist->expert_category == 'Clinical Psychologist (RCI Registered)') selected @endif>Clinical Psychologist (RCI Registered)</option>
+                        <option value="Clinical Psychologist" @if($psychologist->expert_category == 'Clinical Psychologist') selected @endif>Clinical Psychologist</option>
+                        <option value="Counselling psychologist" @if($psychologist->expert_category == 'Counselling psychologist') selected @endif>Counselling psychologist</option>
                       </select>
                     </div>
                   </div>

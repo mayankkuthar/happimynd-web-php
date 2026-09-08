@@ -284,6 +284,7 @@ class PsychologistController extends Controller
             $psychologist->summary = $request->summary;
             $psychologist->city_id = $request->city_id;
             $psychologist->expert_level_id = $request->expert_level_id;
+            $psychologist->expert_category = $request->expert_category ?? 'None';
             $psychologist->password = $request->password;
 
             $psychologist->commission_percentage = $request->commission_percentage;

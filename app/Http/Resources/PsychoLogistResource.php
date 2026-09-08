@@ -26,6 +26,7 @@ class PsychoLogistResource extends JsonResource
             'custom_price' => $this->custom_price,
             'expert_level' => $this->expertLevel,
             'expert_level_id' => $this->expert_level_id,
+            'expert_category' => $this->expert_category,
             'languages' => $this->printLanguages(),
             'plans' => $t,
             'full_name' => $this->full_name,

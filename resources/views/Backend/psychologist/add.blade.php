@@ -91,13 +91,24 @@
                     </div>
                   </div>
                   <div class="form-group row">
-                    <label class="control-label col-md-3 col-sm-3 ">Expert Level</label>
+                    <label class="control-label col-md-3 col-sm-3 ">Grade</label>
                     <div class="col-md-9 col-sm-9 ">
                       <select class="form-control" name="expert_level_id" required>
                         <option></option>
                         @foreach($expertLevels as $expertLevel)
                           <option value="{{ $expertLevel->id }}">{{ $expertLevel->name }}</option>
                         @endforeach
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label class="control-label col-md-3 col-sm-3 ">Expert Category</label>
+                    <div class="col-md-9 col-sm-9 ">
+                      <select class="form-control" name="expert_category">
+                        <option value="None" selected>None</option>
+                        <option value="Clinical Psychologist (RCI Registered)">Clinical Psychologist (RCI Registered)</option>
+                        <option value="Clinical Psychologist">Clinical Psychologist</option>
+                        <option value="Counselling psychologist">Counselling psychologist</option>
                       </select>
                     </div>
                   </div>

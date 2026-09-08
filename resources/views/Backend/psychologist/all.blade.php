@@ -26,7 +26,7 @@
                           <th class="" aria-controls="datatable-buttons" rowspan="1" colspan="1" style="width: 110px;" aria-label=""># <input type="checkbox" id="check-all"> </th>
                           <th class="sorting" tabindex="0" aria-controls="datatable-buttons" rowspan="1" colspan="1" style="width: 110px;" aria-label="Name: activate to sort column ascending">Name</th>
                           <th class="sorting" tabindex="0" aria-controls="datatable-buttons" rowspan="1" colspan="1" style="width: 177px;" aria-label="Position: activate to sort column ascending">Specialization</th>
-                          <th class="sorting_desc" tabindex="0" aria-controls="datatable-buttons" rowspan="1" colspan="1" style="width: 81px;" aria-label="Office: activate to sort column ascending" aria-sort="descending">Expert Level</th>
+                          <th class="sorting_desc" tabindex="0" aria-controls="datatable-buttons" rowspan="1" colspan="1" style="width: 81px;" aria-label="Office: activate to sort column ascending" aria-sort="descending">Grade</th>
                           <th class="sorting" tabindex="0" aria-controls="datatable-buttons" rowspan="1" colspan="1" style="width: 35px;" aria-label="Age: activate to sort column ascending">Summary</th>
                           <th class="sorting" tabindex="0" aria-controls="datatable-buttons" rowspan="1" colspan="1" style="width: 75px;" aria-label="Start date: activate to sort column ascending">Languages</th>
                           <th class="sorting" tabindex="0" aria-controls="datatable-buttons" rowspan="1" colspan="1" style="width: 60px;" aria-label="Salary: activate to sort column ascending">City</th>
