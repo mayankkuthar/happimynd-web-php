@@ -23,21 +23,42 @@ This document describes the JSON API endpoints provided for the **React frontend
 
 Replaces the web page `GET /buy-bundles` (`PaymentController@buyBundle`).
 
+- **Method/Endpoint:** `GET /api/v1/packages`
 - **Controller:** `api\v1\PaymentController@packages`
-- **Auth:** Optional. When a user JWT is sent, each package/plan gains an `is_subscribed` flag.
-- **Behavior:** identical to the web page — org users (`bundle=0`) vs. full list, fixed sort order, and the HappiTALK package returns only its minimum-price expert plan.
-- **Response `data`:** array of packages:
-  ```json
-  [
+- **Auth:** Optional.
+
+**Request Headers (Payload):**
+```json
+{
+  "Accept": "application/json",
+  "Authorization": "Bearer <JWT>"   // OPTIONAL — include to receive is_subscribed flags (0/1) per package & plan
+}
+```
+
+**Request Body / Query Params:** None — this is a `GET` with no body and no required query parameters.
+
+- **Behavior:** identical to the web page — org users see only non-bundle packages (`bundle=0`), full list otherwise, fixed sort order, and the HappiTALK package returns only its minimum-price expert plan.
+
+**Response (200) — Full body:**
+```json
+{
+  "status": "success",
+  "message": "Packages get successfully.",
+  "data": [
     {
-      "id": 3, "name": "HappiLIFE Screening", "description": "...", "bundle": 0,
+      "id": 3,
+      "name": "HappiLIFE Screening",
+      "description": "...",
+      "bundle": 0,
       "is_subscribed": false,
       "plans": [
         {
-          "id": 12, "package_id": 3,
-          "price": 1499, "selling_price": 999,
+          "id": 12,
+          "package_id": 3,
+          "price": 1499,
+          "selling_price": 999,
           "per_session_selling_price": 999,
-          "offer": { "price": 999, "discount": "..." },
+          "offer": { "price": 999, "discount": 33 },
           "offer_max_discount": 33,
           "duration": { "id": 1, "name": "Onetime pay", "type": 1, "value": null, "frequency": null },
           "expert_level": null,
@@ -46,7 +67,34 @@ Replaces the web page `GET /buy-bundles` (`PaymentController@buyBundle`).
       ]
     }
   ]
-  ```
+}
+```
+
+**Field reference (`data[]`):**
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | int | Package id |
+| `name` | string | Package name (e.g. HappiLIFE Screening, HappiSELF, HappiTALK...) |
+| `description` | string/null | Package description |
+| `bundle` | int | `0` = single package, `1` = bundle deal |
+| `is_subscribed` | bool | `true` if any plan in the package is subscribed (only when Bearer token sent) |
+| `plans[]` | array | List of buyable plans for the package |
+
+**Plan fields:**
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | int | Plan id |
+| `package_id` | int | Parent package id |
+| `price` | float | Original (MRP) price |
+| `selling_price` | float | Price after offer discount (offer price, or `price` if no offer) |
+| `per_session_selling_price` | int/null | `selling_price / duration.frequency`, or `null` when frequency is unset |
+| `offer` | object/null | `{ "price": float, "discount": int }` — discounted price & discount %; `null` if no offer |
+| `offer_max_discount` | int/null | Highest discount % among the plan's offers |
+| `duration` | object/null | `{ id, name, type, value, frequency }` of the `DurationType` |
+| `expert_level` | string/null | Expert level name (e.g. "Expert") — populated for HappiTALK plans |
+| `is_subscribed` | bool | `true` if this plan is subscribed (only when Bearer token sent) |
 
 ---
 

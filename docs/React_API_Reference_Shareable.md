@@ -399,11 +399,14 @@ All params optional. Response:
 
 ## PART C — Buyable packages (pricing page)
 
-`GET /api/v1/packages` (public; send Bearer token to get `is_subscribed` flags)
+`GET /api/v1/packages` (public — GET, JSON)
+
+**Request headers (payload):** `Accept: application/json`; optional `Authorization: Bearer <JWT>` to receive `is_subscribed` flags. No request body / query params.
 
 ```json
 {
   "status": "success",
+  "message": "Packages get successfully.",
   "data": [
     {
       "id": 3,

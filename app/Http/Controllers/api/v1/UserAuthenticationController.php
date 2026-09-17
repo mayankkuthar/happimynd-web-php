@@ -1519,7 +1519,7 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
     public function moddEmojiList(Request $request){
         $data = MoodMeterEmoji::get();
 
-        $sortOrder = ["Delighted", "Happy", "Confused", "Disappointed", "Sad", "Angry", "Crying", "Scared", "Anxious"];
+        $sortOrder = ["Nervous", "Frustrated", "Sad", "Angry", "Happy", "Disappointed", "Confused", "Anxious", "Scared", "Calm"];
  
         $sortedData = Collection::make($data)->sortBy(function ($item) use ($sortOrder) {
             return array_search(ucfirst($item['name']), $sortOrder);
@@ -1547,19 +1547,21 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
         }
 
 
+        $positiveMoodIds = MoodMeterEmoji::whereIn('name', ['happy', 'calm'])->pluck('id')->toArray();
+
         $noti_emit_status = true;
 
         $last_6_mood = UserMood::where('user_id' , $user->id)->orderBy('id' , 'desc')->limit(6)->get();
         
         if(count($last_6_mood) == 6){
             foreach($last_6_mood as $row){
-                if($row->emoji_id == 1 || $row->emoji_id == 5){
+                if(in_array($row->emoji_id, $positiveMoodIds)){
                     $noti_emit_status = false;
                 }
             }
 
             if($noti_emit_status){
-                if($request->emoji_id != 1 && $request->emoji_id != 5){
+                if(!in_array($request->emoji_id, $positiveMoodIds)){
                     if($user->device_token && strlen($user->device_token) > 20){
                         $message = "Hey! It's seems you're feeling dull 😟 these days. Don't forget you have a BUDDY waiting for you to share and care. 🤗 Login to HappiBUDDY now!";
                         $title ="HappiBuddy";

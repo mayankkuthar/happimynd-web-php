@@ -16,30 +16,32 @@ class MoodMeterEmojiSeeder extends Seeder
     {
         
         $emoji_name = [
-            'delighted',
+            'calm',
+            'scared',
+            'anxious',
+            'confused',
             'disappointed',
-            'crying',
-            'sad',
             'happy',
             'angry',
-            'confused',
-            'anxious',
-            'scared',
+            'sad',
+            'frustrated',
+            'nervous',
         ];
 
         $emoji_image = [
-            'delighted.png',
+            'calm.png',
+            'scared.png',
+            'anxious.png',
+            'confused.png',
             'disappointed.png',
-            'crying.png',
-            'sad.png',
             'happy.png',
             'angry.png',
-            'confused.png',
-            'anxious.png',
-            'scared.png',
+            'sad.png',
+            'frustrated.png',
+            'nervous.png',
         ];
 
-        for ($i=0; $i < 9 ; $i++) { 
+        for ($i=0; $i < 10 ; $i++) { 
             
             $name = $emoji_name[$i];
             $image = $emoji_image[$i];

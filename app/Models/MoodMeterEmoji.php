@@ -21,8 +21,8 @@ class MoodMeterEmoji extends Model
 
     public function getImageAttribute()
     {
-        // return url('public/assets/Mood-O-Meter').'/'.$this->attributes['image'];
-        return Storage::url(config('constants.mediaAssets.mood_o_meter_emojies.folderName').''.$this->attributes['image']);
+        $url = Storage::url(config('constants.mediaAssets.mood_o_meter_emojies.folderName').''.$this->attributes['image']);
+        return $url.'?v='.strtotime($this->attributes['updated_at']);
     }
     
 
