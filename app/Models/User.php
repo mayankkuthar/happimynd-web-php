@@ -187,13 +187,14 @@ class User extends Authenticatable implements JWTSubject
         return 0;
     }
     
-    // Get all assessments for the user where report is null
+    // Get all completed assessments for the user where report is still null
     $assessments = Assessment::where('user_id', $user_id)
+                            ->whereNotNull('ended_at')
                             ->whereNull('report')
                             ->get();
     
     if ($assessments->isEmpty()) {
-        \Log::debug('No assessments with null reports found for userId:' . $user_id);
+        \Log::debug('No completed assessments with null reports found for userId:' . $user_id);
         return 0;
     }
     
