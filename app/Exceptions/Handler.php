@@ -55,8 +55,28 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $e)
     {
-        if ($request instanceof Request && $this->isHubRequest($request)) {
-            return $this->renderHubError($request, $e);
+        if ($request instanceof Request) {
+            // Unknown API routes always get the API_SPEC JSON envelope,
+            // whether or not they belong to a hub prefix.
+            if ($request->is('api/*') || $request->is('auth/*')) {
+                if ($e instanceof NotFoundHttpException) {
+                    return response()->json([
+                        'error' => 'NOT_FOUND',
+                        'message' => 'Cannot ' . $request->method() . ' ' . $request->getPathInfo(),
+                    ], 404);
+                }
+
+                if ($e instanceof MethodNotAllowedHttpException) {
+                    return response()->json([
+                        'error' => 'METHOD_NOT_ALLOWED',
+                        'message' => 'Cannot ' . $request->method() . ' ' . $request->getPathInfo(),
+                    ], 405);
+                }
+            }
+
+            if ($this->isHubRequest($request)) {
+                return $this->renderHubError($request, $e);
+            }
         }
 
         return parent::render($request, $e);
