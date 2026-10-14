@@ -63,6 +63,36 @@ return [
             ]) : [],
         ],
 
+        /*
+        |--------------------------------------------------------------------------
+        | HappiMynd Games Hub connection
+        |--------------------------------------------------------------------------
+        |
+        | The Games Hub (intern project) lives in its own MySQL database with
+        | its own "users" table, isolated from the main app. See the hub
+        | migrations (database/migrations/hub) and config/hub.php.
+        |
+        */
+        'hub' => [
+            'driver' => 'mysql',
+            'url' => env('HUB_DATABASE_URL'),
+            'host' => env('HUB_DB_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('HUB_DB_PORT', env('DB_PORT', '3306')),
+            'database' => env('HUB_DB_DATABASE', 'happimynd_hub'),
+            'username' => env('HUB_DB_USERNAME', env('DB_USERNAME', 'root')),
+            'password' => env('HUB_DB_PASSWORD', env('DB_PASSWORD', '')),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => env('HUB_DB_COLLATION', 'utf8mb4_0900_ai_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => 'InnoDB',
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DATABASE_URL'),

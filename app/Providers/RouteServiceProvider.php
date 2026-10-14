@@ -48,6 +48,21 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->namespace($this->namespace)
                 ->group(base_path('routes/web.php'));
+
+            // HappiMynd Games Hub (intern project) — its own middleware group,
+            // served under the same /api prefix.
+            Route::prefix('api')
+                ->middleware('hub')
+                ->group(base_path('routes/hub.php'));
+
+            // /api/auth/* and the /auth/* alias share the same auth routes.
+            Route::prefix('api/auth')
+                ->middleware('hub')
+                ->group(base_path('routes/hub_auth.php'));
+
+            Route::prefix('auth')
+                ->middleware('hub')
+                ->group(base_path('routes/hub_auth.php'));
         });
     }
 

@@ -44,6 +44,13 @@ class Kernel extends HttpKernel
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
+
+        // Games Hub API (intern project): isolated from throttle:api so
+        // fire-and-forget tracking is not rate limited like the main API.
+        'hub' => [
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\HubSetUtcTimezone::class,
+        ],
     ];
 
     /**
@@ -68,6 +75,9 @@ class Kernel extends HttpKernel
         'jwt.verify' => \App\Http\Middleware\JwtMiddleware::class,
 
         'psychologist' => \App\Http\Middleware\Psychologist::class,
+
+        'hub.admin' => \App\Http\Middleware\HubAdminAuthenticate::class,
+        'hub.admin.nostore' => \App\Http\Middleware\HubNoStore::class,
 
     ];
 }
