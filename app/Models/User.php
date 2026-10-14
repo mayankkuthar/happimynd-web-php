@@ -602,6 +602,50 @@ class User extends Authenticatable implements JWTSubject
         return 0;
     }
 
+    public function getSessionsLeftAttribute()
+    {
+        $bundleStatuses = BundleStatus::where('user_id', $this->id)
+            ->Valid()
+            ->with('plans.package')
+            ->get();
+
+        $bundleHappiTalkGranted = 0;
+        $solvGranted = 0;
+
+        foreach ($bundleStatuses as $bundleStatus) {
+            $plan = $bundleStatus->plans;
+            $packageName = strtolower(optional($plan)->package ? $plan->package->name : '');
+
+            if ($packageName === 'happitalk') {
+                $sessions = DynamicBundlePlan::where('plan_id', $bundleStatus->plan_id)->max('sessions');
+                $bundleHappiTalkGranted += $sessions ? (int)$sessions : 1;
+            } elseif ($packageName === 'happiguide' && $bundleStatus->percentage_covered == 100.00) {
+                $solvGranted += 1;
+            }
+        }
+
+        $organizationHappiTalkSessions = $this->getOrganizationHappiTalkSessions();
+
+        $bookedTotal = (float) HappitalkBooking::where('user_id', $this->id)->sum('total_no_of_session');
+        $bookedRemaining = (float) HappitalkBooking::where('user_id', $this->id)->sum('remaining_session');
+
+        $happiTalkGranted = max($bundleHappiTalkGranted + $organizationHappiTalkSessions, $bookedTotal);
+        $happiTalkUsed = max($bookedTotal - $bookedRemaining, 0);
+        $happiTalkSessionsLeft = max($happiTalkGranted - $happiTalkUsed, 0);
+
+        $solvUsed = HappiguideSession::where('user_id', $this->id)->count();
+        $solvSessionsLeft = max($solvGranted - $solvUsed, 0);
+
+        return [
+            'happitalk_total' => $happiTalkGranted,
+            'happitalk_used' => $happiTalkUsed,
+            'happitalk_sessions_left' => $happiTalkSessionsLeft,
+            'solv_total' => $solvGranted,
+            'solv_used' => $solvUsed,
+            'solv_sessions_left' => $solvSessionsLeft,
+        ];
+    }
+
     public function usersRating(){
         return $this->hasOne(UsersRating::class)->with('applicationRatingEmoji');
     }

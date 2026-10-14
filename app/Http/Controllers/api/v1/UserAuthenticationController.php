@@ -416,11 +416,14 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
 
         User::where('username' , $username)->update(['device_token' => $device_token]);
 
+        $user = Auth::user();
+        $user->append('sessions_left');
+
         return response()->json([
             'access_token' => $data,
             'token_type' => 'bearer',
             // 'expires_in' => auth('api')->factory()->getTTL() * 60,
-            'user' => Auth::user()
+            'user' => $user
         ]);
     }
 
@@ -434,11 +437,13 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
             return response()->json(['status' => 'failed' , 'message' => 'Invalid username and password.' , 'error' => 'Unauthorized'], 401);
         }
 
+        $user_Details->append('sessions_left');
+
         return response()->json([
             'access_token' => $data,
             'token_type' => 'bearer',
             // 'expires_in' => auth('api')->factory()->getTTL() * 60,
-            'user' => Auth::user()
+            'user' => $user_Details
         ]);
     }
 
@@ -1094,6 +1099,8 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
                 return response()->json(['status' => 'error', 'message' => 'Unable to login. Please try again.'], 401);
             }
             User::where('id', $user->id)->update(['device_token' => $request->device_token]);
+
+            $user->append('sessions_left');
 
             return response()->json([
                 'status' => 'success',
