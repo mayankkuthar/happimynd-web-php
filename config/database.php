@@ -93,6 +93,68 @@ return [
             ]) : [],
         ],
 
+        /*
+        |--------------------------------------------------------------------------
+        | HR Auto (Resume Extractor) connection
+        |--------------------------------------------------------------------------
+        |
+        | Intern project. Its own MySQL database on the same server as the hub.
+        | All access goes through the /api/hr API; the intern app never gets
+        | these credentials. Session settings (READ-COMMITTED, group_concat)
+        | are applied per request by App\Http\Middleware\HrSetSessionSettings.
+        |
+        */
+        'hr' => [
+            'driver' => 'mysql',
+            'url' => env('HR_DATABASE_URL'),
+            'host' => env('HR_DB_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('HR_DB_PORT', env('DB_PORT', '3306')),
+            'database' => env('HR_DB_DATABASE', 'hr_auto'),
+            'username' => env('HR_DB_USERNAME', 'hr_api'),
+            'password' => env('HR_DB_PASSWORD', ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_0900_ai_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => 'InnoDB',
+            'timezone' => '+00:00',
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Invoice Platform connection
+        |--------------------------------------------------------------------------
+        |
+        | Intern project. Its own MySQL database (utf8mb4_unicode_ci). Access is
+        | through the /api/invoice API only.
+        |
+        */
+        'invoice' => [
+            'driver' => 'mysql',
+            'url' => env('INVOICE_DATABASE_URL'),
+            'host' => env('INVOICE_DB_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('INVOICE_DB_PORT', env('DB_PORT', '3306')),
+            'database' => env('INVOICE_DB_DATABASE', 'invoice_platform'),
+            'username' => env('INVOICE_DB_USERNAME', 'invoice_api'),
+            'password' => env('INVOICE_DB_PASSWORD', ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => 'InnoDB',
+            'timezone' => '+00:00',
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DATABASE_URL'),

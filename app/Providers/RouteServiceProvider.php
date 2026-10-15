@@ -59,6 +59,16 @@ class RouteServiceProvider extends ServiceProvider
             Route::prefix('api/hub/auth')
                 ->middleware('hub')
                 ->group(base_path('routes/hub_auth.php'));
+
+            // HR Auto (Resume Extractor) — intern project, own MySQL database.
+            Route::prefix('api/hr')
+                ->middleware('hr')
+                ->group(base_path('routes/hr.php'));
+
+            // Invoice Platform — intern project, own MySQL database.
+            Route::prefix('api/invoice')
+                ->middleware('invoice')
+                ->group(base_path('routes/invoice.php'));
         });
     }
 

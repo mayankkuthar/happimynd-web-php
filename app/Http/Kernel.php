@@ -51,6 +51,20 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\HubSetUtcTimezone::class,
         ],
+
+        // HR Auto API (intern project): own MySQL connection. Sets UTC and the
+        // session settings (READ-COMMITTED, group_concat_max_len) the ported
+        // queries need, without touching the server configuration.
+        'hr' => [
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\HrSetSessionSettings::class,
+        ],
+
+        // Invoice Platform API (intern project): own MySQL connection.
+        'invoice' => [
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\InvoiceSetSessionSettings::class,
+        ],
     ];
 
     /**
@@ -78,6 +92,10 @@ class Kernel extends HttpKernel
 
         'hub.admin' => \App\Http\Middleware\HubAdminAuthenticate::class,
         'hub.admin.nostore' => \App\Http\Middleware\HubNoStore::class,
+
+        // Intern projects (HR Auto, Invoice Platform).
+        'hr.auth' => \App\Http\Middleware\HrAuthenticate::class,
+        'invoice.auth' => \App\Http\Middleware\InvoiceAuthenticate::class,
 
     ];
 }

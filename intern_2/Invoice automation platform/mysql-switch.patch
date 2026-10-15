@@ -1,0 +1,287 @@
+diff --git a/apps/api/src/routes/clients.ts b/apps/api/src/routes/clients.ts
+index 4633519..e08955e 100644
+--- a/apps/api/src/routes/clients.ts
++++ b/apps/api/src/routes/clients.ts
+@@ -31,7 +31,7 @@ clientsRouter.get("/", requireAuth, async (req, res) => {
+     ...(search
+       ? {
+           OR: [
+-            { clientName: { contains: search, mode: "insensitive" } },
++            { clientName: { contains: search } },
+             { phone: { contains: search } },
+           ],
+         }
+diff --git a/apps/api/src/routes/invoices.ts b/apps/api/src/routes/invoices.ts
+index 2649ebd..1adf9e5 100644
+--- a/apps/api/src/routes/invoices.ts
++++ b/apps/api/src/routes/invoices.ts
+@@ -31,7 +31,7 @@ export async function computeInvoiceLedgerStats() {
+     // Broader than duplicateTransactionsDetected: any record carrying a false-data-detection flag
+     // (see decideInvoiceVerification in @invoice/shared) — missing/invalid amount, "Confirm" with
+     // no payment info, or a reused invoice number — not just a re-synced duplicate row.
+-    prisma.invoiceTransaction.count({ where: { ...currentGroup, NOT: { flags: { isEmpty: true } } } }),
++    prisma.invoiceTransaction.count({ where: { ...currentGroup, NOT: { flags: { equals: [] } } } }),
+   ]);
+ 
+   type StatusGroup = (typeof byStatus)[number];
+@@ -99,8 +99,8 @@ invoicesRouter.get("/", requireAuth, async (req, res) => {
+     // Excludes groups whose only linked payment(s) were removed from the current spreadsheet —
+     // see the comment on computeInvoiceLedgerStats above.
+     paymentsCount: { gt: 0 },
+-    ...(clientName ? { clientNameRaw: { contains: clientName, mode: "insensitive" } } : {}),
+-    ...(invoiceNumber ? { invoiceNumber: { contains: invoiceNumber, mode: "insensitive" } } : {}),
++    ...(clientName ? { clientNameRaw: { contains: clientName } } : {}),
++    ...(invoiceNumber ? { invoiceNumber: { contains: invoiceNumber } } : {}),
+     ...(paymentDate ? { paymentDate: { gte: new Date(`${paymentDate}T00:00:00.000Z`), lt: new Date(`${paymentDate}T23:59:59.999Z`) } } : {}),
+     ...(paymentStatus ? { paymentVerified: paymentStatus === "paid" } : {}),
+     ...(status ? { status } : {}),
+@@ -138,7 +138,7 @@ invoicesRouter.get("/", requireAuth, async (req, res) => {
+       paymentVerified: r.paymentVerified,
+       status: r.status,
+       reviewReason: r.reviewReason,
+-      flags: r.flags,
++      flags: r.flags as string[],
+       occurrenceCount: r.occurrenceCount,
+       dataProcessingId: r.dataProcessingId,
+       generatedAt: r.generatedAt?.toISOString() ?? null,
+diff --git a/apps/api/src/routes/payments.ts b/apps/api/src/routes/payments.ts
+index a310fd3..281e0e6 100644
+--- a/apps/api/src/routes/payments.ts
++++ b/apps/api/src/routes/payments.ts
+@@ -27,7 +27,7 @@ paymentsRouter.get("/", requireAuth, async (req, res) => {
+     // softDeleteMissingRows in syncEngine.ts) must never appear as current data.
+     session: { active: true },
+     ...(paymentMode ? { paymentMode } : {}),
+-    ...(invoiceNumber ? { invoiceNumber: { contains: invoiceNumber, mode: "insensitive" as const } } : {}),
++    ...(invoiceNumber ? { invoiceNumber: { contains: invoiceNumber } } : {}),
+     ...(dateFrom || dateTo
+       ? {
+           paymentDate: {
+diff --git a/apps/worker/src/sync/syncEngine.ts b/apps/worker/src/sync/syncEngine.ts
+index f37ee4f..08b5ac0 100644
+--- a/apps/worker/src/sync/syncEngine.ts
++++ b/apps/worker/src/sync/syncEngine.ts
+@@ -55,7 +55,7 @@ async function ensureProcessingForType(args: EnsureProcessingArgs): Promise<stri
+     const changed = hasDependencyChanged(
+       latest ? oldContext : null, // no prior record at all -> always process
+       newContext,
+-      template.dependencyFields,
++      template.dependencyFields as string[],
+     );
+ 
+     if (latest && !changed) continue; // meaningful-change gate: nothing to do
+@@ -175,16 +175,19 @@ async function findDuplicateInvoiceNumber(invoiceNumber: string | null, excludeI
+   if (!invoiceNumber) return false;
+   const other = await prisma.invoiceTransaction.findFirst({
+     where: { invoiceNumber, paymentsCount: { gt: 0 }, ...(excludeId ? { id: { not: excludeId } } : {}) },
+-    select: { id: true },
++    select: { id: true, flags: true },
+   });
+   if (other) {
+     // Best-effort: the other side may not have been touched by a sync in a while — surface the
+     // conflict there too instead of waiting for its own row to resync (which might never happen
+     // again if that row is otherwise unchanged).
+-    await prisma.invoiceTransaction.updateMany({
+-      where: { id: other.id, NOT: { flags: { has: "DUPLICATE_INVOICE_NUMBER" } } },
+-      data: { status: "NEEDS_REVIEW", flags: { push: "DUPLICATE_INVOICE_NUMBER" } },
+-    });
++    const flags = other.flags as string[];
++    if (!flags.includes("DUPLICATE_INVOICE_NUMBER")) {
++      await prisma.invoiceTransaction.update({
++        where: { id: other.id },
++        data: { status: "NEEDS_REVIEW", flags: [...flags, "DUPLICATE_INVOICE_NUMBER"] },
++      });
++    }
+     return true;
+   }
+   return false;
+diff --git a/packages/database/prisma/schema.prisma b/packages/database/prisma/schema.prisma
+index 0aa54ef..db03f35 100644
+--- a/packages/database/prisma/schema.prisma
++++ b/packages/database/prisma/schema.prisma
+@@ -7,7 +7,7 @@ generator client {
+ }
+ 
+ datasource db {
+-  provider = "postgresql"
++  provider = "mysql"
+   url      = env("DATABASE_URL")
+ }
+ 
+@@ -128,7 +128,7 @@ model Client {
+   // the only way.
+   email     String?
+   state     String?
+-  profile   String?
++  profile   String? @db.Text
+   active    Boolean @default(true) // soft-delete: false when row disappears from source
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+@@ -152,11 +152,11 @@ model Session {
+   client         Client        @relation(fields: [clientId], references: [id])
+ 
+   product        String?
+-  source         String?
+-  profile        String?
++  source         String? @db.Text
++  profile        String? @db.Text
+   // "Client Session Purchased" (e.g. "4 sessions") — only populated on the row that recorded
+   // the actual payment; blank on follow-up "- Repeat" usage rows for the same package.
+-  packageDescription String?
++  packageDescription String? @db.Text
+   // Ordinal assigned by the app (1, 2, 3, ...) per client, derived from row arrival order.
+   sessionNumber  Int
+   // Raw "Session Count" value as reported by the spreadsheet for this row, kept for reference/validation.
+@@ -206,12 +206,12 @@ model Payment {
+   cgst           Decimal? @db.Decimal(14, 2)
+   sgst           Decimal? @db.Decimal(14, 2)
+   invoiceNumber  String?
+-  paymentProof     String?
++  paymentProof     String? @db.Text
+   paymentProofType PaymentProofType @default(UNKNOWN)
+   // Raw text of the sheet's "Confirmed" column, and this app's derived verdict — see
+   // isPaymentVerified() in @invoice/shared for how paymentVerified is actually decided
+   // (an explicit status wins; otherwise falls back to data completeness).
+-  paymentStatus    String?
++  paymentStatus    String? @db.Text
+   paymentVerified  Boolean @default(false)
+ 
+   // The consolidated invoice (Client + Payment Date group) this payment belongs to — see
+@@ -265,14 +265,14 @@ model InvoiceTransaction {
+   dataProcessingId String?         @unique
+   dataProcessing   DataProcessing? @relation(fields: [dataProcessingId], references: [id])
+ 
+-  clientNameRaw String
++  clientNameRaw String @db.Text
+   // App-owned once assigned: taken from the first linked row's invoice number if the source
+   // provided one, otherwise auto-generated (see generateInvoiceNumber in syncEngine.ts). Never
+   // reassigned after creation — shared by every payment/session that joins this invoice.
+   invoiceNumber String?
+   paymentDate   DateTime?
+ 
+-  paymentStatusRaw String?
++  paymentStatusRaw String? @db.Text
+   paymentVerified  Boolean @default(false)
+ 
+   // Aggregate totals across every linked Payment — recomputed by fresh summation (never
+@@ -284,7 +284,7 @@ model InvoiceTransaction {
+   cgst          Decimal? @db.Decimal(14, 2)
+   sgst          Decimal? @db.Decimal(14, 2)
+   paymentMode   String?
+-  paymentProof  String?
++  paymentProof  String? @db.Text
+   // Sum of each linked payment's session's reportedSessionCount — sessions BOOKED/PAID FOR,
+   // never sessions completed/used (see Session.sessionsConducted, which this must never read).
+   sessionsBooked Int?
+@@ -293,18 +293,18 @@ model InvoiceTransaction {
+   paymentsCount Int @default(0)
+ 
+   status       InvoiceGenStatus @default(PENDING)
+-  reviewReason String? // why this is NEEDS_REVIEW, or the last verification failure reason
++  reviewReason String? @db.Text // why this is NEEDS_REVIEW, or the last verification failure reason
+   // Machine-readable warning codes from the payment-verification cross-check (see
+   // decideInvoiceVerification in @invoice/shared) — e.g. ["AMOUNT_MISSING", "DUPLICATE_INVOICE_NUMBER"].
+   // Drives the UI's warning badges; reviewReason stays the human-readable summary.
+-  flags String[] @default([])
++  flags Json // JSON array of flag codes; MySQL has no scalar lists (was String[] on Postgres)
+ 
+   // How many synced rows have mapped to this same key — >1 means the source sheet had
+   // duplicate/repeat rows for this transaction, all safely consolidated into this one record.
+   occurrenceCount Int @default(1)
+ 
+   generatedAt DateTime?
+-  error       String?
++  error       String? @db.Text
+ 
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+@@ -337,13 +337,13 @@ model VoiceProcessing {
+   template         Template?         @relation(fields: [templateId], references: [id])
+ 
+   status           ProcessingStatus  @default(PENDING)
+-  content          String?           // rendered script/text used to drive generation
+-  outputReference  String?           // URL / file reference to generated audio
++  content          String? @db.MediumText // rendered script/text used to drive generation
++  outputReference  String? @db.Text // URL / file reference to generated audio
+   contentVersion   Int               @default(1)
+   idempotencyKey   String            @unique
+ 
+   retryCount       Int               @default(0)
+-  error            String?
++  error            String? @db.Text
+   processedAt      DateTime?
+ 
+   createdAt DateTime @default(now())
+@@ -364,19 +364,19 @@ model DataProcessing {
+   template         Template?         @relation(fields: [templateId], references: [id])
+ 
+   status           ProcessingStatus  @default(PENDING)
+-  content          String?           // rendered content (e.g. invoice/data document payload)
+-  outputReference  String?           // URL / file reference to generated output
++  content          String? @db.MediumText // rendered content (e.g. invoice/data document payload)
++  outputReference  String? @db.Text // URL / file reference to generated output
+   // Base64-encoded generated artifact (e.g. the invoice PDF). Nullable — only processors that
+   // produce a binary output (InvoicePdfDataProcessor) populate this.
+-  pdfBase64        String?           @db.Text
++  pdfBase64        String?           @db.LongText
+   contentVersion   Int               @default(1)
+   idempotencyKey   String            @unique
+ 
+   retryCount       Int               @default(0)
+-  error            String?
++  error            String? @db.Text
+   processedAt      DateTime?
+   lastEmailedAt    DateTime?
+-  lastEmailedTo    String?
++  lastEmailedTo    String? @db.Text
+ 
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+@@ -392,9 +392,9 @@ model Template {
+   id               String         @id @default(cuid())
+   name             String
+   type             ProcessingType
+-  body             String         // template text with {{variable}} placeholders
++  body             String @db.Text // template text with {{variable}} placeholders
+   // Field names that, when changed on the source row, require reprocessing (version bump).
+-  dependencyFields String[]
++  dependencyFields Json // JSON array of field names; MySQL has no scalar lists (was String[] on Postgres)
+   active           Boolean        @default(true)
+   version          Int            @default(1)
+   createdAt DateTime @default(now())
+@@ -419,7 +419,7 @@ model ProcessingJob {
+   retryCount     Int            @default(0)
+   startedAt      DateTime?
+   completedAt    DateTime?
+-  error          String?
++  error          String? @db.Text
+ 
+   createdAt DateTime @default(now())
+   updatedAt DateTime @updatedAt
+@@ -444,7 +444,7 @@ model SyncRecord {
+   lastModifiedAt DateTime?
+   syncStatus     SyncRowStatus @default(NEW)
+   rawData        Json?         // raw row snapshot, for debugging/audit
+-  errorMessage   String?
++  errorMessage   String? @db.Text
+ 
+   clientId  String?
+   sessionId String?
+@@ -466,7 +466,7 @@ model SyncRun {
+   recordsUpdated  Int       @default(0)
+   recordsSkipped  Int       @default(0)
+   recordsErrored  Int       @default(0)
+-  errorSummary    String?
++  errorSummary    String? @db.Text
+ 
+   @@index([startedAt])
+ }
+@@ -507,7 +507,7 @@ model RazorpayPaymentRecord {
+   method            String?
+   email             String?
+   contact           String?
+-  notes             String?
++  notes             String? @db.Text
+   razorpayCreatedAt DateTime?
+ 
+   matchStatus      RazorpayMatchStatus @default(NO_MATCH)
