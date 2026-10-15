@@ -12,9 +12,8 @@ use Illuminate\Support\Facades\Route;
 | HappiMynd Games Hub API (intern project)
 |--------------------------------------------------------------------------
 |
-| Served under /api (see RouteServiceProvider). Contract: API_SPEC.md.
-| The auth/SSO endpoints live in routes/hub_auth.php so they can also be
-| exposed at the /auth/* alias.
+| Served under /api/hub (see RouteServiceProvider). Contract: API_SPEC.md.
+| Auth endpoints live in routes/hub_auth.php.
 |
 */
 

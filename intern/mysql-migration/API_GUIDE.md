@@ -5,8 +5,8 @@ database. It implements the contract in `API_SPEC.md`. **Your front end should
 only need `VITE_API_URL` changed** — every path and response shape matches what
 you already call.
 
-- **Base URL:** `https://<api-host>` (set as `VITE_API_URL`, no trailing slash)
-- **Paths:** all endpoints are under `/api/...` (`/auth/...` also works as an alias for `/api/auth/...`)
+- **Base URL:** `https://happimynd.com` (set as `VITE_API_URL`, origin only, no trailing slash)
+- **Paths:** all endpoints are under `/api/hub/...` (e.g. `${VITE_API_URL}/api/hub/catalog`)
 - **Format:** JSON in/out, except the tracking endpoints and progress saves, which take a `text/plain` body
 
 ---
@@ -15,13 +15,13 @@ you already call.
 
 ```bash
 # .env / Vercel env
-VITE_API_URL=https://<api-host>
+VITE_API_URL=https://happimynd.com
 ```
 
 Verify the API is up:
 
 ```bash
-curl -s https://<api-host>/api/health
+curl -s https://happimynd.com/api/hub/health
 # {"status":"ok","service":"happimynd-games-hub","timestamp":"2026-10-14T08:00:14+00:00","dbConnected":true}
 ```
 
@@ -37,7 +37,7 @@ If `dbConnected` is `false`, the server can't reach MySQL — tell the backend o
 The `message` is what you show the user. **Unknown route** →
 
 ```json
-404 { "error": "NOT_FOUND", "message": "Cannot GET /api/x" }
+404 { "error": "NOT_FOUND", "message": "Cannot GET /api/hub/x" }
 ```
 
 - **Times** are UTC ISO-8601 strings (e.g. `2026-10-14T08:00:55+00:00`).
@@ -61,7 +61,7 @@ interface UserProfile {
 }
 ```
 
-### `POST /api/auth/signup`
+### `POST /api/hub/auth/signup`
 
 ```jsonc
 // request
@@ -71,7 +71,7 @@ interface UserProfile {
 `201 { "success": true, "user": UserProfile }`
 Validation errors return `400` with a friendly `message` (e.g. `"Please enter a valid email address."`, `Username "@ada" is already taken.`).
 
-### `POST /api/auth/login`
+### `POST /api/hub/auth/login`
 
 ```jsonc
 // request — loginIdentifier may be the username or the email
@@ -81,12 +81,12 @@ Validation errors return `400` with a friendly `message` (e.g. `"Please enter a 
 `200 { "success": true, "user": UserProfile }`
 `400` if fields are missing; `401 "Invalid email or password"` if wrong.
 
-### `GET /api/auth/me?userId=<uuid>`
+### `GET /api/hub/auth/me?userId=<uuid>`
 
 Also accepts an `x-user-id: <uuid>` header instead of the query param.
 `200 { "success": true, "user": UserProfile }` · `401` no id · `404` unknown user.
 
-### `POST /api/auth/logout`
+### `POST /api/hub/auth/logout`
 
 `200 { "success": true }` (nothing is stored server-side).
 
@@ -99,7 +99,7 @@ Tetris (`emotional-tetris`) keep level/settings progress server-side for signed-
 players. One save per player per game; the save is an opaque JSON object the game
 owns. Guests keep their save in the browser and never call these.
 
-### `GET /api/progress/:slug?userId=<uuid>`
+### `GET /api/hub/progress/:slug?userId=<uuid>`
 
 `200 { "success": true, "data": { ... }, "updatedAt": "2026-10-14T08:00:55+00:00" }`
 No save yet (or unreadable stored text) → `200 { "success": true, "data": null, "updatedAt": null }`.
@@ -107,7 +107,7 @@ No save yet (or unreadable stored text) → `200 { "success": true, "data": null
 
 The game calls this when it opens, then merges the server copy with the browser copy.
 
-### `POST /api/progress/:slug`
+### `POST /api/hub/progress/:slug`
 
 Sent like tracking — debounced (~1.5 s after the last change):
 
@@ -137,7 +137,7 @@ Success is **`204` with no body**; validation failure is `400`. The client can i
 | `gameSlug` | `/^[a-z0-9][a-z0-9-]{0,59}$/` |
 | `sessionId` | a UUID |
 
-### `POST /api/track/event`
+### `POST /api/hub/track/event`
 
 ```jsonc
 { "type": "hub_open", "userType": "guest" }
@@ -145,13 +145,13 @@ Success is **`204` with no body**; validation failure is `400`. The client can i
 
 `hub_open` is the only event type now; any other `type` is a `400`.
 
-### `POST /api/track/session/start`
+### `POST /api/hub/track/session/start`
 
 ```jsonc
 { "sessionId": "<uuid>", "gameSlug": "night-sky", "userType": "guest" }
 ```
 
-### `POST /api/track/session/end`
+### `POST /api/hub/track/session/end`
 
 ```jsonc
 {
@@ -170,7 +170,7 @@ Success is **`204` with no body**; validation failure is `400`. The client can i
 
 ## 6. Public content
 
-### `GET /api/catalog`
+### `GET /api/hub/catalog`
 
 ```json
 {
@@ -185,9 +185,9 @@ Success is **`204` with no body**; validation failure is `400`. The client can i
 `Cache-Control: public, max-age=30`.
 
 > Server-side page rendering: change `src/lib/catalog.ts` to fetch
-> `${VITE_API_URL}/api/catalog` instead of reading the database directly.
+> `${VITE_API_URL}/api/hub/catalog` instead of reading the database directly.
 
-### `GET /api/content/:slug`
+### `GET /api/hub/content/:slug`
 
 ```json
 {
@@ -207,22 +207,22 @@ Only customised lists appear; each value is the JSON exactly as stored.
 ## 7. Admin dashboard
 
 The dashboard calls these with `credentials: "include"`. Auth is a cookie named
-`hm_admin` (set on login). **It is `Path=/api/admin` and `SameSite=Strict`, so the
-admin API must be on the same site as the web app** — e.g. `hub.happimynd.com`
-and `api.happimynd.com` under one domain. On a totally different domain the
-cookie won't be sent.
+`hm_admin` (set on login). **It is `Path=/api/hub/admin` and `SameSite=Strict`, so the
+admin API must be on the same site as the web app** — e.g. `happimynd.com`
+(or a subdomain like `hub.happimynd.com`, which is same-site). On a totally
+different domain the cookie won't be sent.
 
 Every admin response sends `Cache-Control: no-store`.
 
 | Method | Path | Result |
 | --- | --- | --- |
-| POST | `/api/admin/login` | `200 { success: true }` + `Set-Cookie: hm_admin` |
-| POST | `/api/admin/logout` | `200`, clears the cookie |
-| GET | `/api/admin/session` | `{ success, configured, authenticated, email? }` (no login needed) |
-| GET | `/api/admin/overview?days=7\|30\|90&tz=<minutes>` | `{ success, overview }` |
-| GET | `/api/admin/catalog` | `{ success, overrides }` (uncached) |
-| GET | `/api/admin/content` | `{ success, content: [{ game, collection, items }] }` |
-| PUT | `/api/admin/publish` | `{ success, overrides, content }` |
+| POST | `/api/hub/admin/login` | `200 { success: true }` + `Set-Cookie: hm_admin` |
+| POST | `/api/hub/admin/logout` | `200`, clears the cookie |
+| GET | `/api/hub/admin/session` | `{ success, configured, authenticated, email? }` (no login needed) |
+| GET | `/api/hub/admin/overview?days=7\|30\|90&tz=<minutes>` | `{ success, overview }` |
+| GET | `/api/hub/admin/catalog` | `{ success, overrides }` (uncached) |
+| GET | `/api/hub/admin/content` | `{ success, content: [{ game, collection, items }] }` |
+| PUT | `/api/hub/admin/publish` | `{ success, overrides, content }` |
 
 **Login errors:** `401 "Incorrect email or password."` ·
 `429 "Too many attempts. Try again in N min."` (5 fails / IP / 15 min) ·
@@ -230,7 +230,7 @@ Every admin response sends `Cache-Control: no-store`.
 
 **Protected endpoints** return `401 { "message": "Please sign in to the admin dashboard." }` without a valid cookie.
 
-### `PUT /api/admin/publish`
+### `PUT /api/hub/admin/publish`
 
 Everything is validated first, then written in one transaction — all of it goes live, or none of it does.
 
@@ -259,24 +259,24 @@ field list is in `API_SPEC.md` §5.
 ## 8. Quick smoke test
 
 ```bash
-BASE=https://<api-host>
+BASE=https://happimynd.com
 
-curl -s $BASE/api/health
+curl -s $BASE/api/hub/health
 
-curl -s -X POST $BASE/api/auth/signup -H 'Content-Type: application/json' \
+curl -s -X POST $BASE/api/hub/auth/signup -H 'Content-Type: application/json' \
   -d '{"name":"Test User","username":"testuser1","email":"test1@example.com","password":"secret1"}'
 
-curl -s -X POST $BASE/api/auth/login -H 'Content-Type: application/json' \
+curl -s -X POST $BASE/api/hub/auth/login -H 'Content-Type: application/json' \
   -d '{"loginIdentifier":"testuser1","password":"secret1"}'
 
-curl -s -o /dev/null -w "track=%{http_code}\n" -X POST $BASE/api/track/event \
+curl -s -o /dev/null -w "track=%{http_code}\n" -X POST $BASE/api/hub/track/event \
   -H 'Content-Type: text/plain;charset=UTF-8' -d '{"type":"hub_open","userType":"guest"}'
 
-curl -s $BASE/api/catalog
+curl -s $BASE/api/hub/catalog
 
 # progress (use the id from the signup response)
-curl -s "$BASE/api/progress/card-memory-game?userId=<uuid>"
-curl -s -o /dev/null -w "save=%{http_code}\n" -X POST $BASE/api/progress/card-memory-game \
+curl -s "$BASE/api/hub/progress/card-memory-game?userId=<uuid>"
+curl -s -o /dev/null -w "save=%{http_code}\n" -X POST $BASE/api/hub/progress/card-memory-game \
   -H 'Content-Type: text/plain;charset=UTF-8' \
   -d '{"userId":"<uuid>","data":{"savedAt":1}}'
 ```
@@ -287,10 +287,8 @@ curl -s -o /dev/null -w "save=%{http_code}\n" -X POST $BASE/api/progress/card-me
 
 1. **Per-game content validation is now strict.** The server ports
    `src/config/content-schemas.ts`, so publishing validates every game's lists
-   (same rules and messages as the dashboard). Two option lists are derived from
-   game content files that weren't in the package — `AREAS` (control-cant-control)
-   and `DECKS` (guess-my-answer); those two are currently permissive, so supply
-   them for exact parity.
+   (same rules and messages as the dashboard), including the `area`
+   (control-cant-control) and `deck` (guess-my-answer) option lists.
 2. **Signup validation returns `400`** (the old API returned `500` for most
    validation errors) — the front end only reads `message`, so no change needed.
 3. **Guests never get an id stored**, even if one is sent (privacy decision kept).

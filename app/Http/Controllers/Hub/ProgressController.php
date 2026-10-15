@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
  * One save per signed-in player per game. The save is an opaque JSON object
  * that only the game reads; the API stores it as-is. Guests never call these
  * endpoints. There are no player sessions: the API trusts the `userId` it is
- * given, like /api/auth/me.
+ * given, like /api/hub/auth/me.
  */
 class ProgressController extends HubController
 {
@@ -22,7 +22,7 @@ class ProgressController extends HubController
     private const MAX_BYTES = 65536; // 64 KB
 
     /**
-     * GET /api/progress/:slug?userId=<uuid>
+     * GET /api/hub/progress/:slug?userId=<uuid>
      */
     public function show(Request $request, $slug)
     {
@@ -59,7 +59,7 @@ class ProgressController extends HubController
     }
 
     /**
-     * POST /api/progress/:slug
+     * POST /api/hub/progress/:slug
      * Body: text/plain JSON { userId, data } — parsed from the raw body, like
      * the tracking endpoints.
      */

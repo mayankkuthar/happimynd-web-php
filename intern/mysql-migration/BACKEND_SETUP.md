@@ -10,10 +10,10 @@ pointing `VITE_API_URL` at this API.
 ## 1. Point the front end at it
 
 ```
-VITE_API_URL=https://api.happimynd.com
+VITE_API_URL=https://happimynd.com
 ```
 
-All routes are under `/api/...`. `GET /api/health` should return
+All routes are under `/api/hub/...`. `GET /api/hub/health` should return
 `{ "status": "ok", "dbConnected": true, ... }`.
 
 ---
@@ -22,30 +22,30 @@ All routes are under `/api/...`. `GET /api/health` should return
 
 | Method | Path                        | Notes |
 | ------ | --------------------------- | ----- |
-| GET    | `/api/health`               | `{ status, service, timestamp, dbConnected }` |
-| POST   | `/api/auth/signup`          | `201 { success, user }` |
-| POST   | `/api/auth/login`           | `200 { success, user }` |
-| GET    | `/api/auth/me?userId=<uuid>`| `x-user-id` header also accepted |
-| POST   | `/api/auth/logout`          | `200 { success: true }` |
-| POST   | `/api/track/event`          | `text/plain` body → `204` / `400` |
-| POST   | `/api/track/session/start`  | `text/plain` body → `204` / `400` |
-| POST   | `/api/track/session/end`    | `text/plain` body → `204` / `400` |
-| GET    | `/api/catalog`              | `Cache-Control: public, max-age=30` |
-| GET    | `/api/content/{slug}`       | `Cache-Control: public, max-age=30` |
-| GET    | `/api/progress/{slug}`      | `?userId=<uuid>` → `{ success, data, updatedAt }` |
-| POST   | `/api/progress/{slug}`      | `text/plain` body → `204` / `400` |
-| POST   | `/api/admin/login`          | sets `hm_admin` cookie |
-| POST   | `/api/admin/logout`         | clears the cookie |
-| GET    | `/api/admin/session`        | no login needed |
-| GET    | `/api/admin/overview`       | `?days=7|30|90&tz=<minutes>` |
-| GET    | `/api/admin/catalog`        | uncached |
-| GET    | `/api/admin/content`        | uncached |
-| PUT    | `/api/admin/publish`        | validate-all-then-write in one transaction |
+| GET    | `/api/hub/health`          | `{ status, service, timestamp, dbConnected }` |
+| POST   | `/api/hub/auth/signup`          | `201 { success, user }` |
+| POST   | `/api/hub/auth/login`           | `200 { success, user }` |
+| GET    | `/api/hub/auth/me?userId=<uuid>`| `x-user-id` header also accepted |
+| POST   | `/api/hub/auth/logout`          | `200 { success: true }` |
+| POST   | `/api/hub/track/event`          | `text/plain` body → `204` / `400` |
+| POST   | `/api/hub/track/session/start`  | `text/plain` body → `204` / `400` |
+| POST   | `/api/hub/track/session/end`    | `text/plain` body → `204` / `400` |
+| GET    | `/api/hub/catalog`              | `Cache-Control: public, max-age=30` |
+| GET    | `/api/hub/content/{slug}`       | `Cache-Control: public, max-age=30` |
+| GET    | `/api/hub/progress/{slug}`      | `?userId=<uuid>` → `{ success, data, updatedAt }` |
+| POST   | `/api/hub/progress/{slug}`      | `text/plain` body → `204` / `400` |
+| POST   | `/api/hub/admin/login`          | sets `hm_admin` cookie |
+| POST   | `/api/hub/admin/logout`         | clears the cookie |
+| GET    | `/api/hub/admin/session`        | no login needed |
+| GET    | `/api/hub/admin/overview`       | `?days=7|30|90&tz=<minutes>` |
+| GET    | `/api/hub/admin/catalog`        | uncached |
+| GET    | `/api/hub/admin/content`        | uncached |
+| PUT    | `/api/hub/admin/publish`        | validate-all-then-write in one transaction |
 
-`/auth/...` is an alias for `/api/auth/...` (both work).
+`/auth/...` alias is no longer provided; use `/api/hub/auth/...`.
 
 Error envelope: `{ "success": false, "message": "...", "error": "..." }`.
-Unknown route: `404 { "error": "NOT_FOUND", "message": "Cannot GET /api/x" }`.
+Unknown route: `404 { "error": "NOT_FOUND", "message": "Cannot GET /api/hub/x" }`.
 
 ---
 
@@ -68,7 +68,7 @@ HUB_ADMIN_SESSION_SECRET=      # at least 32 characters
 HUB_ADMIN_COOKIE_SECURE=true
 
 # CORS (only needed when the web app is on a different origin)
-CORS_ORIGINS=https://hub.happimynd.com
+CORS_ORIGINS=https://happimynd.com
 CORS_ALLOW_CREDENTIALS=true
 ```
 
@@ -110,27 +110,24 @@ timezone does not leak in.
 - **Content validation is strict.** The server ports
   `src/config/content-schemas.ts` (`app/Services/Hub/HubContentSchema.php`), so
   publishing validates every game's lists with the same rules and messages as the
-  dashboard. Two option lists are derived from game content files that weren't in
-  the package — `AREAS` (control-cant-control) and `DECKS` (guess-my-answer) — and
-  are currently permissive; fill `HubContentSchema::$areaOptions` / `$deckOptions`
-  for exact parity.
+  dashboard, including the `area` and `deck` option lists.
 - **Portable limits** from `catalog-limits.ts` live in `config/hub.php`
   (`limits`): name 40, tagline 60, description 160, 200 entries each.
 - **Signup validation returns `400`** (the old API returned `500` for most
   validation errors by accident).
 - **Guests have no id**: any `userId` a guest sends is ignored and stored `NULL`.
-- **Admin cookie** is `hm_admin`, `Path=/api/admin`, `HttpOnly`,
+- **Admin cookie** is `hm_admin`, `Path=/api/hub/admin`, `HttpOnly`,
   `SameSite=Strict`, `Max-Age=43200`. Because `SameSite=Strict`, serve the admin
-  API on the **same registrable domain** as the web app (e.g. `api.happimynd.com`
-  + `hub.happimynd.com`); otherwise the browser won't send the cookie. Lockout:
-  5 failed logins per IP → `429` for 15 minutes.
+  API on the **same registrable domain** as the web app (e.g. `happimynd.com`,
+  or `hub.happimynd.com` as a subdomain); otherwise the browser won't send the
+  cookie. Lockout: 5 failed logins per IP → `429` for 15 minutes.
 - **CORS**: when the web app is on another origin, set `CORS_ORIGINS` and
   `CORS_ALLOW_CREDENTIALS=true`. Note that setting `CORS_ORIGINS` narrows CORS
   for the whole app (it replaces the default `*`), so include every origin that
   calls this API. `*.vercel.app`, `localhost` and `127.0.0.1` are always allowed
   for hub routes.
 - **Server-side catalog read (§6.3):** change `src/lib/catalog.ts` to
-  `GET {VITE_API_URL}/api/catalog` instead of reading the database directly.
+  `GET {VITE_API_URL}/api/hub/catalog` instead of reading the database directly.
 
 ---
 
@@ -142,7 +139,7 @@ config/hub.php                      (admin, cache, limits, slug pattern)
 config/cors.php                     (env-driven origins + credentials)
 
 routes/hub.php                      (health, track, content, progress, admin)
-routes/hub_auth.php                 (/api/auth/* and /auth/* alias)
+routes/hub_auth.php                 (/api/hub/auth/*)
 
 app/Providers/RouteServiceProvider.php   (loads the hub routes)
 app/Http/Kernel.php                      (hub group + aliases)

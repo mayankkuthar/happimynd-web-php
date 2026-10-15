@@ -85,13 +85,13 @@ class Handler extends ExceptionHandler
     private function isHubRequest(Request $request): bool
     {
         foreach ([
-            'api/health',
-            'api/auth/*',
-            'api/track/*',
-            'api/content/*',
-            'api/catalog',
-            'api/admin/*',
-            'auth/*',
+            'api/hub/health',
+            'api/hub/auth/*',
+            'api/hub/track/*',
+            'api/hub/content/*',
+            'api/hub/catalog',
+            'api/hub/progress/*',
+            'api/hub/admin/*',
         ] as $pattern) {
             if ($request->is($pattern)) {
                 return true;

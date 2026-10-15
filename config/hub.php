@@ -18,7 +18,7 @@ return [
         'password_hash' => env('HUB_ADMIN_PASSWORD_HASH'),
         'session_secret' => env('HUB_ADMIN_SESSION_SECRET'),
         'cookie' => 'hm_admin',
-        'cookie_path' => '/api/admin',
+        'cookie_path' => '/api/hub/admin',
         'cookie_minutes' => 720, // 12 hours
         'cookie_secure' => env('HUB_ADMIN_COOKIE_SECURE', true),
         'lockout_attempts' => 5,

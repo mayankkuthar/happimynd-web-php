@@ -6,7 +6,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Admin dashboard aggregates (API_SPEC §5, GET /api/admin/overview).
+ * Admin dashboard aggregates (API_SPEC §5, GET /api/hub/admin/overview).
  *
  * All stored timestamps are UTC. The viewer's timezone offset (`tz`, minutes)
  * is applied only when bucketing by local day, using MySQL:
