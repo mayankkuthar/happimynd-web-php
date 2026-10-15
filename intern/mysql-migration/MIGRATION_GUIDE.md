@@ -1,12 +1,19 @@
 # Games Hub: Postgres (Neon) → MySQL migration guide
 
 **For:** the backend lead moving the HappiMynd Games Hub database to MySQL on AWS and rebuilding its API.
-**Package contents** (all in `docs/mysql-migration/` unless noted):
+
+> **Changed since the first version of this package.** Card Memory, One Line Draw and Emotional Tetris used to be separate apps with their own tables in the same Neon database (`game_memory.*`, `game_oneline.*`, `game_tetris.*`), which the first package didn't cover. They now run inside the hub, so:
+>
+> - **Added:** a `game_progress` table (one saved-progress row per player per game) and `GET`/`POST /api/progress/:slug` (`API_SPEC.md` §7). The export converts the old per-game tables into `game_progress` rows (§2.1).
+> - **Removed:** `sso_tickets` and the SSO endpoints. If you already created `sso_tickets`, you can drop it (§6.5).
+> - **Removed:** the `external_launch` event and the overview's external-launch fields.
+>   **Package contents** (all in `docs/mysql-migration/` unless noted):
 
 | File                                           | What it is                                                                   |
 | ---------------------------------------------- | ---------------------------------------------------------------------------- |
 | `MIGRATION_GUIDE.md`                           | This guide: what's in the database, how to move it, what changes in the code |
 | `schema.mysql.sql`                             | MySQL schema for all six tables. Safe to run more than once.                 |
+| `src/config/content-schemas.ts` (repo root)    | Rules the server checks before publishing in-game text (`API_SPEC.md` §5)    |
 | `API_SPEC.md`                                  | Contract for every endpoint the web app calls (request, response, rules)     |
 | `scripts/export-neon-to-mysql.mjs` (repo root) | Read-only export of the current data as MySQL `INSERT` statements            |
 
@@ -14,19 +21,20 @@
 
 - The schema loads, and loads again without errors.
 - An export containing emoji, quotes, backslashes, newlines and non-UTC timestamps loaded with every value intact.
-- The MySQL versions of the dashboard, tracking and SSO queries in §5 return the expected results.
+- The MySQL versions of the dashboard, tracking and progress queries in §5 return the expected results.
+- The old per-game tables, created from each game's own `schema.sql` and filled with sample players, export into valid `game_progress` rows, and each game shows that progress when it opens.
 
 ---
 
 ## 1. Current setup
 
-|              | Today                                                                                       |
-| ------------ | ------------------------------------------------------------------------------------------- |
-| Database     | PostgreSQL on Neon (`@neondatabase/serverless` driver)                                      |
-| App          | TanStack Start (React 19) built with Nitro for Cloudflare Workers. Node 22+ in development. |
-| API          | The same app serves `/api/*` (`src/server/api-handler.ts`)                                  |
-| SQL location | `src/server/db.ts`, `auth-service.ts`, `analytics-db.ts`, `catalog-db.ts`, `content-db.ts`  |
-| Connection   | `DATABASE_URL` env var                                                                      |
+|              | Today                                                                                                        |
+| ------------ | ------------------------------------------------------------------------------------------------------------ |
+| Database     | PostgreSQL on Neon (`@neondatabase/serverless` driver)                                                       |
+| App          | TanStack Start (React 19) built with Nitro for Cloudflare Workers. Node 22+ in development.                  |
+| API          | The same app serves `/api/*` (`src/server/api-handler.ts`)                                                   |
+| SQL location | `src/server/db.ts`, `auth-service.ts`, `analytics-db.ts`, `catalog-db.ts`, `content-db.ts`, `progress-db.ts` |
+| Connection   | `DATABASE_URL` env var                                                                                       |
 
 The front end only talks to the backend through the HTTP endpoints in `API_SPEC.md`. The one exception is page rendering, which also reads published game-card edits on the server (see §6.3). If the new backend keeps the same endpoints and response shapes, the front end only needs `VITE_API_URL` pointed at it.
 
@@ -34,18 +42,35 @@ The front end only talks to the backend through the HTTP endpoints in `API_SPEC.
 
 ## 2. Tables
 
-| Table             | Purpose                                                        | Rows grow with                            | Migrate data?                                                  |
-| ----------------- | -------------------------------------------------------------- | ----------------------------------------- | -------------------------------------------------------------- |
-| `users`           | Player accounts (may be shared with other HappiMynd apps)      | Signups                                   | **Yes**                                                        |
-| `sso_tickets`     | Single-use login codes for external games, valid 120 s         | Every external launch by a signed-in user | **No.** Create the empty table; old codes are already expired. |
-| `activity_events` | Hub visits (`hub_open`) and external game launches             | Every visit (one per browser tab)         | Yes                                                            |
-| `game_sessions`   | One row per play of a built-in game                            | Every Start press                         | Yes                                                            |
-| `game_overrides`  | Admin edits to a game's name, tagline, description, visibility | Admin publishes (≤ ~25 rows)              | Yes                                                            |
-| `game_content`    | Admin-edited in-game text, one row per customised list         | Admin publishes (≤ ~40 rows)              | Yes                                                            |
+| Table             | Purpose                                                                      | Rows grow with                     | Migrate data?                                          |
+| ----------------- | ---------------------------------------------------------------------------- | ---------------------------------- | ------------------------------------------------------ |
+| Table             | Purpose                                                                      | Rows grow with                     | Migrate data?                                          |
+| ----------------- | ---------------------------------------------------------------------------  | ---------------------------------- | ---------------------------------------------------    |
+| `users`           | Player accounts (may be shared with other HappiMynd apps)                    | Signups                            | **Yes**                                                |
+| `activity_events` | Hub visits (`hub_open`); older rows may also be `external_launch`            | Every visit (one per browser tab)  | Yes                                                    |
+| `game_sessions`   | One row per play of a game                                                   | Every Start, level or game played  | Yes                                                    |
+| `game_overrides`  | Admin edits to a game's name, tagline, description, visibility               | Admin publishes (≤ ~25 rows)       | Yes                                                    |
+| `game_content`    | Admin-edited in-game text, one row per customised list                       | Admin publishes (≤ ~40 rows)       | Yes                                                    |
+| `game_progress`   | **New.** Saved progress per signed-in player for the three level-based games | Players × 3 games at most          | **Yes**, converted from the old per-game tables (§2.1) |
 
-**`users`:** the hub doesn't create this table. If another HappiMynd service already owns `users` in MySQL, keep that table; the hub needs `id`, `email`, `username`, `name`, `password_hash`, `avatar` and `created_at`.
+**`users`:** the hub doesn't create this table. If another HappiMynd service already owns `users` in MySQL, keep that table; the hub needs `id`, `email`, `username`, `name`, `password_hash`, `avatar` and `created_at`. Players who signed up inside one of the three games are in this same table, so they're migrated with everyone else.
 
 **The other five tables** are created by the hub. Currently that happens automatically on first use; on MySQL, run `schema.mysql.sql` instead.
+
+### 2.1 The old per-game tables
+
+These lived in the same Neon database, in their own Postgres schemas. They are **not** recreated in MySQL. The export reads them and writes one `game_progress` row per player per game, in the JSON shape each game reads (`API_SPEC.md` §7).
+
+| Old table (Neon)                                                                          | Becomes                                                              |
+| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `game_memory.user_progression`, `level_completions`, `user_settings`                      | `game_progress` rows with `game_slug = 'card-memory-game'`           |
+| `game_oneline.user_progression`, `level_completions`, `user_settings`                     | `game_progress` rows with `game_slug = 'one-line-draw'`              |
+| `game_tetris.user_progression`, `user_settings`                                           | `game_progress` rows with `game_slug = 'emotional-tetris'`           |
+| `game_memory.analytics_logs`, `game_oneline.analytics_logs`, `game_tetris.analytics_logs` | **Not migrated.** Replaced by the hub's own `game_sessions` tracking |
+| `game_tetris.game_sessions` (each finished Tetris game)                                   | **Not migrated.** Best score and totals are kept in the save         |
+| `public.games_registry`                                                                   | **Not migrated.** The game list is in the hub's code                 |
+
+If you want the unmigrated tables for reporting, keep a `pg_dump` of the three schemas before Neon is shut down.
 
 ---
 
@@ -53,13 +78,14 @@ The front end only talks to the backend through the HTTP endpoints in `API_SPEC.
 
 | Postgres                                   | MySQL                                         | Notes                                                                                                           |
 | ------------------------------------------ | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `UUID` (users.id, sso_tickets.user_id)     | `CHAR(36)`                                    | Lowercase text. **MySQL won't generate it.** The app must create the ID at signup (see §6.1).                   |
+| `UUID` (users.id)                          | `CHAR(36)`                                    | Lowercase text. **MySQL won't generate it.** The app must create the ID at signup (see §6.1).                   |
 | `VARCHAR(36)` ids in hub tables            | `CHAR(36)`                                    | Already generated by the app or browser                                                                         |
-| `TIMESTAMPTZ` (users, sso_tickets)         | `DATETIME(3)` holding **UTC**                 | The export converts to UTC. Run MySQL with `time_zone = '+00:00'`.                                              |
+| `TIMESTAMPTZ` (users, old game tables)     | `DATETIME(3)` holding **UTC**                 | The export converts to UTC. Run MySQL with `time_zone = '+00:00'`.                                              |
 | `TIMESTAMP` (hub tables)                   | `DATETIME(3)`                                 | Already UTC, written by the app as `'YYYY-MM-DD HH:MM:SS.mmm'`                                                  |
 | `SMALLINT` flag (`game_overrides.hidden`)  | `TINYINT(1)`                                  | 0 / 1                                                                                                           |
 | `TEXT` JSON (`game_sessions.stats`)        | `TEXT`                                        | Could be `JSON` if you prefer; the app writes valid JSON                                                        |
 | `TEXT` JSON (`game_content.items`)         | `MEDIUMTEXT`                                  | Largest list today is about 25 KB                                                                               |
+| `TEXT` JSON (`game_progress.data`)         | `MEDIUMTEXT`                                  | The API caps a save at 64 KB; real saves are a few KB                                                           |
 | `LOWER(email)` / `LOWER(username)` indexes | Plain `UNIQUE` keys with `utf8mb4_0900_ai_ci` | That collation is case-insensitive, so lookups and uniqueness ignore case. Signup stores both lowercase anyway. |
 
 Use **utf8mb4** everywhere. Avatars and game text contain emoji.
@@ -87,7 +113,8 @@ The export only runs `SELECT`s. Run it from the repo root after `npm install`:
 ```bash
 DATABASE_URL='postgres://…neon…' node scripts/export-neon-to-mysql.mjs > hub-data.mysql.sql
 # stderr shows row counts, e.g.
-# Exported rows: { users: 412, activity_events: 3810, game_sessions: 2950, game_overrides: 3, game_content: 2 }
+# Exported rows: { users: 412, activity_events: 3810, …,
+#   'game_progress (one-line-draw, from old tables)': 57, … }
 ```
 
 **What the export does:**
@@ -95,7 +122,9 @@ DATABASE_URL='postgres://…neon…' node scripts/export-neon-to-mysql.mjs > hub
 - Converts every timestamp to UTC (`DATETIME(3)` format) and IDs to text.
 - Escapes strings for MySQL's default `sql_mode`.
 - Writes 200-row `INSERT` batches in foreign-key order, with foreign-key checks off during the load.
-- Skips tables that don't exist yet, and skips `sso_tickets` on purpose.
+- Converts the old per-game tables into `game_progress` rows (§2.1). Only players who still exist in `users` are included.
+- Writes those rows with `INSERT IGNORE`, after any `game_progress` rows the hub itself already saved, so a player's newer in-hub save always wins over their old data.
+- Skips tables that don't exist yet. `sso_tickets` is no longer exported.
 
 **Treat `hub-data.mysql.sql` as sensitive:** it contains emails and password hashes. Delete it after loading.
 
@@ -118,8 +147,11 @@ SELECT 'users', COUNT(*) FROM users
 UNION ALL SELECT 'activity_events', COUNT(*) FROM activity_events
 UNION ALL SELECT 'game_sessions', COUNT(*) FROM game_sessions
 UNION ALL SELECT 'game_overrides', COUNT(*) FROM game_overrides
-UNION ALL SELECT 'game_content', COUNT(*) FROM game_content;
+UNION ALL SELECT 'game_content', COUNT(*) FROM game_content
+UNION ALL SELECT 'game_progress', COUNT(*) FROM game_progress;
 ```
+
+`game_progress` can be lower than the sum the export printed: a player who already has an in-hub save for a game keeps that one, and their old row is skipped.
 
 Spot checks (compare with the same query on Neon):
 
@@ -128,6 +160,8 @@ SELECT MIN(created_at), MAX(created_at) FROM users;                 -- UTC on bo
 SELECT game_slug, COUNT(*) FROM game_sessions GROUP BY game_slug;   -- per-game plays
 SELECT COUNT(*) FROM game_sessions WHERE stats IS NOT NULL AND NOT JSON_VALID(stats);  -- expect 0
 SELECT COUNT(*) FROM game_content WHERE NOT JSON_VALID(items);      -- expect 0
+SELECT COUNT(*) FROM game_progress WHERE NOT JSON_VALID(data);      -- expect 0
+SELECT game_slug, COUNT(*) FROM game_progress GROUP BY game_slug;   -- players per game
 ```
 
 Then sign in to the app with an existing account. That proves the bcrypt hashes and IDs made it across.
@@ -150,27 +184,11 @@ All of these were run on MySQL and return the expected results.
 | Every query                                                                         | `$1, $2…` placeholders                                                     | `?`                                                                                                      |
 | `analytics-db.ts` `localDay()`: daily buckets in the admin's timezone               | `CAST(CAST(col + ($2::int * INTERVAL '1 minute') AS DATE) AS VARCHAR(10))` | `DATE_FORMAT(DATE_ADD(col, INTERVAL ? MINUTE), '%Y-%m-%d')`                                              |
 | `auth-service.ts` signup                                                            | `INSERT … RETURNING id, …` with `gen_random_uuid()`                        | Generate `id = crypto.randomUUID()` in the app, `INSERT`, then return the row you built (or `SELECT` it) |
-| `auth-service.ts` create SSO ticket                                                 | `NOW() + INTERVAL '2 minutes'`                                             | `UTC_TIMESTAMP(3) + INTERVAL 120 SECOND`                                                                 |
 | `auth-service.ts` login and signup lookups                                          | `LOWER(username) = $1 OR LOWER(email) = $1`                                | `username = ? OR email = ?` (the collation is case-insensitive)                                          |
 | Duplicate key detection (`isDuplicateKey`)                                          | Error code `23505`                                                         | Error number `1062` (`ER_DUP_ENTRY`)                                                                     |
+| `progress-db.ts` save (update, else insert, retry on duplicate)                     | `UPDATE …` then `INSERT …`                                                 | One statement: `INSERT … AS new ON DUPLICATE KEY UPDATE data = new.data, updated_at = new.updated_at`    |
 | Table setup on first use                                                            | `CREATE INDEX IF NOT EXISTS`                                               | Not supported; run `schema.mysql.sql` once at deploy instead                                             |
 | `CREATE TABLE IF NOT EXISTS`, `COUNT(DISTINCT CASE …)`, `SUM(CASE …)`, transactions | Same                                                                       | Same                                                                                                     |
-
-### Recommended fix while porting: make the SSO redeem atomic
-
-`exchangeSsoTicket()` currently reads the ticket, checks `used_at` and `expires_at` in code, and then runs a separate `UPDATE`. Two requests at the same moment could both pass the check. In MySQL, redeem in one statement and check the affected-row count:
-
-```sql
-UPDATE sso_tickets
-   SET used_at = UTC_TIMESTAMP(3)
- WHERE code = ? AND used_at IS NULL AND expires_at > UTC_TIMESTAMP(3);
--- affectedRows = 1 → valid: SELECT the user and return it
--- affectedRows = 0 → SELECT the ticket to report "already used" / "expired" / "not found"
-```
-
-Tested: the first redeem changes 1 row; the second changes 0.
-
-Expired tickets can be cleared with `DELETE FROM sso_tickets WHERE expires_at < UTC_TIMESTAMP(3) - INTERVAL 1 DAY` on a schedule. The current app never deletes them.
 
 ---
 
@@ -192,11 +210,17 @@ While rendering pages, the app reads published card edits directly from the data
 
 ### 6.4 Env vars
 
-| Variable                                                     | Change                                                                            |
-| ------------------------------------------------------------ | --------------------------------------------------------------------------------- |
-| `DATABASE_URL`                                               | Becomes the MySQL connection, or is dropped from the web app if the API moves out |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET` | Move with whichever service serves `/api/admin/*`                                 |
-| `VITE_API_URL`                                               | Set if the API is on a different origin                                           |
+| Variable                                                                                | Change                                                                            |
+| --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `DATABASE_URL`                                                                          | Becomes the MySQL connection, or is dropped from the web app if the API moves out |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET`                            | Move with whichever service serves `/api/admin/*`                                 |
+| `VITE_API_URL`                                                                          | Set if the API is on a different origin                                           |
+| `VITE_MEMORY_GAME_URL`, `VITE_ONE_LINE_DRAW_GAME_URL`, `VITE_EMOTIONAL_TETRIS_GAME_URL` | **Remove.** The games are part of the hub now                                     |
+
+### 6.5 Removed: SSO and the separate game backends
+
+- **SSO:** `POST /api/auth/sso/create`, `POST /api/auth/sso/exchange` and `sso_tickets` existed only to sign players into the three separately hosted games. Nothing calls them now. If the new API already has them, they can be deleted, along with the table (`DROP TABLE sso_tickets;`).
+- **The three games' own servers** (the `server/` and `api/` folders in their old repos, deployed on Vercel) wrote straight into Neon. Once the hub is live with these games built in, shut those deployments down, or they will keep writing to Neon after the cut-over.
 
 ---
 

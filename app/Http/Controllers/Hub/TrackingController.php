@@ -23,28 +23,21 @@ class TrackingController extends HubController
     {
         $body = $this->jsonBody($request);
 
-        $common = $this->validateCommon($body, false);
+        $common = $this->validateCommon($body);
         if (isset($common['error'])) {
             return $this->fail($common['error']);
         }
 
-        $type = $body['type'] ?? null;
-        if (!in_array($type, ['hub_open', 'external_launch'], true)) {
+        // The only event the app sends now; the old 'external_launch' event was
+        // removed when the games moved into the hub (API_SPEC §3).
+        if (($body['type'] ?? null) !== 'hub_open') {
             return $this->fail('Invalid event type.');
-        }
-
-        $gameSlug = null;
-        if ($type === 'external_launch') {
-            $gameSlug = isset($body['gameSlug']) ? (string) $body['gameSlug'] : '';
-            if (!preg_match(config('hub.slug_pattern'), $gameSlug)) {
-                return $this->fail('A valid game slug is required for an external launch.');
-            }
         }
 
         DB::connection('hub')->table('activity_events')->insert([
             'id' => (string) Str::uuid(),
-            'event_type' => $type,
-            'game_slug' => $gameSlug,
+            'event_type' => 'hub_open',
+            'game_slug' => null,
             'user_type' => $common['userType'],
             'user_id' => $common['userId'],
             'created_at' => $this->utcStr(),
@@ -57,7 +50,7 @@ class TrackingController extends HubController
     {
         $body = $this->jsonBody($request);
 
-        $common = $this->validateCommon($body, true);
+        $common = $this->validateCommon($body);
         if (isset($common['error'])) {
             return $this->fail($common['error']);
         }
@@ -92,7 +85,7 @@ class TrackingController extends HubController
     {
         $body = $this->jsonBody($request);
 
-        $common = $this->validateCommon($body, true);
+        $common = $this->validateCommon($body);
         if (isset($common['error'])) {
             return $this->fail($common['error']);
         }
@@ -150,7 +143,7 @@ class TrackingController extends HubController
      *
      * @return array{error?: string, userType?: string, userId?: ?string}
      */
-    private function validateCommon(array $body, bool $requireGameSlug): array
+    private function validateCommon(array $body): array
     {
         $userType = $body['userType'] ?? null;
         if (!in_array($userType, ['guest', 'registered'], true)) {

@@ -53,9 +53,6 @@ class HubAdminStats
         $guestVisits = (clone $events)->where('event_type', 'hub_open')
             ->where('user_type', 'guest')->where('created_at', '>=', $since)->count();
 
-        $externalLaunches = (clone $events)->where('event_type', 'external_launch')
-            ->where('created_at', '>=', $since)->count();
-
         $signups = DB::connection($this->conn)->table('users')
             ->where('created_at', '>=', $since)->where('created_at', '<=', $now)->count();
 
@@ -101,7 +98,6 @@ class HubAdminStats
             'completionRate' => ($done + $left) > 0
                 ? round($done / ($done + $left), 4)
                 : null,
-            'externalLaunches' => $externalLaunches,
         ];
 
         return [
@@ -113,7 +109,6 @@ class HubAdminStats
             'totals' => $totals,
             'daily' => $this->daily($days, $sinceTs, $since, $now, $tz, $offsetSeconds),
             'games' => $this->games($since),
-            'external' => $this->external($since),
         ];
     }
 
@@ -243,30 +238,6 @@ class HubAdminStats
                 'totalSec' => $totalSec,
                 'avgSec' => $durCount > 0 ? round($totalSec / $durCount, 2) : null,
                 'completionRate' => ($done + $left) > 0 ? round($done / ($done + $left), 4) : null,
-            ];
-        }
-
-        return $out;
-    }
-
-    private function external(string $since): array
-    {
-        $rows = DB::connection($this->conn)->table('activity_events')
-            ->selectRaw("game_slug,
-                SUM(user_type = 'registered') as registered,
-                SUM(user_type = 'guest') as guest")
-            ->where('event_type', 'external_launch')
-            ->where('created_at', '>=', $since)
-            ->groupBy('game_slug')
-            ->orderBy('game_slug')
-            ->get();
-
-        $out = [];
-        foreach ($rows as $r) {
-            $out[] = [
-                'slug' => (string) $r->game_slug,
-                'registered' => (int) $r->registered,
-                'guest' => (int) $r->guest,
             ];
         }
 

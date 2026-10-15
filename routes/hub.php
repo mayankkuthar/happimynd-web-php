@@ -3,6 +3,7 @@
 use App\Http\Controllers\Hub\AdminController;
 use App\Http\Controllers\Hub\ContentController;
 use App\Http\Controllers\Hub\HealthController;
+use App\Http\Controllers\Hub\ProgressController;
 use App\Http\Controllers\Hub\TrackingController;
 use Illuminate\Support\Facades\Route;
 
@@ -30,6 +31,10 @@ Route::prefix('track')->group(function () {
 // Public content
 Route::get('catalog', [ContentController::class, 'catalog']);
 Route::get('content/{slug}', [ContentController::class, 'content']);
+
+// Saved game progress (text/plain JSON body; 204 on save)
+Route::get('progress/{slug}', [ProgressController::class, 'show']);
+Route::post('progress/{slug}', [ProgressController::class, 'save']);
 
 // Admin dashboard
 Route::prefix('admin')->middleware('hub.admin.nostore')->group(function () {

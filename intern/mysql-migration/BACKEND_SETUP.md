@@ -27,13 +27,13 @@ All routes are under `/api/...`. `GET /api/health` should return
 | POST   | `/api/auth/login`           | `200 { success, user }` |
 | GET    | `/api/auth/me?userId=<uuid>`| `x-user-id` header also accepted |
 | POST   | `/api/auth/logout`          | `200 { success: true }` |
-| POST   | `/api/auth/sso/create`      | `201 { success, code, expiresInSeconds:120, gameId }` |
-| POST   | `/api/auth/sso/exchange`    | `200 { success, user, gameId }` |
 | POST   | `/api/track/event`          | `text/plain` body → `204` / `400` |
 | POST   | `/api/track/session/start`  | `text/plain` body → `204` / `400` |
 | POST   | `/api/track/session/end`    | `text/plain` body → `204` / `400` |
 | GET    | `/api/catalog`              | `Cache-Control: public, max-age=30` |
 | GET    | `/api/content/{slug}`       | `Cache-Control: public, max-age=30` |
+| GET    | `/api/progress/{slug}`      | `?userId=<uuid>` → `{ success, data, updatedAt }` |
+| POST   | `/api/progress/{slug}`      | `text/plain` body → `204` / `400` |
 | POST   | `/api/admin/login`          | sets `hm_admin` cookie |
 | POST   | `/api/admin/logout`         | clears the cookie |
 | GET    | `/api/admin/session`        | no login needed |
@@ -93,10 +93,11 @@ Then, from the app root on the server:
 php artisan migrate --path=database/migrations/hub --database=hub
 ```
 
-This creates the six tables (`users`, `sso_tickets`, `activity_events`,
-`game_sessions`, `game_overrides`, `game_content`) on the `hub` connection.
-To load the exported Neon data, run the `hub-data.mysql.sql` file into this
-database **before** or after migrating, as usual.
+This creates the six tables (`users`, `activity_events`, `game_sessions`,
+`game_overrides`, `game_content`, `game_progress`) on the `hub` connection.
+The old `sso_tickets` table was dropped when the games moved into the hub. No
+data export/import is needed — the reference Neon database only holds a test
+account and test analytics.
 
 Times are stored as UTC `DATETIME(3)`; the framework opens the hub connection
 with `time_zone = '+00:00'` per request, so the main app's `Asia/Kolkata`
@@ -106,18 +107,15 @@ timezone does not leak in.
 
 ## 5. Notes, differences, and known gaps
 
-- **Content validation is permissive for per-game lists.** The source of truth
-  `src/config/content-schemas.ts` was **not** in the migration package, so the
-  server can only strictly validate the shared `end-titles` / `end-messages`
-  lists and the catalog/card limits (`config/hub.php`, `config/hub_content.php`).
-  The dashboard still validates everything client-side with the real schemas, so
-  publishing works; but the server will accept an unknown per-game list rather
-  than reject it with `unknown list`. For exact parity, port `content-schemas.ts`
-  into `config/hub_content.php` (`games` map) and set `strict => true`.
+- **Content validation is strict.** The server ports
+  `src/config/content-schemas.ts` (`app/Services/Hub/HubContentSchema.php`), so
+  publishing validates every game's lists with the same rules and messages as the
+  dashboard. Two option lists are derived from game content files that weren't in
+  the package — `AREAS` (control-cant-control) and `DECKS` (guess-my-answer) — and
+  are currently permissive; fill `HubContentSchema::$areaOptions` / `$deckOptions`
+  for exact parity.
 - **Portable limits** from `catalog-limits.ts` live in `config/hub.php`
   (`limits`): name 40, tagline 60, description 160, 200 entries each.
-- **SSO exchange is atomic** (`UPDATE … WHERE used_at IS NULL AND expires_at > UTC_TIMESTAMP(3)`),
-  fixing the double-redeem race noted in `MIGRATION_GUIDE.md` §5.
 - **Signup validation returns `400`** (the old API returned `500` for most
   validation errors by accident).
 - **Guests have no id**: any `userId` a guest sends is ignored and stored `NULL`.
@@ -141,18 +139,18 @@ timezone does not leak in.
 ```
 config/database.php                 (+ "hub" connection)
 config/hub.php                      (admin, cache, limits, slug pattern)
-config/hub_content.php              (publish schemas)
 config/cors.php                     (env-driven origins + credentials)
 
-routes/hub.php                      (health, track, content, admin)
+routes/hub.php                      (health, track, content, progress, admin)
 routes/hub_auth.php                 (/api/auth/* and /auth/* alias)
 
 app/Providers/RouteServiceProvider.php   (loads the hub routes)
 app/Http/Kernel.php                      (hub group + aliases)
 app/Exceptions/Handler.php               (hub JSON errors)
 
-app/Http/Controllers/Hub/*.php      (Health, Auth, Sso, Tracking, Content, Admin, base)
-app/Services/Hub/*.php              (HubAdminAuth, HubAdminStats, HubContentService, HubContentValidator)
+app/Http/Controllers/Hub/*.php      (Health, Auth, Tracking, Content, Progress, Admin, base)
+app/Services/Hub/*.php              (HubAdminAuth, HubAdminStats, HubContentService,
+                                     HubContentSchema, HubContentValidator)
 app/Http/Middleware/Hub*.php        (SetUtcTimezone, AdminAuthenticate, NoStore)
 app/Models/Hub/*.php                (six models)
 

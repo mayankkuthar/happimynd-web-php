@@ -4,6 +4,13 @@
 
 This is every HTTP endpoint the web app calls today, with the request, the response and the rules behind it. If the new API keeps these paths and shapes, the front end needs no changes beyond `VITE_API_URL`. The current implementation is the reference: `src/server/api-handler.ts` and the services it calls.
 
+> **Changed since the first version of this spec.** Card Memory, One Line Draw and Emotional Tetris now run inside the hub instead of as separate apps. As a result:
+>
+> - **New:** `GET` and `POST /api/progress/:slug` save those games' progress (§7), backed by a new `game_progress` table.
+> - **Removed:** `POST /api/auth/sso/create`, `POST /api/auth/sso/exchange` and the `sso_tickets` table. Nothing calls them any more.
+> - **Removed:** the `external_launch` tracking event, and `totals.externalLaunches` and `external` in the admin overview. Older `activity_events` rows can still contain `external_launch`; the overview simply doesn't report them.
+> - **Removed:** the external game URLs from the CORS rules.
+
 **Who calls what:**
 
 | Client file                                               | Endpoints                                                           |
@@ -12,6 +19,7 @@ This is every HTTP endpoint the web app calls today, with the request, the respo
 | `src/services/admin-api.ts`                               | `/api/admin/*`                                                      |
 | `src/lib/analytics.ts`                                    | `/api/track/*`                                                      |
 | `src/games/_shared/content.ts`                            | `/api/content/:slug`                                                |
+| `src/games/_shared/progress.ts`                           | `/api/progress/:slug`                                               |
 | `src/lib/catalog.ts` (server-side, during page rendering) | `/api/catalog`, after migration; it currently reads the DB directly |
 
 ---
@@ -19,7 +27,7 @@ This is every HTTP endpoint the web app calls today, with the request, the respo
 ## 1. Conventions
 
 - **Base path:** `/api/...`. `/auth/...` is accepted as an alias for `/api/auth/...`.
-- **Format:** JSON in and out (`Content-Type: application/json`), except the tracking endpoints (§3), which receive `text/plain` bodies containing JSON.
+- **Format:** JSON in and out (`Content-Type: application/json`), except the tracking endpoints (§3) and progress saves (§7), which receive `text/plain` bodies containing JSON.
 - **Success:** `{ "success": true, ...data }`.
 - **Error:** `{ "success": false, "message": "Human readable", "error": "same text" }` with an HTTP status. The front end shows `message` to the user, so keep messages friendly.
 - **Unknown route:** `404 { "error": "NOT_FOUND", "message": "Cannot GET /api/x" }`.
@@ -31,7 +39,6 @@ This is every HTTP endpoint the web app calls today, with the request, the respo
 Echo `Access-Control-Allow-Origin` (plus `Allow-Credentials: true`) when the request `Origin` is one of:
 
 - a `CORS_ORIGIN` entry (comma-separated env var)
-- the origin of any external game URL (`VITE_MEMORY_GAME_URL`, `VITE_ONE_LINE_DRAW_GAME_URL`, `VITE_EMOTIONAL_TETRIS_GAME_URL`)
 - any `*.vercel.app` origin
 - `http://localhost:*` or `http://127.0.0.1:*`
 
@@ -43,7 +50,7 @@ Also:
 
 ---
 
-## 2. Players and SSO
+## 2. Players
 
 ### Shared objects
 
@@ -110,26 +117,6 @@ The web app calls this on page load to refresh the stored profile. There are no 
 
 Returns `200 { success: true }`. Nothing is stored server-side.
 
-### `POST /api/auth/sso/create`
-
-- **Body:** `{ userId, gameId }`. Both required; the user must exist (`400` / "User not found.").
-- Creates `sso_tickets` row: a `code` of 64 random hex characters (32 random bytes) and `expires_at = now + 120 s`.
-- Returns `201 { success: true, code, expiresInSeconds: 120, gameId }`.
-
-### `POST /api/auth/sso/exchange`
-
-Called by external games, cross-origin.
-
-- **Body:** `{ code }`.
-- **Single use** within 120 seconds. Do the redeem as one atomic `UPDATE … WHERE used_at IS NULL AND expires_at > now`; see MIGRATION_GUIDE §5.
-
-| Case                    | Response                                           |
-| ----------------------- | -------------------------------------------------- |
-| Valid                   | `200 { success: true, user: UserProfile, gameId }` |
-| Missing or unknown code | `400`, "Unable to authenticate…"                   |
-| Already used            | `400`, "This login link has already been used…"    |
-| Expired                 | `400`, "This login session has expired…"           |
-
 ---
 
 ## 3. Usage tracking
@@ -150,7 +137,7 @@ The browser sends these with `fetch(url, { method: "POST", keepalive: true, head
 
 ### `POST /api/track/event`
 
-- **Body:** `{ type: "hub_open" | "external_launch", userType, userId?, gameSlug? }`. `gameSlug` is required for `external_launch` and ignored for `hub_open`.
+- **Body:** `{ type: "hub_open", userType, userId? }`. Any other `type` is a `400`.
 - Inserts into `activity_events`, with `id` generated by the server and `created_at` = server UTC time.
 
 ### `POST /api/track/session/start`
@@ -289,7 +276,6 @@ interface Overview {
     playSeconds: number; // SUM(duration_sec)
     avgSessionSec: number | null; // playSeconds / sessions with a duration
     completionRate: number | null; // done / (done + left), 0..1
-    externalLaunches: number;
   };
   daily: Array<{
     // one entry per local day in range, oldest first, zeros filled
@@ -311,7 +297,6 @@ interface Overview {
     avgSec: number | null;
     completionRate: number | null;
   }>;
-  external: Array<{ slug: string; registered: number; guest: number }>; // external_launch counts
 }
 ```
 
@@ -395,3 +380,52 @@ The source of truth is `src/config/content-schemas.ts`. A Node/TypeScript backen
 | Catalog during page rendering           | Root loader                                          | 30 s                                  |
 
 After a publish, visitors see changes within about 30 seconds, and games pick up new text the next time they're opened.
+
+---
+
+## 7. Saved game progress
+
+Card Memory (`card-memory-game`), One Line Draw (`one-line-draw`) and Emotional Tetris (`emotional-tetris`) have levels, scores and settings worth keeping across devices. Each signed-in player has one save per game. A save is an opaque JSON object that only the game reads, and the API stores it as-is. Guests never call these endpoints; their saves stay in the browser.
+
+**Reference implementation:** `src/server/progress-service.ts` and `src/server/progress-db.ts`. The client is `src/games/_shared/progress.ts`.
+
+As with `/api/auth/me`, there are no player sessions: the API trusts the `userId` it's given.
+
+### `GET /api/progress/:slug?userId=<uuid>`
+
+The game calls this when it opens, then merges the server copy with the browser's copy.
+
+| Case                                     | Response                                                       |
+| ---------------------------------------- | -------------------------------------------------------------- |
+| Save found                               | `200 { success: true, data: { ... }, updatedAt: "<ISO UTC>" }` |
+| No save yet (or the stored text is bad)  | `200 { success: true, data: null, updatedAt: null }`           |
+| `userId` missing or not a UUID           | `400`, "Invalid userId."                                       |
+| `slug` not `/^[a-z0-9][a-z0-9-]{0,59}$/` | `404`, "Invalid game."                                         |
+
+Send `Cache-Control: no-store`.
+
+### `POST /api/progress/:slug`
+
+Saves are debounced (about 1.5 s after the last change) and sent like tracking: `fetch(url, { method: "POST", keepalive: true, headers: { "Content-Type": "text/plain;charset=UTF-8" }, body: JSON.stringify({ userId, data }) })`. **Read the raw body and `JSON.parse` it.**
+
+| Check (in order)                        | Response                    |
+| --------------------------------------- | --------------------------- |
+| Body isn't JSON                         | `400`, "Invalid JSON."      |
+| `slug` doesn't match the pattern        | `404`, "Invalid game."      |
+| `userId` missing or not a UUID          | `400`, "Invalid userId."    |
+| `data` isn't a JSON object (or is null) | `400`, "Invalid data."      |
+| `JSON.stringify(data)` is over 64 KB    | `400`, "Save is too large." |
+| No user with that id                    | `404`, "User not found."    |
+| Saved                                   | `204` with no body          |
+
+**Writing it:** replace the row, last write wins. `INSERT INTO game_progress (user_id, game_slug, data, updated_at) VALUES (?, ?, ?, UTC_TIMESTAMP(3)) AS new ON DUPLICATE KEY UPDATE data = new.data, updated_at = new.updated_at` (MySQL 8.0.19+). Store `data` as the JSON text, and lowercase the `userId`.
+
+### What the saves contain
+
+The API doesn't need this, but it helps when looking at the table. Every save has a `savedAt` (epoch ms, set by the browser), which is used to choose the newer settings when two devices disagree.
+
+| Game               | `data`                                                                                                                                                                                                                                                                       |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `one-line-draw`    | `{ progress: { unlockedLevelIndex, totalLevelsCompleted, currentStreak, lastCompletionDate, completedLevels: { [levelId]: { stars, bestMoves, bestTimeMs, hintsUsed, undosUsed, completedAt } } }, settings: { soundEnabled }, savedAt }`                                    |
+| `emotional-tetris` | `{ progress: { bestScore, bestLines, bestLevel, totalSessions, totalLinesCleared, totalPlayTimeMs, currentStreak, lastPlayDate, emotionTotals }, settings: { soundEnabled, theme }, savedAt }`                                                                               |
+| `card-memory-game` | `{ progression: { completedLevels: { [level]: { score, stars, bestTime, bestMoves, completedAt } }, unlockedThemes, collectedQuotes, streakCount, lastCompletionDate, lastDailyChallengeDate, hasSeenTutorial }, settings: { soundEnabled, musicEnabled }, theme, savedAt }` |
