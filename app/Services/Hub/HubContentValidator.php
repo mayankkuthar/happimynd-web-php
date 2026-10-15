@@ -5,23 +5,25 @@ namespace App\Services\Hub;
 /**
  * Validates admin-published in-game content lists (API_SPEC §5).
  *
+ * Port of `validateCollection()` from the reference `content-schemas.ts`.
  * Returns the first error as a friendly message, or null when the list is
- * valid. Warnings never block publishing (only errors do), so this returns
- * errors only.
+ * valid. Warnings never block publishing (only errors do), so warnings are
+ * discarded here.
+ *
+ * Message format matches the documented example:
+ *   "guess-my-answer · Questions (item 1): Needs exactly 4 options."
  */
 class HubContentValidator
 {
+    /** Unicode whitespace trimmed by JS String.prototype.trim(). */
+    private const JS_WS = '\x{0009}-\x{000D}\x{0020}\x{00A0}\x{1680}\x{2000}-\x{200A}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}';
+
     /**
      * Does this collection exist for this game?
      */
     public function collectionExists(string $game, string $collection): bool
     {
-        if ($this->schemaFor($game, $collection) !== null) {
-            return true;
-        }
-
-        // Permissive by default; see config/hub_content.php.
-        return !(bool) config('hub_content.strict', false);
+        return HubContentSchema::find($game, $collection) !== null;
     }
 
     /**
@@ -29,192 +31,263 @@ class HubContentValidator
      */
     public function validateCollection(string $game, string $collection, array $items): ?string
     {
-        $schema = $this->schemaFor($game, $collection);
-
-        if ($schema === null) {
-            // Unknown schema: structural check only.
-            foreach ($items as $i => $item) {
-                if (!is_array($item) && !is_scalar($item)) {
-                    return $this->err($game, $collection, $i, 'is not a valid item.');
-                }
-            }
-
+        $def = HubContentSchema::find($game, $collection);
+        if ($def === null) {
             return null;
         }
 
-        $type = $schema['type'] ?? 'fields';
-
-        $countError = $this->checkItemCount($game, $collection, $items, $schema);
-        if ($countError !== null) {
-            return $countError;
-        }
-
-        foreach ($items as $index => $item) {
-            if ($type === 'textList') {
-                $error = $this->checkField($game, $collection, $index, null, $item, $schema['item'] ?? []);
-            } else {
-                if (!is_array($item)) {
-                    return $this->err($game, $collection, $index, 'is not a valid item.');
-                }
-                $error = null;
-                foreach (($schema['fields'] ?? []) as $fieldName => $fieldSchema) {
-                    $error = $this->checkField(
-                        $game,
-                        $collection,
-                        $index,
-                        $fieldName,
-                        $item[$fieldName] ?? null,
-                        $fieldSchema
-                    );
-                    if ($error !== null) {
-                        break;
-                    }
-                }
+        foreach ($this->validate($def, array_values($items)) as $issue) {
+            if ($issue['severity'] === 'error') {
+                return $this->format($game, $def, $issue);
             }
-
-            if ($error !== null) {
-                return $error;
-            }
-        }
-
-        return null;
-    }
-
-    private function checkItemCount(string $game, string $collection, array $items, array $schema): ?string
-    {
-        $min = $schema['minItems'] ?? null;
-        $max = $schema['maxItems'] ?? null;
-        $count = count($items);
-
-        if ($min !== null && $count < $min) {
-            return "{$game} · {$collection}: needs at least {$min} items.";
-        }
-        if ($max !== null && $count > $max) {
-            return "{$game} · {$collection}: needs at most {$max} items.";
         }
 
         return null;
     }
 
     /**
-     * @param int|string|null $fieldName null for a plain textList item
+     * Every problem with a list, in the same order as the reference. Errors
+     * would break the game; warnings are cosmetic.
+     *
+     * @return array<int, array>
      */
-    private function checkField(string $game, string $collection, int $index, $fieldName, $value, array $schema): ?string
+    private function validate(array $def, array $items): array
+    {
+        $issues = [];
+        $count = count($items);
+
+        if ($count < $def['minItems']) {
+            $noun = $def['minItems'] === 1 ? 'item' : 'items';
+            $issues[] = HubContentSchema::issue(
+                'error',
+                "This list needs at least {$def['minItems']} {$noun} (it has {$count})."
+            );
+        }
+        if ($count > $def['maxItems']) {
+            $issues[] = HubContentSchema::issue('error', "This list can have at most {$def['maxItems']} items.");
+        }
+
+        $records = $this->toRecords($def, $items);
+        $seen = [];
+        $firstTextField = null;
+        foreach ($def['fields'] as $f) {
+            if ($f['type'] === 'text') {
+                $firstTextField = $f;
+                break;
+            }
+        }
+
+        foreach ($records as $index => $item) {
+            foreach ($def['fields'] as $f) {
+                $key = $f['key'];
+                $value = $item[$key] ?? null;
+                $fieldIssues = $this->checkField($index, $key, $value, $f);
+                foreach ($fieldIssues as $issue) {
+                    $issues[] = $issue;
+                }
+            }
+
+            // Duplicates (by the first text field) are confusing but harmless.
+            if ($firstTextField !== null) {
+                $dupKey = mb_strtolower($this->trimJs($this->jsString($item[$firstTextField['key']] ?? null)));
+            } else {
+                $dupKey = '';
+            }
+
+            if ($dupKey !== '') {
+                if (array_key_exists($dupKey, $seen)) {
+                    $issues[] = HubContentSchema::issue(
+                        'warning',
+                        'Same as item ' . ($seen[$dupKey] + 1) . '.',
+                        $index,
+                        $firstTextField['key']
+                    );
+                } else {
+                    $seen[$dupKey] = $index;
+                }
+            }
+        }
+
+        if (isset($def['rules']) && is_callable($def['rules'])) {
+            foreach (($def['rules'])($records) as $issue) {
+                $issues[] = $issue;
+            }
+        }
+
+        return $issues;
+    }
+
+    /**
+     * @param array $schema one field definition
+     * @return array<int, array> issues (may be empty)
+     */
+    private function checkField(int $index, string $key, $value, array $schema): array
     {
         $type = $schema['type'] ?? 'text';
-        $label = $fieldName !== null ? (string) $fieldName : 'value';
+        $label = $schema['label'];
         $optional = (bool) ($schema['optional'] ?? false);
 
-        if ($value === null || (is_string($value) && trim($value) === '')) {
-            if ($optional) {
-                return null;
+        if ($type === 'text') {
+            $s = is_string($value) ? $this->trimJs($value) : '';
+            if ($s === '') {
+                return $optional ? [] : [HubContentSchema::issue('error', "{$label} can't be empty.", $index, $key)];
             }
 
-            return $this->err($game, $collection, $index, "{$label} cannot be empty.");
-        }
-
-        switch ($type) {
-            case 'text':
-                return $this->checkText($game, $collection, $index, $label, (string) $value, $schema);
-
-            case 'emoji':
-                $str = (string) $value;
-                if (mb_strlen($str) > 16) {
-                    return $this->err($game, $collection, $index, "{$label} must be 16 characters or fewer.");
-                }
-                if (!$this->startsWithEmoji($str)) {
-                    return $this->err($game, $collection, $index, "{$label} must start with an emoji.");
-                }
-
-                return null;
-
-            case 'select':
-                $options = $schema['options'] ?? [];
-                if (!in_array($value, $options, true)) {
-                    return $this->err($game, $collection, $index, "{$label} is not one of the allowed values.");
-                }
-
-                return null;
-
-            case 'textList':
-                if (!is_array($value)) {
-                    return $this->err($game, $collection, $index, "{$label} must be a list.");
-                }
-                $count = $schema['count'] ?? null;
-                if ($count !== null && count($value) !== $count) {
-                    return $this->err($game, $collection, $index, "needs exactly {$count} options.");
-                }
-                $min = $schema['min'] ?? null;
-                $max = $schema['maxItems'] ?? null;
-                if ($min !== null && count($value) < $min) {
-                    return $this->err($game, $collection, $index, "{$label} needs at least {$min} options.");
-                }
-                if ($max !== null && count($value) > $max) {
-                    return $this->err($game, $collection, $index, "{$label} needs at most {$max} options.");
-                }
-
-                $seen = [];
-                foreach ($value as $sub) {
-                    if (!is_string($sub) || trim($sub) === '') {
-                        return $this->err($game, $collection, $index, "{$label} has an empty option.");
-                    }
-                    $itemSchema = $schema['item'] ?? ['type' => 'text'];
-                    $subError = $this->checkField($game, $collection, $index, $label, $sub, $itemSchema);
-                    if ($subError !== null) {
-                        return $subError;
-                    }
-                    $key = mb_strtolower(trim($sub));
-                    if (isset($seen[$key])) {
-                        return $this->err($game, $collection, $index, "{$label} has a duplicate option.");
-                    }
-                    $seen[$key] = true;
-                }
-
-                return null;
-        }
-
-        return null;
-    }
-
-    private function checkText(string $game, string $collection, int $index, string $label, string $value, array $schema): ?string
-    {
-        $max = $schema['max'] ?? null;
-        if ($max !== null && mb_strlen($value) > $max) {
-            return $this->err($game, $collection, $index, "{$label} is too long (max {$max}).");
-        }
-
-        foreach (($schema['mustInclude'] ?? []) as $placeholder) {
-            if (strpos($value, $placeholder) === false) {
-                return $this->err($game, $collection, $index, "{$label} must include {$placeholder}.");
+            $out = [];
+            $len = $this->lenOf($s);
+            if ($len > $schema['max']) {
+                $out[] = HubContentSchema::issue('error', "{$label} is over {$schema['max']} characters.", $index, $key);
+            } elseif ($len > $schema['soft']) {
+                $out[] = HubContentSchema::issue('warning', "{$label} is long ({$len} characters) and may wrap or be cut off in the game.", $index, $key);
             }
+
+            foreach ($schema['mustInclude'] ?? [] as $placeholder) {
+                if (mb_strpos($s, $placeholder) === false) {
+                    $out[] = HubContentSchema::issue('error', "{$label} must include {$placeholder} (it's replaced with a name in the game).", $index, $key);
+                }
+            }
+
+            return $out;
         }
 
-        return null;
-    }
+        if ($type === 'emoji') {
+            $s = is_string($value) ? $this->trimJs($value) : '';
+            if ($s === '') {
+                return [HubContentSchema::issue('error', "{$label} can't be empty.", $index, $key)];
+            }
+            if ($this->lenOf($s) > 16 || !$this->isEmoji($s)) {
+                return [HubContentSchema::issue('error', "{$label} should be a single emoji.", $index, $key)];
+            }
 
-    private function schemaFor(string $game, string $collection): ?array
-    {
-        $games = config('hub_content.games', []);
-        if (isset($games[$game][$collection])) {
-            return $games[$game][$collection];
+            return [];
         }
 
-        $common = config('hub_content.common', []);
+        if ($type === 'select') {
+            $options = $schema['options'] ?? [];
 
-        return $common[$collection] ?? null;
+            if (empty($options)) {
+                // Defensive: a select with no known options accepts any
+                // non-empty value rather than rejecting everything.
+                if (!is_string($value) || $this->trimJs($value) === '') {
+                    return [HubContentSchema::issue('error', 'Pick a ' . mb_strtolower($label) . '.', $index, $key)];
+                }
+
+                return [];
+            }
+
+            foreach ($options as $o) {
+                if ($o['value'] === $value) {
+                    return [];
+                }
+            }
+
+            return [HubContentSchema::issue('error', 'Pick a ' . mb_strtolower($label) . '.', $index, $key)];
+        }
+
+        if ($type === 'textList') {
+            $list = is_array($value) ? array_values($value) : [];
+            if (count($list) !== $schema['count']) {
+                return [HubContentSchema::issue('error', 'Needs exactly ' . $schema['count'] . ' ' . mb_strtolower($label) . '.', $index, $key)];
+            }
+
+            $out = [];
+            foreach ($list as $i => $o) {
+                $s = is_string($o) ? $this->trimJs($o) : '';
+                if ($s === '') {
+                    $out[] = HubContentSchema::issue('error', "{$label} " . ($i + 1) . " can't be empty.", $index, $key);
+                    continue;
+                }
+                $len = $this->lenOf($s);
+                if ($len > $schema['max']) {
+                    $out[] = HubContentSchema::issue('error', "{$label} " . ($i + 1) . " is over {$schema['max']} characters.", $index, $key);
+                } elseif ($len > $schema['soft']) {
+                    $out[] = HubContentSchema::issue('warning', "{$label} " . ($i + 1) . ' is long and may wrap.', $index, $key);
+                }
+            }
+
+            $distinct = [];
+            foreach ($list as $o) {
+                $distinct[mb_strtolower($this->trimJs($this->jsString($o)))] = true;
+            }
+            if (count($distinct) < count($list)) {
+                $out[] = HubContentSchema::issue('error', 'Two ' . mb_strtolower($label) . ' are the same, so a match would be ambiguous.', $index, $key);
+            }
+
+            return $out;
+        }
+
+        return [];
     }
 
-    private function err(string $game, string $collection, $index, string $problem): string
+    /**
+     * Scalar lists store plain strings; treat them as { value } while checking.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function toRecords(array $def, array $items): array
     {
-        return "{$game} · {$collection} (item " . ($index + 1) . "): {$problem}";
+        $scalar = (bool) ($def['scalar'] ?? false);
+
+        return array_map(function ($item) use ($scalar) {
+            if ($scalar) {
+                return ['value' => $item];
+            }
+
+            return is_array($item) ? $item : [];
+        }, $items);
     }
 
-    private function startsWithEmoji(string $value): bool
+    private function format(string $game, array $def, array $issue): string
     {
-        // Match a leading regional indicator, emoji, or symbol/pictograph.
+        $out = $game . ' · ' . $def['label'];
+
+        if (array_key_exists('index', $issue) && $issue['index'] !== null) {
+            $out .= ' (item ' . ($issue['index'] + 1) . ')';
+        }
+
+        return $out . ': ' . $issue['message'];
+    }
+
+    /** JS String(value): '' for null/undefined/array, else the scalar. */
+    private function jsString($value): string
+    {
+        if ($value === null || is_array($value)) {
+            return '';
+        }
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        return (string) $value;
+    }
+
+    /** Mirrors JS String.prototype.trim(). */
+    private function trimJs(string $s): string
+    {
+        $pattern = '/^[' . self::JS_WS . ']+|[' . self::JS_WS . ']+$/u';
+
+        return (string) preg_replace($pattern, '', $s);
+    }
+
+    /** String length in UTF-16 code units, matching JS `.length`. */
+    private function lenOf(string $s): int
+    {
+        return (int) (strlen(mb_convert_encoding($s, 'UTF-16LE', 'UTF-8')) / 2);
+    }
+
+    /** Mirrors the reference isEmoji(): Extended_Pictographic or Regional_Indicator. */
+    private function isEmoji(string $s): bool
+    {
+        $pictographic = preg_match('/^(?:\p{Extended_Pictographic}|\p{Regional_Indicator})/u', $s);
+
+        if ($pictographic !== false) {
+            return $pictographic === 1;
+        }
+
+        // Fallback for PCRE builds without those Unicode properties.
         return (bool) preg_match(
             '/^(?:\x{1F1E6}-\x{1F1FF}|[\x{1F300}-\x{1FAFF}]|[\x{2600}-\x{27BF}]|[\x{2B00}-\x{2BFF}])/u',
-            $value
+            $s
         );
     }
 }
