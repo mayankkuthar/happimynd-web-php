@@ -80,7 +80,23 @@ class RouteServiceProvider extends ServiceProvider
     protected function configureRateLimiting()
     {
         RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(60)->by(optional($request->user())->id ?: $request->ip());
+            $key = optional($request->user())->id ?: $request->ip();
+
+            // The HappiLIFE assessment saves every answer as it is tapped, so a
+            // user answering quickly used up the shared 60/min allowance and
+            // then every other screen failed with 429 for up to a minute. The
+            // assessment endpoints get their own, larger allowance.
+            if ($request->is(
+                'api/v1/start-assessment',
+                'api/v1/save-option',
+                'api/v1/update-last-answer',
+                'api/v1/assessment-status',
+                'api/v1/checkifany'
+            )) {
+                return Limit::perMinute(300)->by('assessment|' . $key);
+            }
+
+            return Limit::perMinute(60)->by($key);
         });
     }
 }

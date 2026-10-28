@@ -222,16 +222,17 @@ class AssessmentService
     public function endAssessment($assessmentId)
     {
         $assessment = Assessment::find($assessmentId);
-        if ($assessmentId) {
+        if ($assessment && $assessment->ended_at === null) {
             $assessment->ended_at = Carbon::now();
             if ($assessment->save()) {
                 AssessmentApprove::updateOrCreate(['assessment_id' => $assessmentId], [
                     'slot' => null,
                 ]);
-                $bundleStatus = BundleStatus::where('user_id', $this->userId)->where('percentage_covered', '!=', 100.00)->whereHas('plans.package', function ($query) {
+                // $this->userId is not set when called via forAssessment*()
+                $bundleStatus = BundleStatus::where('user_id', $assessment->user_id)->where('percentage_covered', '!=', 100.00)->whereHas('plans.package', function ($query) {
                     $query->where('name', 'HappiLIFE Screening');
                 })->first();
-                $this->user->generateReportAndSendMail();
+                $this->generateReportAfterResponse($this->user ?: $assessment->user);
                 if ($bundleStatus) {
                     (new PackageService)->bundlePlanCompleted($bundleStatus->id);
                 }
@@ -276,37 +277,85 @@ class AssessmentService
     {
         $this->forAssessment($assessmentId);
         $optionQuestion = OptionQuestion::with('question.option')->find($optionQuestionId);
+        if (!$optionQuestion || !$optionQuestion->question) {
+            return false;
+        }
         $questionOptions = $optionQuestion->question->option->pluck('pivot')->pluck('id')->toArray();
-        $answeredOptions = AssessmentAnswer::where('assessment_id', $assessmentId)->get()->pluck('option_question_id')->toArray();
-        if (count(array_intersect($answeredOptions, $questionOptions)) == 0) {
-            $result = AssessmentAnswer::create([
+
+        // Questions are served in the user's language (app/new website) or in
+        // English (old website), so count the total for the language of the
+        // question being answered. forAssessment() always counts English, so
+        // for other languages the assessment never completed here.
+        $totalQuestions = Question::where('language', $optionQuestion->question->language)
+            ->whereHas('category')
+            ->whereIn('batch_category_id', $this->batchCategory->pluck('id')->toArray())
+            ->count();
+
+        // Lock the attempt so saves arriving together (repeated taps, client
+        // retries) can't both insert the same question or both skip the
+        // completion check
+        $completedAssessment = null;
+        $saved = DB::transaction(function () use ($assessmentId, $optionQuestionId, $questionOptions, $totalQuestions, &$completedAssessment) {
+            $assessment = Assessment::where('id', $assessmentId)->lockForUpdate()->first();
+            if (!$assessment || $assessment->ended_at !== null) {
+                return false;
+            }
+            $answeredOptions = AssessmentAnswer::where('assessment_id', $assessmentId)->pluck('option_question_id')->toArray();
+            if (count(array_intersect($answeredOptions, $questionOptions)) > 0) {
+                return false;
+            }
+            AssessmentAnswer::create([
                 'assessment_id' => $assessmentId,
                 'option_question_id' => $optionQuestionId,
             ]);
             $count = AssessmentAnswer::where('assessment_id', $assessmentId)->count();
-            if ($count == $this->totalQuestionsCount) {
-                $assessment = Assessment::find($assessmentId);
+            // >= rather than ==: an extra answer used to skip past the total
+            // and the attempt was then never marked complete
+            if ($totalQuestions > 0 && $count >= $totalQuestions) {
                 $assessment->ended_at = Carbon::now();
                 $assessment->save();
-                AssessmentApprove::updateOrCreate(['assessment_id' => $assessmentId], [
-                    'slot' => null,
-                ]);
-                $this->createOrUpdateScore($assessment, $count);
-                \Log::debug('invoking report job from assessmentService');
-                $bundleStatus = BundleStatus::where('user_id', auth('user')->user()->id)->where('percentage_covered', '!=', 100.00)->whereHas('plans.package', function ($query) {
-                    $query->where('name', 'HappiLIFE Screening');
-                })->first();
-                if ($bundleStatus) {
-                    (new PackageService)->bundlePlanCompleted($bundleStatus->id);
-                }
-                $assessment->user->generateReportAndSendMail();
-                return 'completed';
+                $completedAssessment = $assessment;
             }
-            if ($result) {
-                return true;
-            }
+            return true;
+        });
+
+        if (!$completedAssessment) {
+            return $saved;
         }
-        return false;
+
+        AssessmentApprove::updateOrCreate(['assessment_id' => $assessmentId], [
+            'slot' => null,
+        ]);
+        $this->createOrUpdateScore($completedAssessment, AssessmentAnswer::where('assessment_id', $assessmentId)->count());
+        $bundleStatus = BundleStatus::where('user_id', $completedAssessment->user_id)->where('percentage_covered', '!=', 100.00)->whereHas('plans.package', function ($query) {
+            $query->where('name', 'HappiLIFE Screening');
+        })->first();
+        if ($bundleStatus) {
+            (new PackageService)->bundlePlanCompleted($bundleStatus->id);
+        }
+        $this->generateReportAfterResponse($completedAssessment->user);
+        return 'completed';
+    }
+
+    /**
+     * Build the PDF report and email it once the response has been sent.
+     * Doing it inside the request made the last answer take 20 s or more, so
+     * apps timed out on it and treated the finished assessment as failed.
+     */
+    protected function generateReportAfterResponse($user)
+    {
+        if (!$user) {
+            return;
+        }
+        \Log::debug('scheduling report generation after response for user:' . $user->id);
+        app()->terminating(function () use ($user) {
+            try {
+                $user->generateReportAndSendMail();
+            } catch (\Throwable $e) {
+                \Log::critical('Report generation after response failed for user:' . $user->id);
+                \Log::critical($e);
+            }
+        });
     }
 
     /**
@@ -450,7 +499,7 @@ class AssessmentService
                 $questions = Question::where('language' , 'english')->whereHas('category')->whereIn('batch_category_id', $this->batchCategory->pluck('id')->toArray())->whereNotIn('id', $answered_question_ids)->inRandomOrder()->limit($limit)->get();
             }
             $this->answeredQuestionsCount = count($answered_question_ids);
-            if ($this->answeredQuestionsCount == $this->totalQuestionsCount) {
+            if ($this->totalQuestionsCount > 0 && $this->answeredQuestionsCount >= $this->totalQuestionsCount) {
                 $this->endAssessment($this->assessmentId);
             }
         }
@@ -578,7 +627,7 @@ class AssessmentService
                 }
             }
             $this->answeredQuestionsCount = count($answered_question_ids);
-            if ($this->answeredQuestionsCount == $this->totalQuestionsCount) {
+            if ($this->totalQuestionsCount > 0 && $this->answeredQuestionsCount >= $this->totalQuestionsCount) {
                 $this->endAssessment($this->assessmentId);
             }
         }
@@ -1092,7 +1141,7 @@ class AssessmentService
                 $questions = Question::where('language',$user_language)->whereHas('category')->whereIn('batch_category_id', $this->batchCategory->pluck('id')->toArray())->whereNotIn('id', $answered_question_ids)->inRandomOrder()->limit($limit)->get();
             }
             $this->answeredQuestionsCount = count($answered_question_ids);
-            if ($this->answeredQuestionsCount == $this->totalQuestionsCount) {
+            if ($this->totalQuestionsCount > 0 && $this->answeredQuestionsCount >= $this->totalQuestionsCount) {
                 $this->endAssessment($this->assessmentId);
             }
         }

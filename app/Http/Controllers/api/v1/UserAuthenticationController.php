@@ -18,6 +18,7 @@ use App\Models\BundleStatus;
 use App\Models\NotificationList;
 use App\Models\NotificationMessage;
 use App\Models\AssessmentAnswer;
+use App\Models\OptionQuestion;
 use App\Models\RaiseQuery;
 use App\Models\VerifyGuardian;
 use App\Models\MobileOtp;
@@ -756,8 +757,16 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
             $preventNewAssessment = $completedTime->diffInMinutes(Carbon::now()) < 1;
         }
 
+        // Once an attempt is finished, a new one is only started when the client
+        // asks for it (a "Retake" button sends new_attempt). Status checks and
+        // reloads after the last answer used to call this endpoint too, which
+        // silently opened a new attempt and hid the finished one.
+        $newAttemptRequested = filter_var($request->input('new_attempt', false), FILTER_VALIDATE_BOOLEAN);
+
         if ($incompleteAssessment) {
             $assessment_number = $incompleteAssessment->id;
+        } else if ($recentlyCompletedAssessment && !$newAttemptRequested) {
+            return response()->json(['status' => 'success', 'completed' => true, 'message' => 'Assessment is already completed.']);
         } else if ($preventNewAssessment) {
             // If assessment was just completed, don't create a new one
             return response()->json(['status' => 'success', 'message' => 'Assessment was recently completed. Please wait before starting a new one.']);
@@ -1209,7 +1218,11 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
     
     public function viewReport(Request $request){
         $user = Auth::user();
-        $assessmentId = Assessment::where('user_id' , $user->id)->first();
+        // Latest finished attempt (this used to return the user's first one)
+        $assessmentId = Assessment::where('user_id' , $user->id)->whereNotNull('ended_at')->orderBy('id', 'desc')->first();
+        if(!$assessmentId){
+            return response()->json(['status' => 'error' , 'message' => 'Assesment is  not completed yet.']);
+        }
         $link = url('calculate-score')."?assessment_id=".$assessmentId->id;
         return response()->json(['status' => 'success' , 'link' => $link]);
     }
@@ -1270,7 +1283,7 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
 
             $response = Http::get(env('NODE_URL') . '/check');
             if ($response->ok()) {
-                $response = Http::get(env('NODE_URL') . '/pdf?reportUrl=' . env('APP_URL') . '/calculate-score?assessment_id=' . $assessment_details->id . '&fileName=' . $assessment_details->id . '_' . $user->nickname.'testing' . '-ScreeningReport.pdf');
+                $response = Http::get(env('NODE_URL') . '/pdf?reportUrl=' . env('APP_URL') . '/calculate-score?assessment_id=' . $assessment_details->id . '&fileName=' . $assessment_details->id . '_' . $user->nickname . '-ScreeningReport.pdf');
                 $res = $response->json();
 
                 // print_r($res['link']);
@@ -1303,9 +1316,24 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
             return response()->json(["message" => $validator->errors()->first()],400);
         }
 
-        $users_assessment = Assessment::where('user_id' , $user->id)->first();
+        // The attempt in progress; this used to pick the user's first attempt,
+        // so on a retake it changed an answer in an old, already scored attempt
+        $users_assessment = Assessment::where('user_id' , $user->id)->orderBy('id', 'desc')->first();
+        if(!$users_assessment || $users_assessment->ended_at != null){
+            return response()->json(['status' => 'error' , 'message' => 'There is no assessment in progress to update.'],400);
+        }
 
         $get_last_submit_question = AssessmentAnswer::where('assessment_id' , $users_assessment->id)->orderBy('id' , 'desc')->first();
+        if(!$get_last_submit_question){
+            return response()->json(['status' => 'error' , 'message' => 'No answer to update.'],400);
+        }
+
+        // Only allow switching to another option of the same question
+        $lastOption = OptionQuestion::find($get_last_submit_question->option_question_id);
+        $newOption = OptionQuestion::find($request->option_question_id);
+        if(!$lastOption || !$newOption || $lastOption->question_id != $newOption->question_id){
+            return response()->json(['status' => 'error' , 'message' => 'This option does not belong to the last answered question.'],400);
+        }
 
         $get_last_submit_question->option_question_id = $request->option_question_id;
         $get_last_submit_question->update();

@@ -35,7 +35,10 @@ class UserControllerApi extends Controller
     {
 
         $user = Auth::user();
-        $assessment_details = Assessment::where('user_id', $user->id)->first();
+        // Latest attempt: without the ordering this read the user's first one, so
+        // it said "completed" forever once that was finished, even while a
+        // newer attempt was open
+        $assessment_details = Assessment::where('user_id', $user->id)->orderBy('id', 'desc')->first();
 
         if (!$assessment_details) {
             return response()->json(['status' => 'error', 'message' => 'Assesment is not complete.']);
