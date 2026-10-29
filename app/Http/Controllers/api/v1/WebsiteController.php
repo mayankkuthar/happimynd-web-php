@@ -560,7 +560,8 @@ class WebsiteController extends Controller
 
     public function psychologists(Request $request)
     {
-        $query = (new \App\Models\Psychologist())->newQuery()->whereNotNull('slot1');
+        $query = (new \App\Models\Psychologist())->newQuery()->whereNotNull('slot1')
+            ->where('id', '!=', \App\Models\Psychologist::HAPPITALK_POOL_ID);
 
         if ($request->has('search')) {
             $query->where(function ($query) use ($request) {
@@ -612,19 +613,21 @@ class WebsiteController extends Controller
                 $organization = $token ? Organization::where('id', $token->organization_id)->first() : null;
 
                 if ($organization) {
-                    $orgPsyIds = AssignPsyToOrgForTalk::where('organization_id', $token->organization_id)
-                        ->pluck('psychologist_id');
-                    $query->whereIn('id', $orgPsyIds)->whereNotNull('slot1');
-
                     $totalSessions = $user->getOrganizationHappiTalkSessions();
+
+                    // The organisation's panel only applies when it pays for
+                    // HappiTALK; otherwise the user pays and sees everyone
+                    if ($totalSessions > 0) {
+                        $orgPsyIds = AssignPsyToOrgForTalk::where('organization_id', $token->organization_id)
+                            ->pluck('psychologist_id');
+                        $query->whereIn('id', $orgPsyIds)->whereNotNull('slot1');
+                    }
+
                     if ($totalSessions > 0 && !\App\Models\HappitalkBooking::where('user_id', $user->id)->exists()) {
                         $userType = 'organization';
                         $organizationName = $organization->name;
                     }
                 }
-            } else {
-                $talkPsyIds = AssignPsyToPlan::where('plan_name', 'HappiTalk')->pluck('psychologist_id')->toArray();
-                $query->whereIn('id', $talkPsyIds)->whereNotNull('slot1');
             }
         }
 
@@ -795,6 +798,8 @@ class WebsiteController extends Controller
                 'user_id' => $user->id,
                 'subscribed_plan_ids' => $subscribedPlanIds,
                 'organization_plan_ids' => $organizationPlanIds,
+                // Pre-paid SOLV / HappiTALK sessions (organisation and bundles)
+                'sessions_left' => $user->sessions_left,
             ],
         ]);
     }

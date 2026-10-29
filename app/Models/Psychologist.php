@@ -30,6 +30,10 @@ class Psychologist extends Authenticatable implements JWTSubject
 {
     use HasFactory, Notifiable;
 
+    // Hidden psychologist that pre-paid (organisation / bundle) HappiTALK
+    // bookings are made against; HappiMynd assigns the real one later
+    const HAPPITALK_POOL_ID = 301;
+
     protected $table = 'psychologists';
 
 

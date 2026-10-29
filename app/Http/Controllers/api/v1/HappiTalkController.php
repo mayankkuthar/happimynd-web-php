@@ -161,19 +161,20 @@ class HappiTalkController extends Controller
                 }
             }else{
                 //user name individual and org null because org not buy happitalk
+                //they pay for themselves, so they get the full panel
                 $user_detail = [
                     'user_from' => 'individual',
                     'organization_name' => null,
                 ];
-                $psychologists = $psychologists->whereIn('id', $psy_id_to_be_show_based_on_org )->whereNotNull('slot1');
+                $psychologists = $psychologists->where('id', '!=', Psychologist::HAPPITALK_POOL_ID);
             }
         }else{
+            //individual users get the full panel (not only the psychologists mapped to HappiTalk)
             $user_detail = [
                 'user_from' => 'individual',
                 'organization_name' => null,
             ];
-            $talk_psy_ids = AssignPsyToPlan::where('plan_name' , 'HappiTalk')->pluck('psychologist_id')->toArray();
-            $psychologists = $psychologists->whereIn('id' , $talk_psy_ids)->whereNotNull('slot1');
+            $psychologists = $psychologists->where('id', '!=', Psychologist::HAPPITALK_POOL_ID);
         }
         
 

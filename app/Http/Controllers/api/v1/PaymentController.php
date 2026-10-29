@@ -486,12 +486,27 @@ class PaymentController extends Controller
         // $plan_ids = $request->plan_id;
         // $explode_plan_ids = explode(',',$plan_ids);
         // foreach($explode_plan_ids as $plan){
-        $data = [
-            'user_id' => $user->id,
-            'plan_id' => $request->plan_id,
-        ];
+        // Same as a paid purchase (successPaymentPage): a bundle grants each
+        // plan inside it, fully covered, so its SOLV / HappiTALK sessions count.
+        $plan_details = Plan::where('id', $request->plan_id)->first();
+        $package_details = $plan_details ? Package::where('id', $plan_details->package_id)->first() : null;
 
-        BundleStatus::create($data);
+        if ($package_details && $package_details->bundle == 1) {
+            $bundle_plans = DynamicBundlePlan::where('package_id', $plan_details->package_id)->get();
+            foreach ($bundle_plans as $plan) {
+                BundleStatus::create([
+                    'user_id' => $user->id,
+                    'plan_id' => $plan->plan_id,
+                    'percentage_covered' => "100.00",
+                ]);
+            }
+        } else {
+            BundleStatus::create([
+                'user_id' => $user->id,
+                'plan_id' => $request->plan_id,
+                'percentage_covered' => "100.00",
+            ]);
+        }
         // }
 
 
