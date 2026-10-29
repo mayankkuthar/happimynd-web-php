@@ -448,9 +448,18 @@ class PaymentController extends Controller
         $user = Auth::user();
 
         $user_subscribed_plans = BundleStatus::where('user_id', $user->id)->NotExpired()->pluck('plan_id');
-        $packages_based_on_plan_ids = Plan::whereIn('id', $user_subscribed_plans)->pluck('package_id')->toArray();
+        $bundle_package_ids = $user->subscribedBundlePackageIds();
 
-        $packages = Package::whereIn('id', $packages_based_on_plan_ids)->get();
+        // List each bought bundle once (e.g. CARE 12X) instead of the plans it
+        // grants; plans bought on their own are still listed
+        $plans_in_bundles = DynamicBundlePlan::whereIn('package_id', $bundle_package_ids)->pluck('plan_id');
+        $standalone_package_ids = Plan::whereIn('id', $user_subscribed_plans->diff($plans_in_bundles))
+            ->pluck('package_id')
+            ->diff($bundle_package_ids);
+
+        $packages = Package::whereIn('id', $bundle_package_ids->merge($standalone_package_ids))
+            ->orderBy('bundle', 'desc')
+            ->get();
         return response()->json(['status' => 'success', 'message' => 'My subscribed services get successfully.', 'data' => $packages], 200);
     }
 
@@ -500,6 +509,13 @@ class PaymentController extends Controller
                     'percentage_covered' => "100.00",
                 ]);
             }
+            // There is no receipt to tell which bundle this was, so keep the
+            // bundle plan too (see User::subscribedBundlePackageIds)
+            BundleStatus::create([
+                'user_id' => $user->id,
+                'plan_id' => $request->plan_id,
+                'percentage_covered' => "100.00",
+            ]);
         } else {
             BundleStatus::create([
                 'user_id' => $user->id,

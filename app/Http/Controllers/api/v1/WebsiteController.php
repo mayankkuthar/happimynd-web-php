@@ -720,6 +720,9 @@ class WebsiteController extends Controller
 
         $subscribedPlans = $user->bundleStatus()->NotExpired()->get();
         $subscribedPlanIds = $subscribedPlans->pluck('plan_id')->toArray() ?? [];
+        // A paid bundle only stores the plans it grants, so mark the bundle
+        // itself (e.g. CARE 12X) as subscribed too
+        $subscribedBundlePackageIds = $user->subscribedBundlePackageIds()->toArray();
 
         $organizationPackages = null;
         $organizationPlanIds = [];
@@ -776,7 +779,7 @@ class WebsiteController extends Controller
                         'value' => $plan->duration->value,
                         'frequency' => $plan->duration->frequency,
                     ] : null,
-                    'is_subscribed' => in_array($plan->id, $subscribedPlanIds) || in_array($plan->id, $organizationPlanIds),
+                    'is_subscribed' => in_array($plan->id, $subscribedPlanIds) || in_array($plan->id, $organizationPlanIds) || in_array($package->id, $subscribedBundlePackageIds),
                 ];
             }
             $response[] = [

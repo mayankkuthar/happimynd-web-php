@@ -602,6 +602,23 @@ class User extends Authenticatable implements JWTSubject
         return 0;
     }
 
+    // Bundle packages (e.g. CARE 12X) the user has an active purchase of. A
+    // paid bundle only stores the plans it grants, linked to the receipt for
+    // the bundle plan; a free (100% coupon) one also stores the bundle plan.
+    public function subscribedBundlePackageIds()
+    {
+        $statuses = BundleStatus::where('user_id', $this->id)->NotExpired()->get();
+        $receiptPlanIds = Receipt::whereIn('id', $statuses->pluck('receipt_id')->filter())->pluck('plan_id');
+
+        return Plan::whereIn('id', $receiptPlanIds->merge($statuses->pluck('plan_id')))
+            ->whereHas('package', function ($query) {
+                $query->where('bundle', 1);
+            })
+            ->pluck('package_id')
+            ->unique()
+            ->values();
+    }
+
     public function getSessionsLeftAttribute()
     {
         $bundleStatuses = BundleStatus::where('user_id', $this->id)
