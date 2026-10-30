@@ -129,7 +129,9 @@ class PaymentController extends Controller
         $user = Auth::guard('api')->user();
 
         $un_sorted_packages = null;
-        if ($user && $user->isOrganizationUser()) {
+        // Organisation users get only single services, unless the caller asks
+        // for bundles too (the app offers org users the bundles + HappiTALK)
+        if ($user && $user->isOrganizationUser() && !$request->boolean('with_bundles')) {
             $un_sorted_packages = Package::where('bundle', 0)->with(['plan' => function ($query) {
                 return $query->withMax('offer', 'discount')->with('duration')->orderBy('offer_max_discount', 'ASC')->with('expertLevel');
             }])->get();
@@ -456,6 +458,17 @@ class PaymentController extends Controller
         $standalone_package_ids = Plan::whereIn('id', $user_subscribed_plans->diff($plans_in_bundles))
             ->pluck('package_id')
             ->diff($bundle_package_ids);
+
+        // Services on the user's organisation code are theirs too, though only
+        // HappiLIFE Screening gets its own row at signup
+        if ($user->isOrganizationUser() && $user->userToken->token) {
+            $organization_package_ids = Plan::whereIn('id', $user->userToken->token->tokenPlans()->pluck('plan_id'))
+                ->whereHas('package', function ($query) {
+                    $query->where('bundle', 0);
+                })
+                ->pluck('package_id');
+            $standalone_package_ids = $standalone_package_ids->merge($organization_package_ids)->unique();
+        }
 
         $packages = Package::whereIn('id', $bundle_package_ids->merge($standalone_package_ids))
             ->orderBy('bundle', 'desc')
