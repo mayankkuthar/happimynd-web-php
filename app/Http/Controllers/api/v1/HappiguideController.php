@@ -474,6 +474,9 @@ class HappiguideController extends Controller
             return response()->json(["message" => $validator->errors()->first()],400);
         }
 
+        if (!$user->hasFreeSession('solv', $request->coupen_id ?: $request->coupon_id)) {
+            return response()->json(['status' => 'error' , 'message' => 'You have no SOLV sessions left. Please buy a session to book.']);
+        }
 
         $bundleStatus = BundleStatus::create([
             'user_id' => $user->id,

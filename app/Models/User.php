@@ -620,6 +620,37 @@ class User extends Authenticatable implements JWTSubject
             ->values();
     }
 
+    /**
+     * Whether the user may book a 'solv' or 'happitalk' session at no cost:
+     * they have a session credit (bundle or organisation), their organisation
+     * provides SOLV, or they applied a 100% coupon.
+     */
+    public function hasFreeSession($service, $couponId = null)
+    {
+        $left = $this->sessions_left;
+        if ($left[$service === 'solv' ? 'solv_sessions_left' : 'happitalk_sessions_left'] > 0) {
+            return true;
+        }
+
+        if ($service === 'solv' && $this->isOrganizationUser() && $this->userToken->token) {
+            $happiguidePlanIds = Plan::whereHas('package', function ($query) {
+                $query->where('name', 'HappiGUIDE');
+            })->pluck('id');
+            if ($this->userToken->token->tokenPlans()->whereIn('plan_id', $happiguidePlanIds)->exists()) {
+                return true;
+            }
+        }
+
+        if ($couponId) {
+            $coupon = Coupon::find($couponId);
+            if ($coupon && $coupon->status == 1 && (float)$coupon->discount_percent >= 100) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function getSessionsLeftAttribute()
     {
         $bundleStatuses = BundleStatus::where('user_id', $this->id)
@@ -630,13 +661,68 @@ class User extends Authenticatable implements JWTSubject
         $bundleHappiTalkGranted = 0;
         $solvGranted = 0;
 
-        foreach ($bundleStatuses as $bundleStatus) {
+        // Each bundle bought grants its own sessions: HappiTALK as set on the
+        // bundle (e.g. CARE 3X = 3), SOLV 1 when HappiGUIDE is in it. A paid
+        // bundle is found through its receipt; a free one (avail-free-services)
+        // keeps a status row for the bundle plan itself.
+        $bundlePackageIds = [];
+        $receiptIds = $bundleStatuses->pluck('receipt_id')->filter()->unique();
+        $bundleReceiptPackages = ReceiptPackage::whereIn('receipt_id', $receiptIds)
+            ->with('plan.package')
+            ->get()
+            ->filter(function ($receiptPackage) {
+                return optional(optional($receiptPackage->plan)->package)->bundle == 1;
+            });
+        foreach ($bundleReceiptPackages as $receiptPackage) {
+            $bundlePackageIds[] = $receiptPackage->plan->package_id;
+        }
+        $bundleReceiptIds = $bundleReceiptPackages->pluck('receipt_id')->unique()->all();
+
+        // Status rows not created by a bundle purchase
+        $standalone = $bundleStatuses->reject(function ($bundleStatus) use ($bundleReceiptIds) {
+            return in_array($bundleStatus->receipt_id, $bundleReceiptIds);
+        });
+        $freeBundles = $standalone->filter(function ($bundleStatus) {
+            return optional(optional($bundleStatus->plans)->package)->bundle == 1;
+        });
+        $standalone = $standalone->diff($freeBundles);
+        foreach ($freeBundles as $freeBundle) {
+            $bundlePackageIds[] = $freeBundle->plans->package_id;
+            // The plan rows the free bundle created alongside it (same request).
+            // Matched by time, not by the bundle's current contents, which
+            // may have changed since.
+            $standalone = $standalone->reject(function ($bundleStatus) use ($freeBundle) {
+                return !$bundleStatus->receipt_id
+                    && $bundleStatus->created_at && $freeBundle->created_at
+                    && abs($bundleStatus->created_at->diffInSeconds($freeBundle->created_at)) <= 5;
+            });
+        }
+
+        $bundleContents = DynamicBundlePlan::whereIn('package_id', array_unique($bundlePackageIds))
+            ->get()
+            ->groupBy('package_id');
+        $contentPlans = Plan::with('package')
+            ->whereIn('id', $bundleContents->flatten()->pluck('plan_id'))
+            ->get()
+            ->keyBy('id');
+        foreach ($bundlePackageIds as $packageId) {
+            foreach ($bundleContents->get($packageId, collect()) as $content) {
+                $packageName = strtolower(optional(optional($contentPlans->get($content->plan_id))->package)->name ?? '');
+                if ($packageName === 'happitalk') {
+                    $bundleHappiTalkGranted += $content->sessions ? (int)$content->sessions : 1;
+                } elseif ($packageName === 'happiguide') {
+                    $solvGranted += 1;
+                }
+            }
+        }
+
+        // Services bought on their own
+        foreach ($standalone as $bundleStatus) {
             $plan = $bundleStatus->plans;
             $packageName = strtolower(optional($plan)->package ? $plan->package->name : '');
 
             if ($packageName === 'happitalk') {
-                $sessions = DynamicBundlePlan::where('plan_id', $bundleStatus->plan_id)->max('sessions');
-                $bundleHappiTalkGranted += $sessions ? (int)$sessions : 1;
+                $bundleHappiTalkGranted += 1;
             } elseif ($packageName === 'happiguide' && $bundleStatus->percentage_covered == 100.00) {
                 $solvGranted += 1;
             }

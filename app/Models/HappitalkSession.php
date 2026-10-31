@@ -16,6 +16,66 @@ class HappitalkSession extends Model
 {
     use HasFactory;
 
+    // How many users can book the same psychologist slot. Change it here; the
+    // slots API returns it as slot_capacity.
+    const SLOT_CAPACITY = 20;
+
+    // Sessions that still hold their slot: not cancelled, not rejected
+    public function scopeHoldingSlot($query)
+    {
+        return $query->where('is_cancel', '!=', '1')->where('is_req_accepted', '!=', '2');
+    }
+
+    // Start and end of a slot like "10:00 AM - 10:30 AM" as timestamps, or
+    // nulls when it can't be read
+    public static function slotBounds($time)
+    {
+        $parts = explode('-', (string) $time);
+        $start = strtotime('1970-01-01 ' . trim($parts[0]));
+        $end = isset($parts[1]) ? strtotime('1970-01-01 ' . trim($parts[1])) : false;
+        return ($start === false || $end === false) ? [null, null] : [$start, $end];
+    }
+
+    // The sessions (of one psychologist and date) that overlap the slot $time
+    public static function overlappingSlot($sessions, $time)
+    {
+        [$start, $end] = self::slotBounds($time);
+        return $sessions->filter(function ($session) use ($start, $end, $time) {
+            if ($start === null) {
+                return $session->time == $time;
+            }
+            $sessionStart = strtotime('1970-01-01 ' . $session->start_time);
+            $sessionEnd = strtotime('1970-01-01 ' . $session->end_time);
+            if ($sessionStart === false || $sessionEnd === false) {
+                return $session->time == $time;
+            }
+            return $sessionStart < $end && $sessionEnd > $start;
+        });
+    }
+
+    // Why $user_id can't book the psychologist's slot, or null when they can.
+    // A slot takes up to SLOT_CAPACITY bookings, one per user. Rescheduling
+    // passes the session being moved so it doesn't count against itself.
+    public static function slotUnavailableReason($psychologist_id, $date, $time, $user_id, $except_session_id = null)
+    {
+        $sessions = self::where('psychologist_id', $psychologist_id)
+            ->where('date', $date)
+            ->holdingSlot()
+            ->when($except_session_id, function ($query) use ($except_session_id) {
+                return $query->where('id', '!=', $except_session_id);
+            })
+            ->get();
+        $inSlot = self::overlappingSlot($sessions, $time);
+
+        if ($inSlot->contains('user_id', $user_id)) {
+            return "You have already booked this slot.";
+        }
+        if ($inSlot->count() >= self::SLOT_CAPACITY) {
+            return "This slot is fully booked.";
+        }
+        return null;
+    }
+
     protected $fillable = [
         'happitalk_booking_id',
         'user_id',

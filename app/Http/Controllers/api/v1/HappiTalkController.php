@@ -206,21 +206,31 @@ class HappiTalkController extends Controller
         $current_date = Date('Y-m-d'); 
         $psychologist = Psychologist::where('id' , $request->psychologist_id)->first();
 
-        // return $psychologist->availability;
-        $slot_dates =  $psychologist->availability->where('date','>=',$current_date)->pluck('date')->toArray();
-        $slot_dates =  array_values(array_unique($slot_dates));
+        // Leave out slots that are fully booked or that this user already has
+        $booked_sessions = HappitalkSession::where('psychologist_id', $psychologist->id)
+            ->where('date', '>=', $current_date)
+            ->holdingSlot()
+            ->get()
+            ->groupBy('date');
+        $user_id = Auth::id();
 
-
-        $availableSlots = $psychologist->availability->where('date','>=',$current_date)->groupBy('date')->map(function ($slots) {
+        $availableSlots = $psychologist->availability->where('date','>=',$current_date)->groupBy('date')->map(function ($slots, $date) use ($booked_sessions, $user_id) {
+            $sessions_on_date = $booked_sessions->get($date, collect());
             $times = [];
-            foreach ($slots as $k => $slot) {
-                $times['time'][$k] = $slot->time;
-                // array_push($times, $slot->time);
+            foreach ($slots as $slot) {
+                $in_slot = HappitalkSession::overlappingSlot($sessions_on_date, $slot->time);
+                if ($in_slot->count() >= HappitalkSession::SLOT_CAPACITY || $in_slot->contains('user_id', $user_id)) {
+                    continue;
+                }
+                $times['time'][] = $slot->time;
             }
             return $times;
+        })->filter(function ($times) {
+            return !empty($times);
         });
+        $slot_dates = $availableSlots->keys()->toArray();
 
-        return response()->json(['status' => 'success' , 'message' => 'Slots get successfully.' , 'slot_dates' => $slot_dates , 'slot_dates_with_time' => $availableSlots]);
+        return response()->json(['status' => 'success' , 'message' => 'Slots get successfully.' , 'slot_dates' => $slot_dates , 'slot_dates_with_time' => $availableSlots, 'slot_capacity' => HappitalkSession::SLOT_CAPACITY]);
 
     }
 
@@ -324,13 +334,10 @@ class HappiTalkController extends Controller
         // if($is_there_any_session_on_this_time){
         //     return response()->json(['status' => 'error' , 'message' => "This slot is already booked."]);
         // }
-        $is_there_any_pending_session_req_at_this_time = HappitalkSession::where('psychologist_id' , $psychologist_id)->where('date' , $request->date)->where('time', $request->time)->where('is_req_accepted','0')->first();
-        if($is_there_any_pending_session_req_at_this_time){
-            return response()->json(['status' => 'error' , 'message' => "This slot is already booked."]);
-        }
-        $is_there_any_accepted_session_and_not_cancel_req_at_this_time = HappitalkSession::where('psychologist_id' , $psychologist_id)->where('date' , $request->date)->where('time', $request->time)->where('is_req_accepted','1')->where('is_cancel' , '0')->first();
-        if($is_there_any_accepted_session_and_not_cancel_req_at_this_time){
-            return response()->json(['status' => 'error' , 'message' => "This slot is already booked."]);
+        // A slot takes up to HappitalkSession::SLOT_CAPACITY bookings
+        $slot_unavailable = HappitalkSession::slotUnavailableReason($psychologist_id, $date, $time, $session_details->user_id, $session_id);
+        if ($slot_unavailable) {
+            return response()->json(['status' => 'error', 'message' => $slot_unavailable]);
         }
 
         $explode_start_end_time = explode('-' ,$time ) ;
@@ -479,43 +486,10 @@ class HappiTalkController extends Controller
 
         $booking = HappitalkBooking::where('id' , $request->booking_id)->first();
 
-        $explode_start_end_time = explode('-' ,$request->time ) ;
- 
-        $requested_start_time = rtrim($explode_start_end_time[0]);
-        $check_start_time_exist_in_any_booked_slot =  HappitalkSession::
-                                where('psychologist_id' , $booking->psychologist_id)
-                                ->where('date' , $request->date)
-                                ->whereRaw("STR_TO_DATE(CONCAT('1970-01-01 ', start_time), '%Y-%m-%d %h:%i %p') < STR_TO_DATE(CONCAT('1970-01-01 ', '$requested_start_time'), '%Y-%m-%d %h:%i %p')")
-                                ->whereRaw("STR_TO_DATE(CONCAT('1970-01-01 ', end_time), '%Y-%m-%d %h:%i %p') > STR_TO_DATE(CONCAT('1970-01-01 ', '$requested_start_time'), '%Y-%m-%d %h:%i %p')")
-                                ->where('is_req_accepted' , '!=' , '2')
-                                ->where('is_cancel' , '!=' , '1')
-                                ->first();
-
-        if($check_start_time_exist_in_any_booked_slot){
-            return response()->json(['status' => 'error' , 'message' => "This slot is not available."]);
-        }
-
-        $requested_end_time = ltrim($explode_start_end_time[1]);
-        $check_end_time_exist_in_any_booked_slot =  HappitalkSession::
-                                where('psychologist_id' , $booking->psychologist_id)
-                                ->where('date' , $request->date)
-                                ->whereRaw("STR_TO_DATE(CONCAT('1970-01-01 ', start_time), '%Y-%m-%d %h:%i %p') < STR_TO_DATE(CONCAT('1970-01-01 ', '$requested_end_time'), '%Y-%m-%d %h:%i %p')")
-                                ->whereRaw("STR_TO_DATE(CONCAT('1970-01-01 ', end_time), '%Y-%m-%d %h:%i %p') > STR_TO_DATE(CONCAT('1970-01-01 ', '$requested_end_time'), '%Y-%m-%d %h:%i %p')")
-                                ->where('is_req_accepted' , '!=' , '2')
-                                ->where('is_cancel' , '!=' , '1')
-                                ->first();
-
-        if($check_end_time_exist_in_any_booked_slot){
-            return response()->json(['status' => 'error' , 'message' => "This slot is not available."]);
-        }
-
-        $is_there_any_pending_session_req_at_this_time = HappitalkSession::where('psychologist_id' , $booking->psychologist_id)->where('date' , $request->date)->where('time', $request->time)->where('is_req_accepted','0')->first();
-        if($is_there_any_pending_session_req_at_this_time){
-            return response()->json(['status' => 'error' , 'message' => "This slot is already booked."]);
-        }
-        $is_there_any_accepted_session_and_not_cancel_req_at_this_time = HappitalkSession::where('psychologist_id' , $booking->psychologist_id)->where('date' , $request->date)->where('time', $request->time)->where('is_req_accepted','1')->where('is_cancel' , '0')->first();
-        if($is_there_any_accepted_session_and_not_cancel_req_at_this_time){
-            return response()->json(['status' => 'error' , 'message' => "This slot is already booked."]);
+        // A slot takes up to HappitalkSession::SLOT_CAPACITY bookings
+        $slot_unavailable = HappitalkSession::slotUnavailableReason($booking->psychologist_id, $request->date, $request->time, $user->id);
+        if ($slot_unavailable) {
+            return response()->json(['status' => 'error', 'message' => $slot_unavailable]);
         }
 
         // $unique_room_name = Date('Y-m-d_h:i:s').'_'.rand('0000000','9999999');
@@ -1517,46 +1491,14 @@ class HappiTalkController extends Controller
         $date = $request->date;
         $time = $request->time;
 
-
-        $explode_start_end_time = explode('-' ,$request->time ) ;
- 
-        $requested_start_time = rtrim($explode_start_end_time[0]);
-        $check_start_time_exist_in_any_booked_slot =  HappitalkSession::
-                                where('psychologist_id' , $psychologist_id)
-                                ->where('date' , $request->date)
-                                ->whereRaw("STR_TO_DATE(CONCAT('1970-01-01 ', start_time), '%Y-%m-%d %h:%i %p') < STR_TO_DATE(CONCAT('1970-01-01 ', '$requested_start_time'), '%Y-%m-%d %h:%i %p')")
-                                ->whereRaw("STR_TO_DATE(CONCAT('1970-01-01 ', end_time), '%Y-%m-%d %h:%i %p') > STR_TO_DATE(CONCAT('1970-01-01 ', '$requested_start_time'), '%Y-%m-%d %h:%i %p')")
-                                ->where('is_req_accepted' , '!=' , '2')
-                                ->where('is_cancel' , '!=' , '1')
-                                ->first();
-
-        if($check_start_time_exist_in_any_booked_slot){
-            return response()->json(['status' => 'error' , 'message' => "This slot is not available."]);
+        if (!$user->hasFreeSession('happitalk', $request->coupen_id ?: $request->coupon_id)) {
+            return response()->json(['status' => 'error' , 'message' => 'You have no HappiTALK sessions left. Please buy a session to book.']);
         }
 
-        $requested_end_time = ltrim($explode_start_end_time[1]);
-        $check_end_time_exist_in_any_booked_slot =  HappitalkSession::
-                                where('psychologist_id' , $psychologist_id)
-                                ->where('date' , $request->date)
-                                ->whereRaw("STR_TO_DATE(CONCAT('1970-01-01 ', start_time), '%Y-%m-%d %h:%i %p') < STR_TO_DATE(CONCAT('1970-01-01 ', '$requested_end_time'), '%Y-%m-%d %h:%i %p')")
-                                ->whereRaw("STR_TO_DATE(CONCAT('1970-01-01 ', end_time), '%Y-%m-%d %h:%i %p') > STR_TO_DATE(CONCAT('1970-01-01 ', '$requested_end_time'), '%Y-%m-%d %h:%i %p')")
-                                ->where('is_req_accepted' , '!=' , '2')
-                                ->where('is_cancel' , '!=' , '1')
-                                ->first();
-
-        if($check_end_time_exist_in_any_booked_slot){
-            return response()->json(['status' => 'error' , 'message' => "This slot is not available."]);
-        }
-
-
-
-        $is_there_any_pending_session_req_at_this_time = HappitalkSession::where('psychologist_id' , $psychologist_id)->where('date' , $date)->where('time', $time)->where('is_req_accepted','0')->first();
-        if($is_there_any_pending_session_req_at_this_time){
-            return response()->json(['status' => 'error' , 'message' => "This slot is already booked."]);
-        }
-        $is_there_any_accepted_session_and_not_cancel_req_at_this_time = HappitalkSession::where('psychologist_id' , $psychologist_id)->where('date' , $date)->where('time', $time)->where('is_req_accepted','1')->where('is_cancel' , '0')->first();
-        if($is_there_any_accepted_session_and_not_cancel_req_at_this_time){
-            return response()->json(['status' => 'error' , 'message' => "This slot is already booked."]);
+        // A slot takes up to HappitalkSession::SLOT_CAPACITY bookings
+        $slot_unavailable = HappitalkSession::slotUnavailableReason($psychologist_id, $date, $request->time, $user->id);
+        if ($slot_unavailable) {
+            return response()->json(['status' => 'error', 'message' => $slot_unavailable]);
         }
         
        
