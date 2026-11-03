@@ -309,6 +309,7 @@ class ResumeController extends HrController
         if ($err = $this->checkDepartment($department, 'body')) {
             return $err;
         }
+        $department = $this->canonicalDepartment($department);
 
         $fileName = isset($body['file_name']) ? trim((string) $body['file_name']) : '';
         if ($fileName === '') {

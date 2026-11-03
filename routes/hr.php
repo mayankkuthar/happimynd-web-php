@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\Hr\ApplicationController;
 use App\Http\Controllers\Hr\AuthController;
+use App\Http\Controllers\Hr\DepartmentController;
 use App\Http\Controllers\Hr\HealthController;
+use App\Http\Controllers\Hr\PortalController;
 use App\Http\Controllers\Hr\ResumeController;
 use App\Http\Controllers\Hr\WorkerController;
 use Illuminate\Support\Facades\Route;
@@ -35,8 +38,25 @@ Route::get('/session', [AuthController::class, 'session']);
 Route::get('/health', [HealthController::class, 'health']);
 Route::get('/health/ready', [HealthController::class, 'ready']);
 
+// --- Candidate portal (public, no session; API_SPEC §7) --------------------
+// POST /portal/applications is not mounted: storing the resume needs the GCS
+// service account. Submit + resume download stay on the intern's side for now.
+Route::get('/portal/config', [PortalController::class, 'config']);
+
 // --- Authenticated API -----------------------------------------------------
 Route::middleware('hr.auth')->group(function () {
+    // Department picker (API_SPEC §6). No rename or delete.
+    Route::get('/departments', [DepartmentController::class, 'index']);
+    Route::post('/departments', [DepartmentController::class, 'store']);
+
+    // Hiring dashboard (API_SPEC §8).
+    Route::get('/applications', [ApplicationController::class, 'index']);
+    Route::get('/applications/meta', [ApplicationController::class, 'meta']);
+    Route::get('/applications/{id}', [ApplicationController::class, 'show'])->where('id', 'APP-[A-Za-z0-9]+');
+    Route::patch('/applications/{id}/status', [ApplicationController::class, 'status'])->where('id', 'APP-[A-Za-z0-9]+');
+    Route::post('/applications/{id}/notes', [ApplicationController::class, 'notes'])->where('id', 'APP-[A-Za-z0-9]+');
+    Route::post('/applications/{id}/email', [ApplicationController::class, 'email'])->where('id', 'APP-[A-Za-z0-9]+');
+
     // Resumes / records (the router is mounted twice in the contract; keep both).
     Route::get('/resumes', [ResumeController::class, 'index']);
     Route::delete('/resumes', [ResumeController::class, 'clear']);

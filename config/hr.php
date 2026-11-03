@@ -66,4 +66,47 @@ return [
         (string) env('CORS_ORIGINS', '')
     )))),
 
+    // Candidate pipeline stages (APPLICATION_STATUSES). The first one is the
+    // status given to new portal applications.
+    'application_statuses' => array_values(array_filter(array_map('trim', explode(
+        ',',
+        (string) env('HR_APPLICATION_STATUSES', 'New,Shortlisted,Interview,Offer,Hired,Rejected')
+    )))),
+
+    // Careers page (API_SPEC §7).
+    'portal' => [
+        'open_roles' => array_values(array_filter(array_map('trim', explode(
+            ',',
+            (string) env('HR_PORTAL_OPEN_ROLES', env('PORTAL_OPEN_ROLES', ''))
+        )))),
+        'allowed_extensions' => array_values(array_filter(array_map('trim', explode(
+            ',',
+            (string) env('HR_PORTAL_ALLOWED_EXTENSIONS', env('PORTAL_ALLOWED_EXTENSIONS', 'pdf,doc,docx'))
+        )))),
+        'max_file_bytes' => (int) env('HR_PORTAL_MAX_FILE_BYTES', env('PORTAL_MAX_FILE_BYTES', 5 * 1024 * 1024)),
+        'rate_limit_per_hour' => (int) env('HR_PORTAL_RATE_LIMIT_PER_HOUR', env('PORTAL_RATE_LIMIT_PER_HOUR', 10)),
+    ],
+
+    // Application workflow (API_SPEC §8).
+    'applications' => [
+        'duplicate_match' => (string) env('HR_APPLICATION_DUPLICATE_MATCH', env('APPLICATION_DUPLICATE_MATCH', 'email_or_phone')),
+        'duplicate_window_days' => (int) env('HR_APPLICATION_DUPLICATE_WINDOW_DAYS', env('APPLICATION_DUPLICATE_WINDOW_DAYS', 90)),
+        'ack_email' => (bool) env('HR_APPLICATION_ACK_EMAIL', env('APPLICATION_ACK_EMAIL', false)),
+    ],
+
+    // SMTP for candidate email (API_SPEC §8, POST /applications/{id}/email).
+    // Reads the intern's SMTP_* names too, so her .env works unchanged.
+    'mail' => [
+        'host' => (string) env('HR_SMTP_HOST', env('SMTP_HOST', '')),
+        'port' => (int) env('HR_SMTP_PORT', env('SMTP_PORT', 587)),
+        'secure' => (bool) env('HR_SMTP_SECURE', env('SMTP_SECURE', false)),
+        'username' => (string) env('HR_SMTP_USER', env('SMTP_USER', '')),
+        // App passwords are shown with spaces; SMTP wants them without.
+        'password' => str_replace(' ', '', (string) env('HR_SMTP_PASSWORD', env('SMTP_PASSWORD', ''))),
+        'from' => (string) env('HR_SMTP_FROM', env('SMTP_FROM', '')),
+        'team_name' => (string) env('HR_HIRING_TEAM_NAME', env('HIRING_TEAM_NAME', 'Hiring HappiMynd')),
+        // No templates are stored yet; the dashboard sends a subject + body.
+        'templates' => [],
+    ],
+
 ];

@@ -33,6 +33,14 @@ abstract class HrController extends Controller
         return response()->json(['detail' => $message], $status);
     }
 
+    /** The single admin account name, used as audit_log.actor (API_SPEC §8). */
+    protected function actor(): string
+    {
+        $username = (string) config('hr.admin.username', 'admin');
+
+        return $username !== '' ? $username : 'admin';
+    }
+
     /** 422 { "detail": [ { loc, msg, type } ] } for a missing field (API_SPEC §1). */
     protected function missing(string $field, string $loc = 'query', string $type = 'missing'): JsonResponse
     {
@@ -76,22 +84,55 @@ abstract class HrController extends Controller
         return null;
     }
 
+    /** Departments in picker order: oldest first (API_SPEC §6). */
+    protected function departments(): array
+    {
+        try {
+            $names = $this->db()->table('departments')
+                ->orderBy('created_at')
+                ->orderBy('name')
+                ->pluck('name')
+                ->all();
+        } catch (\Throwable $e) {
+            $names = [];
+        }
+
+        return $names !== [] ? $names : (array) config('hr.departments', []);
+    }
+
+    /** The `departments` spelling for any letter case, or null (API_SPEC §1). */
+    protected function canonicalDepartment($value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $needle = mb_strtolower(trim((string) $value));
+
+        foreach ($this->departments() as $name) {
+            if (mb_strtolower($name) === $needle) {
+                return $name;
+            }
+        }
+
+        return null;
+    }
+
     protected function checkDepartment($value, string $loc = 'body'): ?JsonResponse
     {
         if ($value === null || $value === '') {
             return null; // department is nullable
         }
 
-        $departments = (array) config('hr.departments');
-
-        if (!in_array($value, $departments, true)) {
-            return $this->detail(
-                "Unknown department '" . $value . "'. Expected one of: " . implode(', ', $departments) . '.',
-                400
-            );
+        if ($this->canonicalDepartment($value) !== null) {
+            return null;
         }
 
-        return null;
+        return $this->detail(
+            "Unknown department '" . $value . "'. Expected one of: "
+            . implode(', ', $this->departments()) . '.',
+            400
+        );
     }
 
     /** Decode a JSON column that should be an object (empty → {}). */
