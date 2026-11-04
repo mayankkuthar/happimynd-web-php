@@ -41,6 +41,26 @@ abstract class HrController extends Controller
         return $username !== '' ? $username : 'admin';
     }
 
+    /**
+     * Fill the email placeholders from a candidate and their application.
+     * Templates use {{name}}; the dashboard also sends the single-brace form.
+     */
+    protected function fillPlaceholders(string $text, string $fullName, string $role, string $applicationId): string
+    {
+        $first = trim((string) preg_split('/\s+/', trim($fullName))[0]);
+
+        return strtr($text, [
+            '{{candidate_name}}' => $fullName,
+            '{{first_name}}' => $first,
+            '{{applied_role}}' => $role,
+            '{{application_id}}' => $applicationId,
+            '{candidate_name}' => $fullName,
+            '{first_name}' => $first,
+            '{applied_role}' => $role,
+            '{application_id}' => $applicationId,
+        ]);
+    }
+
     /** 422 { "detail": [ { loc, msg, type } ] } for a missing field (API_SPEC §1). */
     protected function missing(string $field, string $loc = 'query', string $type = 'missing'): JsonResponse
     {

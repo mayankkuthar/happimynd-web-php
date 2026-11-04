@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Hr;
 
 use App\Services\Hr\ApplicationMailer;
+use App\Services\Hr\GcsStorage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -177,6 +178,32 @@ class ApplicationController extends HrController
 
     // --- Writes -----------------------------------------------------------
 
+    /** GET /applications/{id}/resume — the stored file, inline (API_SPEC §8). */
+    public function resume(string $id, GcsStorage $storage)
+    {
+        $row = $this->find($id);
+
+        if ($row === null || empty($row->resume_storage_key)) {
+            return $this->detail('Resume not found', 404);
+        }
+
+        $bytes = $storage->download((string) $row->resume_storage_key);
+
+        if ($bytes === null) {
+            return $this->detail('Resume is not available right now', 503);
+        }
+
+        $fileName = str_replace(['"', "\r", "\n"], '', (string) ($row->resume_file_name ?: 'resume'));
+        $contentType = (string) ($row->resume_content_type ?: 'application/octet-stream');
+
+        return response($bytes, 200, [
+            'Content-Type' => $contentType,
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+            'Cache-Control' => 'private, max-age=3600',
+            'Content-Security-Policy' => "sandbox; default-src 'none'",
+        ]);
+    }
+
     public function status(Request $request, string $id): JsonResponse
     {
         $row = $this->find($id);
@@ -291,14 +318,8 @@ class ApplicationController extends HrController
             return $this->detail('Email is not configured', 503);
         }
 
-        $replace = [
-            '{candidate_name}' => (string) $row->full_name,
-            '{applied_role}' => (string) $row->applied_role,
-            '{application_id}' => (string) $row->id,
-        ];
-
-        $subject = strtr($subject, $replace);
-        $text = strtr($text, $replace);
+        $subject = $this->fillPlaceholders($subject, (string) $row->full_name, (string) $row->applied_role, (string) $row->id);
+        $text = $this->fillPlaceholders($text, (string) $row->full_name, (string) $row->applied_role, (string) $row->id);
 
         [$sent, $messageId, $error] = $mailer->send((string) $row->email, $subject, $text);
 

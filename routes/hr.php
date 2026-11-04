@@ -39,9 +39,8 @@ Route::get('/health', [HealthController::class, 'health']);
 Route::get('/health/ready', [HealthController::class, 'ready']);
 
 // --- Candidate portal (public, no session; API_SPEC §7) --------------------
-// POST /portal/applications is not mounted: storing the resume needs the GCS
-// service account. Submit + resume download stay on the intern's side for now.
 Route::get('/portal/config', [PortalController::class, 'config']);
+Route::post('/portal/applications', [PortalController::class, 'store']);
 
 // --- Authenticated API -----------------------------------------------------
 Route::middleware('hr.auth')->group(function () {
@@ -53,6 +52,7 @@ Route::middleware('hr.auth')->group(function () {
     Route::get('/applications', [ApplicationController::class, 'index']);
     Route::get('/applications/meta', [ApplicationController::class, 'meta']);
     Route::get('/applications/{id}', [ApplicationController::class, 'show'])->where('id', 'APP-[A-Za-z0-9]+');
+    Route::get('/applications/{id}/resume', [ApplicationController::class, 'resume'])->where('id', 'APP-[A-Za-z0-9]+');
     Route::patch('/applications/{id}/status', [ApplicationController::class, 'status'])->where('id', 'APP-[A-Za-z0-9]+');
     Route::post('/applications/{id}/notes', [ApplicationController::class, 'notes'])->where('id', 'APP-[A-Za-z0-9]+');
     Route::post('/applications/{id}/email', [ApplicationController::class, 'email'])->where('id', 'APP-[A-Za-z0-9]+');

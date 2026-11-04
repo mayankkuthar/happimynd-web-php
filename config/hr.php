@@ -67,24 +67,31 @@ return [
     )))),
 
     // Candidate pipeline stages (APPLICATION_STATUSES). The first one is the
-    // status given to new portal applications.
+    // status given to new portal applications. The web app picks badge colours
+    // from these exact names.
     'application_statuses' => array_values(array_filter(array_map('trim', explode(
         ',',
-        (string) env('HR_APPLICATION_STATUSES', 'New,Shortlisted,Interview,Offer,Hired,Rejected')
+        (string) env('HR_APPLICATION_STATUSES', 'New,Under Review,Shortlisted,Interview,Selected,Rejected')
     )))),
 
-    // Careers page (API_SPEC §7).
+    // Careers page (API_SPEC §7). Roles are free text, so there is no list.
     'portal' => [
-        'open_roles' => array_values(array_filter(array_map('trim', explode(
-            ',',
-            (string) env('HR_PORTAL_OPEN_ROLES', env('PORTAL_OPEN_ROLES', ''))
-        )))),
         'allowed_extensions' => array_values(array_filter(array_map('trim', explode(
             ',',
             (string) env('HR_PORTAL_ALLOWED_EXTENSIONS', env('PORTAL_ALLOWED_EXTENSIONS', 'pdf,doc,docx'))
         )))),
         'max_file_bytes' => (int) env('HR_PORTAL_MAX_FILE_BYTES', env('PORTAL_MAX_FILE_BYTES', 5 * 1024 * 1024)),
         'rate_limit_per_hour' => (int) env('HR_PORTAL_RATE_LIMIT_PER_HOUR', env('PORTAL_RATE_LIMIT_PER_HOUR', 10)),
+    ],
+
+    // Object storage for resumes (GCS JSON API, service account).
+    'storage' => [
+        'project_id' => (string) env('HR_GCS_PROJECT_ID', env('GCS_PROJECT_ID', 'project-ae1396db-f419-4e7b-903')),
+        'bucket' => (string) env('HR_GCS_BUCKET', env('GCS_BUCKET_NAME', 'it-team-test')),
+        'prefix' => trim((string) env('HR_GCS_RESUME_PREFIX', env('GCS_RESUME_PREFIX', 'resumes')), '/'),
+        // Either a path to the service-account JSON, or its contents in env.
+        'credentials_path' => (string) env('HR_GCS_CREDENTIALS_PATH', env('GOOGLE_APPLICATION_CREDENTIALS', '')),
+        'credentials_json' => (string) env('HR_GCS_CREDENTIALS_JSON', ''),
     ],
 
     // Application workflow (API_SPEC §8).
@@ -105,8 +112,37 @@ return [
         'password' => str_replace(' ', '', (string) env('HR_SMTP_PASSWORD', env('SMTP_PASSWORD', ''))),
         'from' => (string) env('HR_SMTP_FROM', env('SMTP_FROM', '')),
         'team_name' => (string) env('HR_HIRING_TEAM_NAME', env('HIRING_TEAM_NAME', 'Hiring HappiMynd')),
-        // No templates are stored yet; the dashboard sends a subject + body.
-        'templates' => [],
+
+        // Dashboard composer templates. Placeholders are filled with
+        // {{candidate_name}}, {{first_name}}, {{applied_role}} and
+        // {{application_id}} (single-brace spellings also work).
+        'templates' => [
+            [
+                'id' => 'connect',
+                'name' => "We'd like to connect",
+                'subject' => "We'd Like to Connect With You",
+                'body' => "Hi {{candidate_name}},\n\nWe reviewed your profile and resume and would like to connect with you regarding an opportunity with our team.\n\nPlease let us know a convenient time to connect, or reply to this email and we will coordinate with you.\n\nRegards,\nHiring HappiMynd",
+            ],
+            [
+                'id' => 'interview',
+                'name' => 'Interview invitation',
+                'subject' => 'Interview for {{applied_role}}',
+                'body' => "Hi {{candidate_name}},\n\nThank you for applying for the {{applied_role}} position. We would like to invite you to an interview.\n\nPlease reply with a few times that work for you over the coming week and we will confirm the details.\n\nRegards,\nHiring HappiMynd",
+            ],
+            [
+                'id' => 'regret',
+                'name' => 'Not moving forward',
+                'subject' => 'Your application for {{applied_role}}',
+                'body' => "Hi {{candidate_name}},\n\nThank you for your interest in the {{applied_role}} position and for the time you put into your application. After careful review, we will not be moving forward at this time.\n\nWe will keep your profile on file for future opportunities.\n\nRegards,\nHiring HappiMynd",
+            ],
+        ],
+
+        // Sent to the candidate after a portal submission when
+        // APPLICATION_ACK_EMAIL=1 (logged with sent_by = "system").
+        'ack' => [
+            'subject' => "We've received your application ({{application_id}})",
+            'body' => "Hi {{candidate_name}},\n\nThank you for applying for {{applied_role}}. Your application has been submitted successfully and your reference ID is {{application_id}}.\n\nOur hiring team will review your profile and contact you if there is a suitable opportunity.\n\nRegards,\nHiring HappiMynd",
+        ],
     ],
 
 ];
