@@ -119,13 +119,21 @@ class HappiLearnController extends Controller
             $data->keywords = $data->keywords ?? '';
         }
 
-        // Recently viewed update
-        RecentlyViewedHappiLearnContent::updateOrCreate(
+        // Recently viewed update + view count (shown in admin HappiLEARN user list)
+        $recentlyViewed = RecentlyViewedHappiLearnContent::firstOrCreate(
             [
                 'user_id' => $user->id,
                 'happi_learn_content_id' => $request->content_id
             ]
         );
+        if (!$recentlyViewed->wasRecentlyCreated) {
+            try {
+                $recentlyViewed->increment('view_count'); // also refreshes updated_at
+            } catch (\Throwable $e) {
+                // view_count column not migrated yet - still record the latest view time
+                $recentlyViewed->touch();
+            }
+        }
 
         // Suggestions (FULL DATA)
         $profiles = explode(',', $data->profile);

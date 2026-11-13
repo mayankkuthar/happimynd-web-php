@@ -47,6 +47,7 @@ use Validator;
 use Hash;
 use JWTAuth;
 use DB;
+use Log;
 use Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Crypt;
@@ -152,6 +153,12 @@ class UserAuthenticationController extends Controller
             ],$message);
             if($validator->fails()) {
                 return response()->json(["message" => $validator->errors()->first()],400);
+            }
+
+            // Reject revoked / validity-over / fully used B2B codes before creating the user
+            $tokenError = (new TokenService)->getUnusableReason($request->input('happimyndCode'), $request->input('organization_id'));
+            if ($tokenError) {
+                return response()->json(["message" => $tokenError],400);
             }
         }
 
@@ -300,7 +307,9 @@ class UserAuthenticationController extends Controller
             }
 
             if (isset($formData['signup_type']) && $formData['signup_type'] == 'organization' && !(new TokenService)->assignToken($request->input('happimyndCode'), $user->id)) {
-                return response()->json(['message' => 'error expiring Token for user_id=' . $user->id . ' with code=' . $request->input('happimyndCode') . ';']);
+                DB::rollBack();
+                Log::alert('error expiring Token for user_id=' . $user->id . ' with code=' . $request->input('happimyndCode') . ';');
+                return response()->json(['message' => 'This HappiMynd code can no longer be used.'], 400);
             }
             $token = auth('user')->login($user);
             $cookie = Cookie::make('user-access-token', $token);
@@ -357,10 +366,11 @@ class UserAuthenticationController extends Controller
             // if($check_code_already_used){
             //     return response()->json(['status'=>'error' ,'message' => 'Code is already used.'],400 );
             // }
-            if($check_data->use_count < $check_data->use_limit){
+            $tokenError = (new TokenService)->getUnusableReason($happimynd_code, $organization_id);
+            if(!$tokenError){
                 return response()->json(['status'=>'success' ,'message' => 'Code verified. Now you can signup now.'],200 );
             }else{
-                return response()->json(['status'=>'error' ,'message' => 'Max user limit for this code is over.'],400 );
+                return response()->json(['status'=>'error' ,'message' => $tokenError],400 );
             }
         }
         else{

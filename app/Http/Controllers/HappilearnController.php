@@ -2,6 +2,10 @@
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\HappiLearnContent;
+use App\Models\User;
+use App\Models\RecentlyViewedHappiLearnContent;
+use App\Models\LikeHappiLearnContent;
+use Illuminate\Support\Facades\Schema;
 use App\Imports\ImportHappiLearnContent;
 use App\Models\UserLanguage;
 use Excel;
@@ -174,6 +178,110 @@ class HappilearnController extends Controller
             ->appends($request->except('page'));
 
         return view('Backend.happilearn.happilearn_content_list')->with('content' , $content);
+    }
+
+    /**
+     * Users who are using HappiLEARN, with how much content they opened / liked.
+     */
+    public function happiLearnUserList(Request $request){
+        if (!auth('admin')->user()->hasAnyRole(['admin', 'super-admin', 'HappiLEARN'])) {
+            return redirect(route('admin.dashboard'));
+        }
+
+        $perPage = $request->get('per_page', 10);
+        $hasViewCount = $this->hasViewCountColumn();
+
+        // Same definition as the sidebar / dashboard HappiLEARN count (UserProductService)
+        $query = User::has('happilearnViews')
+            ->with('userToken.token.organization')
+            ->withCount(['happilearnViews as contents_viewed_count', 'happilearnLikes as contents_liked_count'])
+            ->withMax('happilearnViews as last_viewed_at', 'updated_at');
+
+        if ($hasViewCount) {
+            $query->withSum('happilearnViews as total_views_count', 'view_count');
+        }
+
+        if ($request->filled('username')) {
+            $search = $request->input('username');
+            $query->where(function ($q) use ($search) {
+                $q->where('username', 'like', '%' . $search . '%')
+                    ->orWhere('nickname', 'like', '%' . $search . '%');
+            });
+        }
+
+        $users = $query->orderByDesc('last_viewed_at')
+            ->orderByDesc('id')
+            ->paginate($perPage)
+            ->appends($request->except('page'));
+
+        $summary = [
+            'users'       => User::has('happilearnViews')->count(),
+            'views'       => $hasViewCount
+                                ? (int)RecentlyViewedHappiLearnContent::sum('view_count')
+                                : RecentlyViewedHappiLearnContent::count(),
+            'likes'       => LikeHappiLearnContent::count(),
+            'contents'    => RecentlyViewedHappiLearnContent::distinct('happi_learn_content_id')->count('happi_learn_content_id'),
+        ];
+
+        return view('Backend.happilearn.happilearn_user_list')
+            ->with('users', $users)
+            ->with('summary', $summary)
+            ->with('hasViewCount', $hasViewCount);
+    }
+
+    /**
+     * What a single user has used in HappiLEARN.
+     */
+    public function happiLearnUserDetail(Request $request, $user_id){
+        if (!auth('admin')->user()->hasAnyRole(['admin', 'super-admin', 'HappiLEARN'])) {
+            return redirect(route('admin.dashboard'));
+        }
+
+        $user = User::findOrFail($user_id);
+
+        $views = RecentlyViewedHappiLearnContent::where('user_id', $user->id)
+            ->orderByDesc('updated_at')
+            ->get();
+        $likedIds = LikeHappiLearnContent::where('user_id', $user->id)
+            ->pluck('happi_learn_content_id')
+            ->all();
+
+        $contentIds = $views->pluck('happi_learn_content_id')->merge($likedIds)->unique();
+        // include deleted content too, so history stays complete
+        $contents = HappiLearnContent::whereIn('id', $contentIds)->get()->keyBy('id');
+
+        $rows = $views->map(function ($view) use ($contents, $likedIds) {
+            $content = $contents->get($view->happi_learn_content_id);
+            return (object)[
+                'content'     => $content,
+                'views'       => (int)($view->view_count ?? 1),
+                'first_viewed'=> $view->created_at,
+                'last_viewed' => $view->updated_at,
+                'liked'       => in_array($view->happi_learn_content_id, $likedIds),
+            ];
+        });
+
+        // liked but never opened (e.g. liked from the list)
+        $viewedIds = $views->pluck('happi_learn_content_id')->all();
+        foreach (array_diff($likedIds, $viewedIds) as $contentId) {
+            $rows->push((object)[
+                'content'     => $contents->get($contentId),
+                'views'       => 0,
+                'first_viewed'=> null,
+                'last_viewed' => null,
+                'liked'       => true,
+            ]);
+        }
+
+        return view('Backend.happilearn.happilearn_user_detail')
+            ->with('user', $user)
+            ->with('rows', $rows)
+            ->with('hasViewCount', $this->hasViewCountColumn());
+    }
+
+    private function hasViewCountColumn(): bool
+    {
+        return Schema::hasColumn('recently_viewed_happi_learn_contents', 'view_count');
     }
  
 

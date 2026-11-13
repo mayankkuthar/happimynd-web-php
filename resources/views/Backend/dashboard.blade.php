@@ -61,6 +61,61 @@
                       {{-- <p>Lorem ipsum psdea itgum rixt.</p> --}}
                     </div>
                   </div>
+                  <div class="animated flipInY col-lg-3 col-md-3 col-sm-6  ">
+                    <div class="tile-stats">
+                      <div class="count">{{ $b2bCodeStats['used_codes'] }}</div>
+                      <h3>B2B codes used</h3>
+                      <p>{{ $b2bCodeStats['redemptions'] }} sign-ups via B2B codes</p>
+                    </div>
+                  </div>
+                  <div class="animated flipInY col-lg-3 col-md-3 col-sm-6  ">
+                    <div class="tile-stats">
+                      <div class="count">{{ $b2bCodeStats['validity_over'] }}</div>
+                      <h3>B2B codes validity over</h3>
+                    </div>
+                  </div>
+                </div>
+
+                {{-- Users classified by the products they have started --}}
+                <div class="row">
+                  <div class="col-md-12 col-sm-12 ">
+                    <div class="x_panel">
+                      <div class="x_title">
+                        <h2>Product usage <small>users who started each product (test users excluded)</small></h2>
+                        <div class="clearfix"></div>
+                      </div>
+                      <div class="x_content">
+                        <table class="table table-bordered" style="display:table; height:auto; overflow:visible;">
+                          <thead>
+                            <tr>
+                              <th>Product</th>
+                              <th class="text-right">B2C</th>
+                              <th class="text-right">B2B</th>
+                              <th class="text-right">Total</th>
+                              <th></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @foreach($productUsage as $key => $row)
+                            <tr>
+                              <td>{{ $row['label'] }}</td>
+                              <td class="fs15 fw700 text-right">{{ $row['b2c'] }}</td>
+                              <td class="fs15 fw700 text-right">{{ $row['b2b'] }}</td>
+                              <td class="fs15 fw700 text-right">{{ $row['total'] }}</td>
+                              <td>
+                                @if($key === 'happilearn')
+                                <a href="{{ route('admin.happilearnUserList') }}">View users</a>
+                                @else
+                                <a href="{{ route('admin.customerListView', ['product' => $key]) }}">View users</a>
+                                @endif
+                              </td>
+                            </tr>
+                            @endforeach
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
 
@@ -87,7 +142,10 @@
                                   <th>Organization</th>
                                   <th>Tokens Generated</th>
                                   <th>Used</th>
+                                  <th>Sign-ups</th>
                                   <th>not Used</th>
+                                  <th>Validity Over</th>
+                                  <th>Valid Till (latest)</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -96,7 +154,10 @@
                                   <td>{{ $organization->name }}</td>
                                   <td class="fs15 fw700 text-right">{{ $organization->token_count }}</td>
                                   <td class="fs15 fw700 text-right">{{ $organization->token_used_count }}</td>
+                                  <td class="fs15 fw700 text-right">{{ (int)$organization->token_redemption_count }}</td>
                                   <td class="fs15 fw700 text-right">{{ $organization->token_unused_count }}</td>
+                                  <td class="fs15 fw700 text-right">{{ $organization->token_validity_over_count }}</td>
+                                  <td class="text-right">{{ $organization->token_valid_till ? \Carbon\Carbon::parse($organization->token_valid_till)->format('d M Y') : 'No expiry' }}</td>
                                 </tr>
                                 @endforeach
                               </tbody>
@@ -136,8 +197,8 @@
                                 @if($product->package)
                                   <tr>
                                     <td>{{ $product->package->name }}({{ $product->duration->name }}:{{ $product->duration->frequency }})</td>
-                                    <td class="fs15 fw700 text-right">{{ $product->B2C_user_count }}</td>
                                     <td class="fs15 fw700 text-right">{{ $product->B2B_user_count }}</td>
+                                    <td class="fs15 fw700 text-right">{{ $product->B2C_user_count }}</td>
                                   </tr>
                                 @endif
                                 @endforeach

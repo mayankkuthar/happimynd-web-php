@@ -47,6 +47,7 @@ use App\Models\TokenMetaData;
 use App\Services\FileService;
 use App\Collections\Constants;
 use App\Services\TokenService;
+use App\Services\UserProductService;
 use App\Models\AssessmentScore;
 use App\Models\ServiceMetaData;
 use App\Services\BitrixService;
@@ -158,15 +159,28 @@ class AdminController extends Controller
         $report_generated_on_ios = Assessment::where('ended_at' , '!=' , null)->where('platform' , 'ios')->count();
 
         
+        // B2B code (token) usage per organization.
+        // A code is "used" once use_count > 0 (redemption increments use_count; expired_at is no longer set).
         $organizations = Organization::removeTestOrganization()->withCount('token')
             ->withCount(['token as token_used_count' => function ($query) {
-                $query->ExpiredTokens();
+                $query->UsedTokens();
             }])
             ->withCount(['token as token_unused_count' => function ($query) {
-                $query->ValidTokens();
+                $query->where('use_count', 0)->ValidTokens()->WithinValidity();
             }])
+            ->withCount(['token as token_validity_over_count' => function ($query) {
+                $query->ValidityOver();
+            }])
+            ->withSum('token as token_redemption_count', 'use_count')
+            ->withMax('token as token_valid_till', 'valid_till')
             ->orderBy('name')
             ->get();
+
+        $b2bCodeStats = [
+            'used_codes'     => $organizations->sum('token_used_count'),
+            'redemptions'    => (int)$organizations->sum('token_redemption_count'),
+            'validity_over'  => $organizations->sum('token_validity_over_count'),
+        ];
 
         $products = Plan::withCount(['bundleStatus' => function ($query) {
             $query->where('valid', 1);
@@ -174,13 +188,17 @@ class AdminController extends Controller
             ->withCount(['bundleStatus as B2C_user_count' => function ($query) {
                 $query->whereHas('user', function ($query) {
                     $query->RemoveTestUser()->doesntHave('userToken');
-                })->with('user');
+                });
             }])
             ->withCount(['bundleStatus as B2B_user_count' => function ($query) {
+                // previously missing the userToken check, so B2B counted every user
                 $query->whereHas('user', function ($query) {
-                    $query->RemoveTestUser();
-                })->with('user');
+                    $query->RemoveTestUser()->has('userToken');
+                });
             }])->get();
+
+        // Users who actually started each product (B2C / B2B split)
+        $productUsage = UserProductService::dashboardBreakdown();
         // $tokenCount = Token::whereHas('organization', function ($query) {
         //     $query->removeTestOrganization();
         // })->get()->count();
@@ -218,6 +236,8 @@ class AdminController extends Controller
             ->with('report_generated_on_android', $report_generated_on_android)
             ->with('report_generated_on_ios', $report_generated_on_ios)
             ->with('tokenCount', $tokenCount)
+            ->with('b2bCodeStats', $b2bCodeStats)
+            ->with('productUsage', $productUsage)
             ->with('session_Details' , $session_Details);
     }
     public function addAdminUser(AdminUserDetailRequest $request)
@@ -308,10 +328,26 @@ class AdminController extends Controller
         }
         // $users = User::latest()->with('profileType' , 'usersRating')->get();
         $perPage = $request->get('per_page', 10);
-        $users = User::latest()->with('profileType' , 'usersRating')->paginate($perPage)
+
+        // Every user is in the list; ?product=happilife (etc.) narrows it to users who started that product
+        $product = $request->get('product');
+        if (!UserProductService::isValidFilter($product)) {
+            $product = null;
+        }
+
+        $query = User::latest()->with('profileType' , 'usersRating');
+        UserProductService::withUsageCounts($query);
+        if ($product) {
+            UserProductService::applyFilter($query, $product);
+        }
+        $users = $query->paginate($perPage)
             ->appends($request->except('page'));
 
-        return view('Backend/customerList')->with('users', $users);
+        return view('Backend/customerList')
+            ->with('users', $users)
+            ->with('product', $product)
+            ->with('products', UserProductService::PRODUCTS)
+            ->with('productCounts', UserProductService::counts());
     }
 
 
@@ -410,7 +446,7 @@ class AdminController extends Controller
         if ($request->input('thrive_code') && $request->file('thrive_file')->isValid()) {
             $thriveCodes = $tokenService->generateThriveTokenForOrganization($request->input('organization_id'), $request->thrive_file);
         }
-        $tokens = $tokenService->generateTokenForOrganization($request->input('organization_id'), $request->input('token_count'), $request->input('plans'), $request['use_limit'], $emails, $attachmentPath, $emailBody);
+        $tokens = $tokenService->generateTokenForOrganization($request->input('organization_id'), $request->input('token_count'), $request->input('plans'), $request['use_limit'], $emails, $attachmentPath, $emailBody, $request->input('valid_till'));
         $token_ids = $tokens->pluck('id');
         if (!is_null($request->input('HappiTALK-input')) || !is_null($request->input('HappiAPP-input'))) {
             $metaData = TokenMetaData::create([
@@ -496,9 +532,17 @@ class AdminController extends Controller
                 ->with('organization', 'tokenMetaData', 'plans', 'userToken.user');
 
             if ($request->input('token_status') == 'active') {
-                $tokens->ValidTokens();
+                $tokens->ValidTokens()->WithinValidity()->whereColumn('use_count', '<', 'use_limit');
             } elseif ($request->input('token_status') == 'expired') {
-                $tokens->ExpiredTokens();
+                // used-up (legacy expired_at) or validity date passed
+                $tokens->where(function ($q) {
+                    $q->whereNotNull('expired_at')
+                        ->orWhere(function ($q) {
+                            $q->ValidityOver();
+                        });
+                });
+            } elseif ($request->input('token_status') == 'used') {
+                $tokens->UsedTokens();
             } elseif ($request->input('token_status') == 'disabled') {
                 $tokens->DisabledTokens();
             } elseif ($request->input('token_status') == 'all') {
@@ -524,6 +568,26 @@ class AdminController extends Controller
         }
         return view('Backend/tokenList')
             ->with('organizations', $organizations);
+    }
+
+    /**
+     * Set (or clear) the validity date for every B2B code of an organization.
+     */
+    public function updateTokenValidity(Request $request)
+    {
+        if (!auth('admin')->user()->hasAnyRole(['super-admin', 'admin'])) {
+            return redirect(route('admin.dashboard'));
+        }
+        $request->validate([
+            'organization_id' => 'required|exists:organizations,id',
+            'valid_till' => 'nullable|date',
+        ]);
+
+        $validTill = $request->filled('valid_till') ? Carbon::parse($request->valid_till)->toDateString() : null;
+        $updated = Token::where('organization_id', $request->organization_id)->update(['valid_till' => $validTill]);
+
+        return redirect(route('admin.tokenListView'))
+            ->with('success', $updated . ' code(s) updated. Validity: ' . ($validTill ? Carbon::parse($validTill)->format('d M Y') : 'No expiry'));
     }
 
     public function thriveCodeList(Request $request)

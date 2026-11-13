@@ -31,7 +31,12 @@ class Token extends Model
         'organization_id',
         'email',
         'use_limit',
-        'use_count'
+        'use_count',
+        'valid_till'
+    ];
+
+    protected $casts = [
+        'valid_till' => 'date',
     ];
 
     public function organization()
@@ -81,7 +86,42 @@ class Token extends Model
 
     public function isUsable()
     {
-        return ($this->isActive() && !$this->isExpired());
+        return ($this->isActive() && !$this->isExpired() && !$this->isValidityOver());
+    }
+
+    /**
+     * Validity (valid_till) is inclusive: a code valid till 2026-12-31
+     * can still be redeemed on 2026-12-31.
+     */
+    public function isValidityOver()
+    {
+        return $this->valid_till !== null && $this->valid_till->copy()->endOfDay()->isPast();
+    }
+
+    /**
+     * Codes redeemed by at least one user
+     */
+    public function scopeUsedTokens($query)
+    {
+        return $query->where('use_count', '>', 0);
+    }
+
+    /**
+     * Codes whose validity date has not passed (or have no validity date)
+     */
+    public function scopeWithinValidity($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('valid_till')->orWhereDate('valid_till', '>=', now()->toDateString());
+        });
+    }
+
+    /**
+     * Codes whose validity date has passed
+     */
+    public function scopeValidityOver($query)
+    {
+        return $query->whereNotNull('valid_till')->whereDate('valid_till', '<', now()->toDateString());
     }
 
     /**
@@ -195,10 +235,7 @@ class Token extends Model
     }
 
     public function isMaxUsed(){
-        if($this->use_limit == $this->use_count){
-            return true;
-        }else{
-            return false;
-        }
+        // >= so a code that somehow went past its limit is still treated as used up
+        return $this->use_limit !== null && (int)$this->use_count >= (int)$this->use_limit;
     }
 }

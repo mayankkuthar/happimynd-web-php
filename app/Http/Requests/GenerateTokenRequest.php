@@ -26,7 +26,8 @@ class GenerateTokenRequest extends FormRequest
         return [
             'plans' => 'required',
             'token_count'   => 'required',
-            'organization_id' => 'required'
+            'organization_id' => 'required',
+            'valid_till' => 'nullable|date|after_or_equal:today',
         ];
     }
 }

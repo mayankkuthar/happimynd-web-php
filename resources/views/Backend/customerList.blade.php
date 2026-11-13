@@ -36,13 +36,31 @@
         <div class="col-md-12 col-sm-12 ">
             <div class="x_panel">
               <div class="x_title">
-                <h2>Users</h2>
+                <h2>Users @if($product) - {{ \App\Services\UserProductService::label($product) }} @endif ({{ $users->total() }})</h2>
                 <div class="clearfix"></div>
               </div>
               <div class="x_content">
                   <div class="row">
                       <div class="col-sm-12">
                         <div class="card-box table-responsive custom-change-table">
+                          {{-- Product classification: all users, or only users who started a product --}}
+                          <div style="margin-bottom:15px; display:flex; flex-wrap:wrap; gap:6px;">
+                            <a href="{{ route('admin.customerListView') }}"
+                               class="btn btn-sm {{ !$product ? 'btn-primary' : 'btn-default' }}">
+                              All Users ({{ $productCounts['all'] ?? 0 }})
+                            </a>
+                            @foreach($products as $key => $config)
+                            <a href="{{ route('admin.customerListView', ['product' => $key]) }}"
+                               class="btn btn-sm {{ $product === $key ? 'btn-primary' : 'btn-default' }}">
+                              {{ $config['label'] }} ({{ $productCounts[$key] ?? 0 }})
+                            </a>
+                            @endforeach
+                            <a href="{{ route('admin.customerListView', ['product' => 'none']) }}"
+                               class="btn btn-sm {{ $product === 'none' ? 'btn-primary' : 'btn-default' }}">
+                              Not started any product ({{ $productCounts['none'] ?? 0 }})
+                            </a>
+                          </div>
+                          <p class="text-muted" style="font-size:12px;">A user is listed under every product they have started. Counts refresh every 10 minutes.</p>
 
 
                 <!-- <div class="excel-button">
@@ -75,6 +93,7 @@
                       <th>Account Status</th>
                       <th>Age</th>
                       <th>Gender</th>
+                      <th>Products Used</th>
                       <th>Date</th>
                       <th>Rating</th>
                       <th>Review</th>
@@ -107,6 +126,7 @@
                         <td>{{ $user->account_status ?? '-' }}</td>
                         <td>{{ $user->age ?? '-' }}</td>
                         <td>{{ $user->gender ?? '-'}}</td>
+                        <td>{{ implode(', ', \App\Services\UserProductService::usedProductLabels($user)) ?: 'Not started' }}</td>
                         <td> {{ $user->created_at->format('M d,Y h:i a') ?? '-' }}</td>
                           @if($user->usersRating != null)
                           <td>

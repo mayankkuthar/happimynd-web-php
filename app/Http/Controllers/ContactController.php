@@ -25,7 +25,10 @@ class ContactController extends Controller
 
     public function index()
     {
-        $contacts = DB::table('contacts')->get();
+        $contacts = DB::table('contacts')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get();
         return view('Backend.contact_lead', compact('contacts'));
     }
 

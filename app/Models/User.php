@@ -754,4 +754,55 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasOne(UsersRating::class)->with('applicationRatingEmoji');
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Product usage relations
+    |--------------------------------------------------------------------------
+    | A row in each of these tables means the user has *started* that product.
+    | Used by App\Services\UserProductService to classify users per product.
+    | (HappiLIFE uses the existing assessment() relation.)
+    */
+
+    // HappiSELF: course / content progress
+    public function happiselfProgress()
+    {
+        return $this->hasMany(HappiselfUsersLastVisitSubCourseAndContent::class, 'user_id');
+    }
+
+    // HappiGUIDE: booked guide sessions
+    public function happiguideSessions()
+    {
+        return $this->hasMany(HappiguideSession::class, 'user_id');
+    }
+
+    // HappiBUDDY: chat with an assigned buddy psychologist
+    public function happibuddyChats()
+    {
+        return $this->hasMany(GroupChat::class, 'user_id');
+    }
+
+    // HappiTALK: booked talk sessions
+    public function happitalkSessions()
+    {
+        return $this->hasMany(HappitalkSession::class, 'user_id');
+    }
+
+    // HappiLEARN: content opened by the user
+    public function happilearnViews()
+    {
+        return $this->hasMany(RecentlyViewedHappiLearnContent::class, 'user_id');
+    }
+
+    // HappiLEARN: content liked by the user
+    public function happilearnLikes()
+    {
+        return $this->hasMany(LikeHappiLearnContent::class, 'user_id');
+    }
+
+    // HappiVOICE: voice analysis scores
+    public function happivoiceScores()
+    {
+        return $this->hasMany(Score::class, 'user_id');
+    }
+
 }

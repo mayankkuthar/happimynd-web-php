@@ -30,17 +30,19 @@ class TokenService
      * @param integer $count
      * @return array
      */
-    function generateToken(int $count = 1, $plans, $use_limit=null, $saveDB = false)
+    function generateToken(int $count = 1, $plans, $use_limit=null, $saveDB = false, $valid_till = null)
     {
         $tokens = [];
         if(empty($use_limit)){
             $use_limit=1;
         }
+        $valid_till = empty($valid_till) ? null : Carbon::parse($valid_till)->toDateString();
         for ($i = 1; $i <= $count; $i++) {
             $tokens[] = [
                 "token" => substr(md5(uniqid()), 0, 6),
                 "use_limit" => $use_limit,
-                "use_count" => 0
+                "use_count" => 0,
+                "valid_till" => $valid_till,
             ];
         }
         if ($saveDB) {
@@ -50,11 +52,11 @@ class TokenService
     }
 
     
-    public function generateTokenForOrganization($organization_id, $count = 1, $plans, $use_limit=null, $emails = [], $attachmentPath = '', $emailBody = '')
+    public function generateTokenForOrganization($organization_id, $count = 1, $plans, $use_limit=null, $emails = [], $attachmentPath = '', $emailBody = '', $valid_till = null)
     {
 
         $organization = Organization::find($organization_id);
-        $tokens = $this->generateToken($count, $plans, $use_limit);
+        $tokens = $this->generateToken($count, $plans, $use_limit, false, $valid_till);
         // if emails were added via excel file
         if ($emails) {
             $tokens = $this->mapEmailTokenSendEmail($emails, $tokens, $plans, $organization, $attachmentPath, $emailBody);
@@ -90,13 +92,46 @@ class TokenService
         return true;
     }
 
+    /**
+     * Returns null when the B2B code can be redeemed, otherwise the reason it cannot.
+     */
+    public function getUnusableReason($code, $organization_id = null)
+    {
+        if (empty($code)) {
+            return 'Invalid Code.';
+        }
+        $query = Token::where('token', $code);
+        if (!empty($organization_id)) {
+            $query->where('organization_id', $organization_id);
+        }
+        $token = $query->first();
+        if (is_null($token)) {
+            return 'Invalid Code.';
+        }
+        if ($token->isDisabled()) {
+            return 'Sorry, Code has been revoked.';
+        }
+        if ($token->isValidityOver()) {
+            return 'Code validity is over.';
+        }
+        if ($token->isExpired()) {
+            return 'Code is Expired.';
+        }
+        if ($token->isMaxUsed()) {
+            return 'Max user limit for this code is over.';
+        }
+        return null;
+    }
+
     function assignToken($token, $user_id)
     {
         //Token::where('token', $token)->update(['user_id' => $user_id, 'expired_at' => Carbon::now()]);
         $token = Token::with('plans')->where('token', $token)->first();
-        $use_count = $token->use_count;
-        $use_count += 1;
-        Token::where('token', $token->token)->update(['use_count' => $use_count]);
+        if (is_null($token) || !$token->isUsable() || $token->isMaxUsed()) {
+            return false;
+        }
+        // Atomic increment so simultaneous sign-ups with the same code are both counted
+        Token::where('id', $token->id)->increment('use_count');
         UserToken::create(['user_id' => $user_id, 'token_id' => $token->id]);
         $user = User::find($user_id);
         $bundleStatuses = array();
@@ -185,6 +220,9 @@ class TokenService
         if (!is_null($this->token)) {
             if ($this->token->isExpired()) {
                 $this->status = 'Code is Expired.';
+            }
+            if ($this->token->isValidityOver()) {
+                $this->status = 'Code validity is over.';
             }
             if ($this->token->isMaxUsed()) {
                 $this->status = 'Max user limit for this code is over.';
