@@ -5,6 +5,16 @@
   <x-slot name="content">
     <div class="right_col" role="main">
       <div class="x_content">
+        <div class="flash-message">
+          @foreach (['danger', 'warning', 'success', 'info'] as $msg)
+            @if(Session::has($msg))
+            <p class="alert alert-{{ $msg }}">{{ Session::get($msg) }}</p>
+            @endif
+          @endforeach
+          @foreach ($errors->all() as $error)
+            <p class="alert alert-danger">{{ $error }}</p>
+          @endforeach
+        </div>
         <form class="form-horizontal form-label-left" id='validate-form' method="POST" action="{{ route('admin.tokenList.post') }}">
           @csrf
           <div class="form-group row">
@@ -63,6 +73,11 @@
               </div>
               <div class="radio">
                 <label class="">
+                  <div class="iradio_flat-green" style="position: relative;"><input type="radio" class="flat" @if(old('token_status') == 'used') checked="" @endif value="used" name="token_status" style="position: absolute; opacity: 0;"><ins class="iCheck-helper" style="position: absolute; top: 0%; left: 0%; display: block; width: 100%; height: 100%; margin: 0px; padding: 0px; background: rgb(255, 255, 255); border: 0px; opacity: 0;"></ins></div> Used (redeemed at least once)
+                </label>
+              </div>
+              <div class="radio">
+                <label class="">
                   <div class="iradio_flat-green" style="position: relative;"><input type="radio" class="flat" @if(old('token_status') == 'all') checked="" @endif value="all" name="token_status" style="position: absolute; opacity: 0;"><ins class="iCheck-helper" style="position: absolute; top: 0%; left: 0%; display: block; width: 100%; height: 100%; margin: 0px; padding: 0px; background: rgb(255, 255, 255); border: 0px; opacity: 0;"></ins></div> All
                 </label>
               </div>
@@ -79,6 +94,18 @@
         </form>
       </div>
       @isset($tokens)
+      @if(old('organization_id'))
+      <div class="x_content">
+        <form class="form-inline" method="POST" action="{{ route('admin.updateTokenValidity') }}" onsubmit="return confirm('Update validity for ALL codes of this organization?');">
+          @csrf
+          <input type="hidden" name="organization_id" value="{{ old('organization_id') }}">
+          <label for="bulk_valid_till" style="margin-right:10px;">Set validity for all codes of this organization:</label>
+          <input type="date" id="bulk_valid_till" name="valid_till" class="form-control" style="margin-right:10px;">
+          <button type="submit" class="btn btn-primary">Update Validity</button>
+          <small class="text-muted" style="margin-left:10px;">Leave the date empty to remove expiry.</small>
+        </form>
+      </div>
+      @endif
       <div class="col">
         <div class="row">
           <div class="col-sm-12">
@@ -117,13 +144,21 @@
                       <td>{{implode(',',$token->category->pluck('category')->pluck('name')->toArray())}}</td>
                       <td>{{ $token->organization->name }}</td>
                       <td>
-                        @if($token->isUsable())
-                        Active
+                        @if($token->isDisabled())
+                        Disabled
+                        @elseif($token->isValidityOver())
+                        Validity Over
                         @elseif($token->isExpired())
                         Expired
-                        @elseif($token->isDisabled())
-                        Disabled
+                        @elseif($token->isMaxUsed())
+                        Fully Used
+                        @elseif($token->isUsable())
+                        Active
                         @endif
+                        <br>
+                        <b>Used:</b> {{ (int)$token->use_count }} / {{ $token->use_limit ?? '-' }}
+                        <br>
+                        <b>Valid till:</b> {{ $token->valid_till ? $token->valid_till->format('d M Y') : 'No expiry' }}
                         <br>
                         @if($token->userToken->count())
                         Used by

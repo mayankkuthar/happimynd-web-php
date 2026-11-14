@@ -238,10 +238,12 @@ Route::get('/admin/login', function () {
 })->name('admin.getLogin')->middleware('custom.guest:admin');
 Route::post('admin/login', [AuthController::class, 'adminLogin'])->name('postLogin');
 Route::any('/admin/logout', [AuthController::class, 'adminLogout'])->name('admin.logout')->middleware('jwt.verify:admin');
-Route::get('/admin/contacts', [ContactController::class, 'index'])->name('admin.contacts');
 
 
 Route::prefix('admin')->name('admin.')->middleware(['jwt.verify:admin'])->group(function () {
+
+    // Contact leads (latest first) - admin only
+    Route::get('contacts', [ContactController::class, 'index'])->name('contacts');
 
 
     //HappiBUDDY
@@ -335,6 +337,8 @@ Route::prefix('admin')->name('admin.')->middleware(['jwt.verify:admin'])->group(
 
 
     Route::match(['GET' , 'POST'],'happilearn-content-list', [HappilearnController::class, 'happiLearnContentList'])->name('happilearn-content-list');
+    Route::get('happilearn-users', [HappilearnController::class, 'happiLearnUserList'])->name('happilearnUserList');
+    Route::get('happilearn-users/{user_id}', [HappilearnController::class, 'happiLearnUserDetail'])->name('happilearnUserDetail');
     Route::match(['GET' , 'POST'],'upload-learn-media', [HappilearnController::class, 'uploadLearnMedia'])->name('uploadLearnMedia');
 
 
@@ -434,6 +438,7 @@ Route::prefix('admin')->name('admin.')->middleware(['jwt.verify:admin'])->group(
     Route::post('/generateToken', [AdminController::class, 'generateTokens'])->name('generateToken.post');
     Route::get('/tokenList', [AdminController::class, 'tokenList'])->name('tokenListView');
     Route::post('/tokenList', [AdminController::class, 'tokenList'])->name('tokenList.post');
+    Route::post('/token-validity', [AdminController::class, 'updateTokenValidity'])->name('updateTokenValidity');
     Route::get('/thriveCodeList', [AdminController::class, 'thriveCodeList'])->name('thriveCodeListView');
     Route::post('/thriveCodeList', [AdminController::class, 'thriveCodeList'])->name('thriveCodeList.post');
     Route::get('Organizations', [AdminController::class, 'OrganizationView'])->name('OrganizationView');

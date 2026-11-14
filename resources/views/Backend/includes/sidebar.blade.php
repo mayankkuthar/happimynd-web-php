@@ -15,6 +15,22 @@
         // $admin_Details  = auth('admin')->user();
         // $get_role_id = DB::table('model_has_roles')->where('model_id' , $admin_Details->id)->pluck('role_id')->toArray();
         // $get_name_of_permission_options = DB::table('roles')->whereIn('id' , $get_role_id)->get();
+
+        // Users per product (cached) - shown in each product menu
+        $canSeeUserList = auth('admin')->user()->hasAnyRole(['admin', 'super-admin']);
+        try {
+            $productCounts = \App\Services\UserProductService::counts();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Sidebar product counts failed: ' . $e->getMessage());
+            $productCounts = [];
+        }
+        $productUsersLink = function ($product, $label) use ($canSeeUserList, $productCounts) {
+            if (!$canSeeUserList) {
+                return '';
+            }
+            return '<li><a href="' . e(route('admin.customerListView', ['product' => $product])) . '">'
+                . e($label) . ' Users <span class="badge">' . (int)($productCounts[$product] ?? 0) . '</span></a></li>';
+        };
       ?>
 
       <!-- sidebar menu -->
@@ -32,7 +48,7 @@
                     <ul class="nav child_menu">
                     {{-- <li><a href="index.html">Add user</a></li> --}}
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'user' ]))<li><a href="{{ route('admin.addUserProfile.get') }}">Add User Profile</a></li> @endif
-                    @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'user' ]))<li><a href="{{ route('admin.customerListView') }}">User List</a></li> @endif
+                    @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'user' ]))<li><a href="{{ route('admin.customerListView') }}">User List <span class="badge">{{ (int)($productCounts['all'] ?? 0) }}</span></a></li> @endif
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'user' ]))<li><a href="{{ route('admin.addAdminView') }}">Add Admin</a></li> @endif
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'user' ]))<li><a href="{{ route('admin.adminListView') }}">Admin List</a></li> @endif
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'user' ]))<li><a href="{{ route('admin.notifyUserView') }}">Notify User</a></li> @endif
@@ -192,6 +208,7 @@
             @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'assessments']))
                 <li><a><i class="fa fa-users"></i> Assessment <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">
+                    {!! $productUsersLink('happilife', 'HappiLIFE') !!}
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'assessments']))<li><a href="{{ route("admin.getAllBatches.get") }}">Batches</a></li> @endif
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'assessments']))<li><a href="{{ route("admin.getAllCategories.get") }}">Categories</a></li> @endif
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'assessments']))<li><a href="{{ route('admin.allocateCategoryToBatch') }}">Allocate Categories to Batch</a></li> @endif
@@ -234,6 +251,7 @@
             @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiBUDDY' ]))
                 <li><a><i class="fa fa-solid fa-database"></i> HappiBuddy <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">
+                    {!! $productUsersLink('happibuddy', 'HappiBUDDY') !!}
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiBUDDY']))<li><a href="{{ route('admin.allPsychologistListForBuddy')}}">All Psychologist List</a></li> @endif
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiBUDDY']))<li><a href="{{ route('admin.buddyPsyList')}}">HappiBUDDY Psychologist List</a></li> @endif
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiBUDDY']))<li><a href="{{ route('admin.userListToWhomPsyAssigned.get') }}">  Buddy UserList</span></a></li> @endif
@@ -252,6 +270,7 @@
             @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiLEARN' ]))
                 <li><a><i class="fa fa-solid fa-database"></i> HappiLearn <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">
+                    @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiLEARN']))<li><a href="{{ route('admin.happilearnUserList') }}">HappiLEARN Users <span class="badge">{{ (int)($productCounts['happilearn'] ?? 0) }}</span></a></li> @endif
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiLEARN']))<li><a href="{{ route('admin.import-happilearn-content')}}">Import HappiLearn excel file</a></li> @endif
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiLEARN']))<li><a href="{{ route('admin.uploadLearnMedia')}}">HappiLearn Import Media</a></li> @endif
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiLEARN']))<li><a href="{{ route('admin.happilearn-content-list')}}">HappiLearn Content List</a></li> @endif
@@ -264,6 +283,7 @@
             @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiSELF']))
                 <li><a><i class="fa fa-solid fa-database"></i> HappiSelf <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">
+                    {!! $productUsersLink('happiself', 'HappiSELF') !!}
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiSELF']))<li><a href="{{ route('admin.dateForExportSelfdata')}}">Export HappiSelf User Data</a></li> @endif
 
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiSELF']))<li><a href="{{ route('admin.uploadSelfMedia')}}">Upload HappiSelf Media</a></li> @endif
@@ -283,6 +303,7 @@
             @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiTALK']))
                 <li><a><i class="fa fa-solid fa-database"></i> HappiTalk <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">
+                    {!! $productUsersLink('happitalk', 'HappiTALK') !!}
                     <!-- @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiTALK']))<li><a href="{{ route('admin.talkTds')}}">TDS</a></li> @endif -->
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiTALK']))<li><a href="{{ route('admin.penaltyClause')}}">Penalty Clause</a></li> @endif
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiTALK']))<li><a href="{{ route('admin.allPsychologistListForTalk')}}">All Psychologist List</a></li> @endif
@@ -302,6 +323,7 @@
             @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiGUIDE']))
                 <li><a><i class="fa fa-solid fa-database"></i> HappiGuide <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">
+                    {!! $productUsersLink('happiguide', 'HappiGUIDE') !!}
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiGUIDE']))<li><a href="{{ route('admin.allPsychologistListForGuide')}}">All Psychologist List</a></li> @endif
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiGUIDE']))<li><a href="{{ route('admin.happiguidePsychologistList')}}">HappiGuide Psychologist List</a></li> @endif
                     @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiGUIDE']))<li><a href="{{ route('admin.happiguideSessionList')}}">HappiGuide Session List</a></li> @endif
@@ -314,6 +336,7 @@
             @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiVOICE']))
                 <li><a><i class="fa fa-tag"></i> HappiVoice <span class="fa fa-chevron-down"></span></a>
                 <ul class="nav child_menu">
+                  {!! $productUsersLink('happivoice', 'HappiVOICE') !!}
                   @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiVOICE']))<li><a href="{{ route('admin.prompt.show') }}">Prompts</a></li> @endif
                   @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'HappiVOICE']))<li><a href="{{ route('admin.score.all') }}">Scores</a></li> @endif
                 </ul>

@@ -11,7 +11,8 @@ class RecentlyViewedHappiLearnContent extends Model
 
     protected $fillable = [
         'user_id',
-        'happi_learn_content_id'
+        'happi_learn_content_id',
+        'view_count'
     ];
 
     public function HappiLearnContent(){

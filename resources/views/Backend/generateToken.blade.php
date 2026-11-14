@@ -132,6 +132,10 @@
                 <label for="generate_unique_id"> Max Limit users registered through the coupon </label>
               <input name="use_limit" type="number" class="form-control" id="generate_unique_id" placeholder="Enter max Limit user resitered happimynd" value="{{ Session::get('use_limit') }}" required="false" min="1">
             </div>
+            <div class="form-group col-sm-6">
+                <label for="valid_till">Code valid till (leave empty for no expiry)</label>
+              <input name="valid_till" type="date" class="form-control" id="valid_till" value="{{ old('valid_till') }}" min="{{ now()->toDateString() }}">
+            </div>
             <div class="form-group" id='customize-email'>
                 <label class="form-label">Email Body</label>
                 <textarea  id="orientation-email-body-content" name="orientation-email-body">{{ $orientationMailText }}</textarea>
