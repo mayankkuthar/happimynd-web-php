@@ -130,8 +130,17 @@ class TokenService
         if (is_null($token) || !$token->isUsable() || $token->isMaxUsed()) {
             return false;
         }
-        // Atomic increment so simultaneous sign-ups with the same code are both counted
-        Token::where('id', $token->id)->increment('use_count');
+        // Check the limit and increment in one query, so two simultaneous sign-ups
+        // cannot both redeem the last remaining use of a code.
+        $incremented = Token::where('id', $token->id)
+            ->where(function ($q) {
+                // NULL use_limit = no limit (same as Token::isMaxUsed)
+                $q->whereNull('use_limit')->orWhereColumn('use_count', '<', 'use_limit');
+            })
+            ->increment('use_count');
+        if (!$incremented) {
+            return false;
+        }
         UserToken::create(['user_id' => $user_id, 'token_id' => $token->id]);
         $user = User::find($user_id);
         $bundleStatuses = array();

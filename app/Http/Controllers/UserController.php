@@ -223,7 +223,9 @@ class UserController extends Controller
                 );
             }
             if (isset($formData['signup_type']) && $formData['signup_type'] == 'organization' && !(new TokenService)->assignToken($request->input('happimyndCode'), $user->id)) {
+                DB::rollBack();
                 Log::alert('error expiring Token for user_id=' . $user->id . ' with code=' . $request->input('happimyndCode') . ';');
+                return $this->apiService->error('This HappiMynd code can no longer be used.');
             }
             $token = auth('user')->login($user);
             $cookie = Cookie::make('user-access-token', $token);

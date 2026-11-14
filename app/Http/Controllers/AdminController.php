@@ -586,7 +586,8 @@ class AdminController extends Controller
         $validTill = $request->filled('valid_till') ? Carbon::parse($request->valid_till)->toDateString() : null;
         $updated = Token::where('organization_id', $request->organization_id)->update(['valid_till' => $validTill]);
 
-        return redirect(route('admin.tokenListView'))
+        // Re-run the Token List filter for this organization after updating
+        return redirect(route('admin.tokenListView', ['organization_id' => $request->organization_id, 'token_status' => 'all']))
             ->with('success', $updated . ' code(s) updated. Validity: ' . ($validTill ? Carbon::parse($validTill)->format('d M Y') : 'No expiry'));
     }
 
