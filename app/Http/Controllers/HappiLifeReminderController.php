@@ -30,7 +30,7 @@ class HappiLifeReminderController extends Controller
             ->when($search !== '', function ($q) use ($search) {
                 $q->whereHas('user', function ($u) use ($search) {
                     $u->where('username', 'like', "%{$search}%")
-                        ->orWhere('name', 'like', "%{$search}%")
+                        ->orWhere('nickname', 'like', "%{$search}%")
                         ->orWhere('email', 'like', "%{$search}%")
                         ->orWhere('mobile', 'like', "%{$search}%");
                 });
