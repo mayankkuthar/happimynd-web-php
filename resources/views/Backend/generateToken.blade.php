@@ -133,8 +133,10 @@
               <input name="use_limit" type="number" class="form-control" id="generate_unique_id" placeholder="Enter max Limit user resitered happimynd" value="{{ Session::get('use_limit') }}" required="false" min="1">
             </div>
             <div class="form-group col-sm-6">
-                <label for="valid_till">Code valid till (leave empty for no expiry)</label>
+                @php($defaultValidityDays = \App\Models\Setting::tokenDefaultValidityDays())
+                <label for="valid_till">Code valid till</label>
               <input name="valid_till" type="date" class="form-control" id="valid_till" value="{{ old('valid_till') }}" min="{{ now()->toDateString() }}">
+              <small class="text-muted">Leave empty to expire after {{ $defaultValidityDays }} days (valid till {{ now()->addDays($defaultValidityDays)->format('d M Y') }}). <a href="{{ route('admin.codeExpirySettings') }}">Change default</a></small>
             </div>
             <div class="form-group" id='customize-email'>
                 <label class="form-label">Email Body</label>

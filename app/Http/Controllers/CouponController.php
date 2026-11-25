@@ -7,6 +7,7 @@ use App\Models\Coupon;
 use App\Models\CouponPlan;
 use App\Models\CouponReceipt;
 use App\Models\Plan;
+use App\Models\Setting;
 use App\Services\CouponService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -92,7 +93,9 @@ class CouponController extends Controller
                 array_push($categorical_plans['uncategorized'], $plan);
             }
         }
-        return view("Backend.coupon.add")->with('categorical_plans', $categorical_plans);
+        return view("Backend.coupon.add")
+            ->with('categorical_plans', $categorical_plans)
+            ->with('defaultValidityDays', Setting::couponDefaultValidityDays());
     }
 
     public function storeCoupons(CouponSaveRequest $request)
@@ -113,6 +116,9 @@ class CouponController extends Controller
             }
             if (isset($request['ends_at'])) {
                 $coupon->expired_at = $request['ends_at'];
+            } else {
+                // No date given: coupon expires after the admin-configured number of days (default 60)
+                $coupon->expired_at = Carbon::now()->addDays(Setting::couponDefaultValidityDays());
             }
 
             $coupon->save();
