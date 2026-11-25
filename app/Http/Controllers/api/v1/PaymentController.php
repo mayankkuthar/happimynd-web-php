@@ -347,10 +347,8 @@ class PaymentController extends Controller
 
         $plan_details = Plan::where('id', $plan_id)->with('package')->first();
         if ($plan_details->package->name === 'HappiLEARN') {
-            $reward_points = RewardPointInstance::where('action_performed', 'When HappiLEARN Subscribed')->first();
-            $points_to_be_added_to_user = $reward_points->points_to_be_given;
             $task_performed = 'Subscribe HappiLEARN';
-            $this->rewardPointToUser()->addRewardToUser($user_id, $points_to_be_added_to_user, $task_performed);
+            $this->rewardPointToUser()->awardByKey($user_id, 'happilearn_subscribed', $task_performed);
 
             // $reward_data = [
             //     'user_id' => $user_id,
@@ -360,10 +358,8 @@ class PaymentController extends Controller
             // UserRewardPointRecord::create($reward_data);
         }
         if ($plan_details->package->name === 'HappiBUDDY') {
-            $reward_points = RewardPointInstance::where('action_performed', 'When HappiBUDDY Subscribed')->first();
-            $points_to_be_added_to_user = $reward_points->points_to_be_given;
             $task_performed = 'Subscribe HappiBUDDY';
-            $this->rewardPointToUser()->addRewardToUser($user_id, $points_to_be_added_to_user, $task_performed);
+            $this->rewardPointToUser()->awardByKey($user_id, 'happibuddy_subscribed', $task_performed);
             // $reward_data = [
             //     'user_id' => $user_id,
             //     'points_earned' => $points_to_be_added_to_user,
@@ -372,10 +368,8 @@ class PaymentController extends Controller
             // UserRewardPointRecord::create($reward_data);
         }
         if ($plan_details->package->name === 'HappiSELF') {
-            $reward_points = RewardPointInstance::where('action_performed', 'When HappiSELF subscribed')->first();
-            $points_to_be_added_to_user = $reward_points->points_to_be_given;
             $task_performed = 'Subscribe HappiSELF';
-            $this->rewardPointToUser()->addRewardToUser($user_id, $points_to_be_added_to_user, $task_performed);
+            $this->rewardPointToUser()->awardByKey($user_id, 'happiself_subscribed', $task_performed);
             // $reward_data = [
             //     'user_id' => $user_id,
             //     'points_earned' => $points_to_be_added_to_user,
@@ -753,10 +747,8 @@ class PaymentController extends Controller
         }
 
 
-        $reward_points = RewardPointInstance::where('action_performed', 'When HappiTALK is booked')->first();
-        $points_to_be_added_to_user = $reward_points->points_to_be_given;
         $task_performed = 'Book HappiTALK';
-        $this->rewardPointToUser()->addRewardToUser($user_id, $points_to_be_added_to_user, $task_performed);
+        $this->rewardPointToUser()->awardByKey($user_id, 'happitalk_booked', $task_performed);
 
         // $reward_data = [
         //     'user_id' => $user_id,
@@ -1054,10 +1046,8 @@ class PaymentController extends Controller
         HappiguideSession::create($data);
 
         //Reward Points
-        $reward_points = RewardPointInstance::where('action_performed', 'When HappiGUIDE Subscribed')->first();
-        $points_to_be_added_to_user = $reward_points->points_to_be_given;
         $task_performed = 'Book HappiGUIDE';
-        $this->rewardPointToUser()->addRewardToUser($user_id, $points_to_be_added_to_user, $task_performed);
+        $this->rewardPointToUser()->awardByKey($user_id, 'happiguide_booked', $task_performed);
 
 
         //Notifications

@@ -65,6 +65,12 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\InvoiceSetSessionSettings::class,
         ],
+
+        // Conscious Growth Enquiries API (intern project): own MySQL database,
+        // all work through stored procedures.
+        'enquiries' => [
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ],
     ];
 
     /**
@@ -96,6 +102,7 @@ class Kernel extends HttpKernel
         // Intern projects (HR Auto, Invoice Platform).
         'hr.auth' => \App\Http\Middleware\HrAuthenticate::class,
         'invoice.auth' => \App\Http\Middleware\InvoiceAuthenticate::class,
+        'enquiries.admin' => \App\Http\Middleware\EnquiriesAdminAuth::class,
 
     ];
 }

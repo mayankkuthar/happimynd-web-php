@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Classifies users by the products they have actually started.
@@ -254,35 +255,63 @@ class UserProductService
             foreach (self::ACTIVITY_WINDOWS as $name => $days) {
                 $since[$name] = $now->copy()->subDays($days);
             }
+            // Only the widest window is read from the tables; the narrower
+            // ones are counted from the same rows in one pass
+            $oldest = $now->copy()->subDays(max(self::ACTIVITY_WINDOWS));
 
+            // Counting from each product's (small) table and joining users by
+            // primary key keeps this to one query per product plus one for
+            // "any product". The earlier whereHas() version checked every
+            // user against every product table for every window (32 scans of
+            // ~230k users, most product tables have no user_id index) and
+            // took minutes on production.
             $stats = ['products' => [], 'all' => []];
+            $all = null;
             foreach (self::PRODUCTS as $key => $config) {
-                $stats['products'][$key] = ['label' => $config['label']];
-                foreach ($since as $name => $from) {
-                    $stats['products'][$key][$name] = User::RemoveTestUser()
-                        ->whereHas($config['relation'], self::activeSince($key, $from))
-                        ->count();
-                }
+                $activity = self::activityRows($key, $oldest);
+                $stats['products'][$key] = ['label' => $config['label']] + self::countActiveUsers($activity, $since);
+                $all = $all ? $all->unionAll($activity) : $activity;
             }
-            foreach ($since as $name => $from) {
-                $stats['all'][$name] = User::RemoveTestUser()
-                    ->where(function ($query) use ($from) {
-                        foreach (self::PRODUCTS as $key => $config) {
-                            $query->orWhereHas($config['relation'], self::activeSince($key, $from));
-                        }
-                    })
-                    ->count();
-            }
+            $stats['all'] = self::countActiveUsers($all, $since);
             return $stats;
         });
     }
 
-    private static function activeSince($product, $from)
+    /**
+     * (user_id, activity_at) rows for one product since $from. Goes through
+     * the related model so its scopes (e.g. soft deletes) still apply.
+     */
+    private static function activityRows($product, $from)
     {
-        $column = self::ACTIVITY_COLUMNS[$product] ?? 'created_at';
-        return function ($q) use ($column, $from) {
-            $q->where($q->getModel()->qualifyColumn($column), '>=', $from);
-        };
+        $relation = (new User)->{self::PRODUCTS[$product]['relation']}();
+        $related = $relation->getRelated();
+        $column = $related->qualifyColumn(self::ACTIVITY_COLUMNS[$product] ?? 'created_at');
+
+        return $related->newQuery()
+            ->select([$relation->getQualifiedForeignKeyName() . ' as user_id', $column . ' as activity_at'])
+            ->where($column, '>=', $from)
+            ->toBase();
+    }
+
+    /**
+     * Distinct non-test users in $activity per window: [window => n]
+     */
+    private static function countActiveUsers($activity, array $since): array
+    {
+        $selects = [];
+        $bindings = [];
+        foreach ($since as $name => $from) {
+            $selects[] = "COUNT(DISTINCT CASE WHEN a.activity_at >= ? THEN a.user_id END) AS `{$name}`";
+            $bindings[] = $from;
+        }
+
+        $row = DB::query()
+            ->selectRaw(implode(', ', $selects), $bindings)
+            ->fromSub($activity, 'a')
+            ->joinSub(User::RemoveTestUser()->select('id')->toBase(), 'u', 'u.id', '=', 'a.user_id')
+            ->first();
+
+        return array_map('intval', (array) $row);
     }
 
     /**

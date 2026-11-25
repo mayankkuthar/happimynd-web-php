@@ -28,6 +28,10 @@ class AuthController extends Controller
      */
     public function adminLogin(AdminLoginRequest $request)
     {
+        if (auth('admin')->check()) {
+            return redirect(route('admin.dashboard'));
+        }
+
         $formData = $request->validated();
 
         $credentials = ['email' => $formData['email'], 'password' => $formData['password']];

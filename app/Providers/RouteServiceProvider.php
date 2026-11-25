@@ -69,6 +69,11 @@ class RouteServiceProvider extends ServiceProvider
             Route::prefix('api/invoice')
                 ->middleware('invoice')
                 ->group(base_path('routes/invoice.php'));
+
+            // Conscious Growth — Website Enquiries, own MySQL database.
+            Route::prefix('api/enquiries')
+                ->middleware('enquiries')
+                ->group(base_path('routes/enquiries.php'));
         });
     }
 

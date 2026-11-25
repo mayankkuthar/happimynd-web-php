@@ -87,6 +87,8 @@ Route::group(['prefix' => 'v1',  'namespace' => 'api\v1'], function () {
 
     Route::get('on-off-status', [UserAuthenticationController::class, 'onOffStatus']);
 
+    Route::match(['GET' , 'POST'],'payment-gateway-path', [UserAuthenticationController::class, 'paymentGatewayPath']);
+
     Route::match(['GET' , 'POST'],'onboarding', [UserAuthenticationController::class,'onBoarding']);
     Route::match(['GET' , 'POST'],'organizer-list', [UserAuthenticationController::class,'organizerList']);
     Route::match(['GET' , 'POST'],'user-profile', [UserAuthenticationController::class,'userProfile']);
@@ -165,6 +167,7 @@ Route::group(['prefix' => 'v1',  'namespace' => 'api\v1'], function () {
         //Assessment
         Route::match(['GET' , 'POST'],'start-assessment', [UserAuthenticationController::class,'startAssessment']);
         Route::match(['GET' , 'POST'],'checkifany', [UserAuthenticationController::class,'checkIfAnyAssessmentCompleted']);
+        Route::match(['GET' , 'POST'],'happilife-progress', [UserAuthenticationController::class,'happiLifeProgress']);
         Route::match(['GET' , 'POST'],'save-option', [UserAuthenticationController::class,'saveOption']);
         Route::match(['GET' , 'POST'],'complete-assessment', [UserAuthenticationController::class,'completeAssessment']);
         Route::match(['GET' , 'POST'],'view-report', [UserAuthenticationController::class,'viewReport']);
@@ -178,6 +181,7 @@ Route::group(['prefix' => 'v1',  'namespace' => 'api\v1'], function () {
         Route::match(['GET' , 'POST'],'user-mood', [UserAuthenticationController::class,'userMood']);
 
         Route::match(['GET' , 'POST'],'total-reward-points-user', [UserAuthenticationController::class,'totalRewardPointsUser']);
+        Route::post('earn-reward-points', [UserAuthenticationController::class,'earnRewardPoints']);
 
 
         //Payment

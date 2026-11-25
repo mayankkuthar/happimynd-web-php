@@ -82,11 +82,9 @@ class UserControllerApi extends Controller
                     }
 
                     if ($user->mobile == null) {
-                        $reward_points = RewardPointInstance::where('action_performed', 'When gives phone number')->first();
-                        $points_to_be_added_to_user = $reward_points->points_to_be_given;
                         $user_id = $user->id;
                         $task_performed = 'Gives phone number';
-                        $this->rewardPointToUser()->addRewardToUser($user_id, $points_to_be_added_to_user, $task_performed);
+                        $this->rewardPointToUser()->awardByKey($user_id, 'phone_added', $task_performed);
                     }
 
 
@@ -129,11 +127,9 @@ class UserControllerApi extends Controller
                 Mail::to($request->email)->send(new OtpEmail($mailDetails));
 
                 if ($user && $user->email == null) {
-                    $reward_points = RewardPointInstance::where('action_performed', 'When gives email ID')->first();
-                    $points_to_be_added_to_user = $reward_points->points_to_be_given;
                     $user_id = $user->id;
                     $task_performed = 'Gives email ID';
-                    $this->rewardPointToUser()->addRewardToUser($user_id, $points_to_be_added_to_user, $task_performed);
+                    $this->rewardPointToUser()->awardByKey($user_id, 'email_added', $task_performed);
                 }
 
                 if ($user) {

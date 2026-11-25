@@ -27,19 +27,20 @@
                 <div class="row">
                   <div class="animated flipInY col-lg-3 col-md-3 col-sm-6  ">
                     <div class="tile-stats">
-                      <h3>Total users: {{ $userCount+$organizationUsersCount }}</h3>
-                      <h3>Total test users: {{ $testUserCount }}</h3>
+                      <div class="count">{{ number_format($userCount + $organizationUsersCount) }}</div>
+                      <h3>Total users</h3>
+                      <p>{{ number_format($testUserCount) }} test users</p>
                     </div>
                   </div>
                   <div class="animated flipInY col-lg-3 col-md-3 col-sm-6  ">
                     <div class="tile-stats">
-                      <div class="count">{{ $userCount }}</div>
+                      <div class="count">{{ number_format((int) $userCount) }}</div>
                       <h3>B2C Users</h3>
                     </div>
                   </div>
                   <div class="animated flipInY col-lg-3 col-md-3 col-sm-6  ">
                     <div class="tile-stats">
-                      <div class="count">{{ $organizationUsersCount }}</div>
+                      <div class="count">{{ number_format((int) $organizationUsersCount) }}</div>
 
                       <h3>B2B users</h3>
                       {{-- <p>Lorem ipsum psdea itgum rixt.</p> --}}
@@ -47,7 +48,7 @@
                   </div>
                   <div class="animated flipInY col-lg-3 col-md-3 col-sm-6  ">
                     <div class="tile-stats">
-                      <div class="count">{{ $organizationCount }}</div>
+                      <div class="count">{{ number_format((int) $organizationCount) }}</div>
 
                       <h3>Total Organizations</h3>
                       {{-- <p>Lorem ipsum psdea itgum rixt.</p> --}}
@@ -55,7 +56,7 @@
                   </div>
                   <div class="animated flipInY col-lg-3 col-md-3 col-sm-6  ">
                     <div class="tile-stats">
-                      <div class="count">{{ $tokenCount }}</div>
+                      <div class="count">{{ number_format((int) $tokenCount) }}</div>
 
                       <h3>HappiMynd codes generated</h3>
                       {{-- <p>Lorem ipsum psdea itgum rixt.</p> --}}
@@ -63,26 +64,26 @@
                   </div>
                   <div class="animated flipInY col-lg-3 col-md-3 col-sm-6  ">
                     <div class="tile-stats">
-                      <div class="count">{{ $b2bCodeStats['used_codes'] }}</div>
+                      <div class="count">{{ number_format((int) $b2bCodeStats['used_codes']) }}</div>
                       <h3>B2B codes used</h3>
-                      <p>{{ $b2bCodeStats['redemptions'] }} sign-ups via B2B codes</p>
+                      <p>{{ number_format((int) $b2bCodeStats['redemptions']) }} sign-ups via B2B codes</p>
                     </div>
                   </div>
                   <div class="animated flipInY col-lg-3 col-md-3 col-sm-6  ">
                     <div class="tile-stats">
-                      <div class="count">{{ $b2bCodeStats['validity_over'] }}</div>
+                      <div class="count">{{ number_format((int) $b2bCodeStats['validity_over']) }}</div>
                       <h3>B2B codes validity over</h3>
                     </div>
                   </div>
                   <div class="animated flipInY col-lg-3 col-md-3 col-sm-6  ">
                     <div class="tile-stats">
-                      <div class="count">{{ $newUserStats['overall']['24h'] ?? 0 }}</div>
+                      <div class="count">{{ number_format((int) ($newUserStats['overall']['24h'] ?? 0)) }}</div>
                       <h3>New users (last 24 hours)</h3>
                     </div>
                   </div>
                   <div class="animated flipInY col-lg-3 col-md-3 col-sm-6  ">
                     <div class="tile-stats">
-                      <div class="count">{{ $newUserStats['overall']['7d'] ?? 0 }}</div>
+                      <div class="count">{{ number_format((int) ($newUserStats['overall']['7d'] ?? 0)) }}</div>
                       <h3>New users (last 7 days)</h3>
                     </div>
                   </div>

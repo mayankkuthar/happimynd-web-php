@@ -75,6 +75,24 @@ Token is obtained via `psychologist-login`.
 
 ---
 
+### 1.1.1 Payment Gateway Path
+
+**Endpoint:** `GET|POST /api/v1/payment-gateway-path`
+
+**Description:** Check which payment gateway path the app should use.
+
+**Flow:** Called before starting a payment. `payment_gateway_path = 0` uses the current path; `1` uses the alternate path. Currently hardcoded to `0`.
+
+**Response (200):**
+```json
+{
+  "status": "success",
+  "payment_gateway_path": 0
+}
+```
+
+---
+
 ### 1.2 Onboarding
 
 **Endpoint:** `GET|POST /api/v1/onboarding`

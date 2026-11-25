@@ -14,7 +14,9 @@ class AdminLoginRequest extends FormRequest
      */
     public function authorize()
     {
-        return !auth('admin')->check();
+        // Already logged in (e.g. Back to a cached login page): the controller
+        // sends them to the dashboard instead of a 403.
+        return true;
     }
 
     /**

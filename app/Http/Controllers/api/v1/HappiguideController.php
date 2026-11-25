@@ -564,10 +564,8 @@ class HappiguideController extends Controller
         
 
         //Reward Points
-        $reward_points = RewardPointInstance::where('action_performed' , 'When HappiGUIDE Subscribed')->first();
-        $points_to_be_added_to_user = $reward_points->points_to_be_given;
         $task_performed = 'Book HappiGUIDE';
-        $this->rewardPointToUser()->addRewardToUser($user->id , $points_to_be_added_to_user , $task_performed);
+        $this->rewardPointToUser()->awardByKey($user->id, 'happiguide_booked', $task_performed);
                     
 
 

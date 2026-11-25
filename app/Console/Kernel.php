@@ -29,6 +29,11 @@ class Kernel extends ConsoleKernel
         // $schedule->command('inspire')->hourly();
         $schedule->command('notification:cron')
                  ->everyMinute();
+
+        // Nudge users with an unfinished HappiLIFE attempt (see config/happilife.php)
+        $schedule->command('happilife:send-reminders')
+                 ->dailyAt(config('happilife.reminder_time', '11:00'))
+                 ->withoutOverlapping();
     }
 
     /**

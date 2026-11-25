@@ -1,86 +1,37 @@
+<?php
+  $hmAdmin = Auth::guard('admin')->user();
+  $hmName = trim($hmAdmin->full_name ?? '') ?: 'Admin User';
+  $hmInitials = collect(preg_split('/\s+/', $hmName))->filter()->take(2)->map(function ($p) {
+      return mb_strtoupper(mb_substr($p, 0, 1));
+  })->implode('');
+  try {
+      $hmRole = str_replace('-', ' ', (string) $hmAdmin->getRoleNames()->first());
+  } catch (\Throwable $e) {
+      $hmRole = '';
+  }
+?>
 <div class="top_nav">
   <div class="nav_menu">
       <div class="nav toggle">
-        <a id="menu_toggle"><i class="fa fa-bars"></i></a>
+        <a id="menu_toggle" role="button" aria-label="Collapse or expand the menu" title="Collapse / expand menu"><i class="fa fa-bars"></i></a>
       </div>
+
+      <div class="hm-page-title">{{ trim(strip_tags($title ?? '')) ?: 'Admin Panel' }}</div>
+
       <nav class="nav navbar-nav">
-      <ul class=" navbar-right">
-        <li role="presentation" class="nav-item dropdown open">
-          <a href="javascript:;" class="dropdown-toggle info-number" id="navbarDropdown1" data-toggle="dropdown" aria-expanded="false">
-            <i class="fa fa-envelope-o"></i>
-            <span class="badge bg-green">6</span>
-          </a>
-          <ul class="dropdown-menu list-unstyled msg_list" role="menu" aria-labelledby="navbarDropdown1">
-            <li class="nav-item">
-              <a class="dropdown-item">
-                <span class="image"><img src="{{ asset('assets/Backend/images/img.jpg') }}" alt="Profile Image" /></span>
-                <span>
-                  <span>John Smith</span>
-                  <span class="time">3 mins ago</span>
-                </span>
-                <span class="message">
-                  Film festivals used to be do-or-die moments for movie makers. They were where...
-                </span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="dropdown-item">
-                <span class="image"><img src="{{ asset('assets/Backend/images/img.jpg') }}" alt="Profile Image" /></span>
-                <span>
-                  <span>John Smith</span>
-                  <span class="time">3 mins ago</span>
-                </span>
-                <span class="message">
-                  Film festivals used to be do-or-die moments for movie makers. They were where...
-                </span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="dropdown-item">
-                <span class="image"><img src="{{ asset('assets/Backend/images/img.jpg') }}" alt="Profile Image" /></span>
-                <span>
-                  <span>John Smith</span>
-                  <span class="time">3 mins ago</span>
-                </span>
-                <span class="message">
-                  Film festivals used to be do-or-die moments for movie makers. They were where...
-                </span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="dropdown-item">
-                <span class="image"><img src="{{ asset('assets/Backend/images/img.jpg') }}" alt="Profile Image" /></span>
-                <span>
-                  <span>John Smith</span>
-                  <span class="time">3 mins ago</span>
-                </span>
-                <span class="message">
-                  Film festivals used to be do-or-die moments for movie makers. They were where...
-                </span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <div class="text-center">
-                <a class="dropdown-item">
-                  <strong>See All Alerts</strong>
-                  <i class="fa fa-angle-right"></i>
-                </a>
-              </div>
-            </li>
-          </ul>
-        </li>
-        <li class="nav-item dropdown open" style="padding-left: 15px;">
+      <ul class="navbar-right">
+        <li class="nav-item dropdown open">
           <a href="javascript:;" class="user-profile dropdown-toggle" aria-haspopup="true" id="navbarDropdown" data-toggle="dropdown" aria-expanded="false">
-            <img src="{{ asset('assets/Backend/images/img.jpg') }}" alt="">{{ Auth::guard('admin')->user()->full_name ?? 'Admin User' }}
+            <span class="hm-avatar" aria-hidden="true">{{ $hmInitials ?: 'A' }}</span>
+            <span class="hm-user-meta">
+              {{ $hmName }}
+              @if($hmRole)<small>{{ $hmRole }}</small>@endif
+            </span>
+            <span class="fa fa-angle-down"></span>
           </a>
           <div class="dropdown-menu dropdown-usermenu pull-right" aria-labelledby="navbarDropdown">
-            <a class="dropdown-item"  href="javascript:;"> Profile</a>
-              <a class="dropdown-item"  href="javascript:;">
-                <span class="badge bg-red pull-right">50%</span>
-                <span>Settings</span>
-              </a>
-          <a class="dropdown-item"  href="javascript:;">Help</a>
-            <a class="dropdown-item" href="{{ route('admin.logout') }}"  ><i class="fa fa-sign-out pull-right"></i> Log Out</a>
+            <a class="dropdown-item" href="{{ route('admin.dashboard') }}"><i class="fa fa-tachometer"></i>&nbsp; Dashboard</a>
+            <a class="dropdown-item" href="{{ route('admin.logout') }}"><i class="fa fa-sign-out"></i>&nbsp; Log out</a>
           </div>
         </li>
       </ul>

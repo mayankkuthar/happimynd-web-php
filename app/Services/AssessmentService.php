@@ -1087,6 +1087,48 @@ class AssessmentService
 
 
 
+    /**
+     * Progress of one attempt without loading its answers or relying on the
+     * logged-in user, so it also works from the reminder cron and admin pages.
+     * Counts questions in the attempt owner's language — the same total
+     * start-assessment reports to the website and app.
+     *
+     * @return array{assessment_id:int, answered:int, total:int, percent:int, remaining:int, started_at:?string, last_answered_at:?string, last_activity_at:?string, completed:bool}
+     */
+    public function progressSnapshot($assessmentId)
+    {
+        $this->assessmentId = $assessmentId;
+        $this->assessment = Assessment::find($assessmentId);
+        $this->user = $this->assessment->user;
+        $this->profileType = null;
+        $this->batch = null;
+        $this->getProfileType();
+
+        $batchCategoryIds = $this->batch->batchCategory()->whereHas('category')->pluck('id');
+        $language = $this->user->language ?: 'english';
+        $total = Question::whereIn('batch_category_id', $batchCategoryIds)->where('language', $language)->count();
+        $answered = AssessmentAnswer::where('assessment_id', $assessmentId)->count();
+        $lastAnsweredAt = AssessmentAnswer::where('assessment_id', $assessmentId)->max('updated_at');
+
+        $percent = $total > 0 ? (int) floor(min($answered, $total) / $total * 100) : 0;
+        // Never show 100% for an attempt that hasn't been submitted
+        if ($percent >= 100 && empty($this->assessment->ended_at)) $percent = 99;
+
+        $startedAt = $this->assessment->started_at ?? $this->assessment->created_at;
+
+        return [
+            'assessment_id' => (int) $this->assessment->id,
+            'answered' => (int) $answered,
+            'total' => (int) $total,
+            'percent' => $percent,
+            'remaining' => max(0, $total - $answered),
+            'started_at' => $startedAt ? Carbon::parse($startedAt)->toIso8601String() : null,
+            'last_answered_at' => $lastAnsweredAt ? Carbon::parse($lastAnsweredAt)->toIso8601String() : null,
+            'last_activity_at' => Carbon::parse($lastAnsweredAt ?? $startedAt ?? now())->toIso8601String(),
+            'completed' => !empty($this->assessment->ended_at),
+        ];
+    }
+
     public function getRemainingQuestionsApp()
     {
         return $this->getQuestionsApp($this->assessmentId);

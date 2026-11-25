@@ -2764,28 +2764,82 @@ class AdminController extends Controller
 
     public function getRewardPointsInstanceList(Request $request){
         $perPage = $request->get('per_page', 50);
-        $list = RewardPointInstance::paginate($perPage)
+        $list = RewardPointInstance::orderBy('service')->orderBy('id')->paginate($perPage)
             ->appends($request->except('page'));
         return view('Backend/reward_points')->with('list' , $list);
     }
 
+    /**
+     * Rules shared by add / edit. Text, points, service, frequency and on/off are editable;
+     * the key is fixed once created because the code (or an app) finds the reward by it.
+     */
+    private function rewardPointRules(): array
+    {
+        return [
+            'action_performed'   => 'required|string|max:255',
+            'points_to_be_given' => 'required|integer|min:0|max:1000',
+            'service'            => 'nullable|string|max:64',
+            'frequency'          => 'required|in:' . implode(',', array_keys(RewardPointInstance::FREQUENCIES)),
+        ];
+    }
 
+    private function rewardPointData(Request $request): array
+    {
+        return [
+            'action_performed'   => trim($request->action_performed),
+            'points_to_be_given' => (string) (int) $request->points_to_be_given,
+            'service'            => $request->filled('service') ? trim($request->service) : null,
+            'frequency'          => $request->frequency,
+            'is_active'          => $request->boolean('is_active'),
+        ];
+    }
 
     public function getEditRewardPointsList(Request $request , $id){
 
+        $data = RewardPointInstance::findOrFail($id);
+
         if($request->isMethod('GET')){
-            $data = RewardPointInstance::where('id', $id)->first();
             return view('Backend/reward_points_edit')->with('data' , $data);
         }
 
-        if($request->isMethod('POST')){
-
-            RewardPointInstance::where('id' , $id)->update(['points_to_be_given' => $request->points_to_be_given]);
-            return redirect('admin/list/reward-points-instance')->with('success' , 'Points has been updated successfully.');
-
+        $rules = $this->rewardPointRules();
+        if ($data->awarded_by === RewardPointInstance::BY_APP) {
+            $rules['frequency'] = 'required|in:daily,once';
         }
-        
-    }   
+        $request->validate($rules);
+        $data->update($this->rewardPointData($request));
+        return redirect('admin/list/reward-points-instance')->with('success' , 'Reward has been updated successfully.');
+    }
+
+    /**
+     * New reward, e.g. for a newly launched service. It is "Reported by app": the app,
+     * website or service calls POST /api/v1/earn-reward-points with its key when the
+     * user does the action. "Every time" is not allowed for these so points cannot be farmed.
+     */
+    public function addRewardPoints(Request $request){
+
+        if($request->isMethod('GET')){
+            return view('Backend/reward_points_edit')->with('data' , new RewardPointInstance([
+                'frequency' => 'daily',
+                'is_active' => true,
+                'points_to_be_given' => '0',
+            ]));
+        }
+
+        $request->merge(['key' => Str::slug((string) $request->key, '_')]);
+        $request->validate($this->rewardPointRules() + [
+            'key'       => 'required|max:64|unique:reward_point_instances,key',
+            'frequency' => 'required|in:daily,once',
+        ], [
+            'frequency.in' => 'Rewards reported by an app can only be earned once a day or only once.',
+        ]);
+
+        RewardPointInstance::create($this->rewardPointData($request) + [
+            'key'        => $request->key,
+            'awarded_by' => RewardPointInstance::BY_APP,
+        ]);
+        return redirect('admin/list/reward-points-instance')->with('success' , 'Reward has been added. Share its key "' . $request->key . '" with the app team.');
+    }
 
 
 }

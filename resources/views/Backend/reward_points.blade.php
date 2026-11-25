@@ -36,7 +36,8 @@
         <div class="col-md-12 col-sm-12 ">
             <div class="x_panel">
               <div class="x_title">
-                <h2>Reward Point List</h2>
+                <h2>Reward Point List <small>ways users earn points in the app and website</small></h2>
+                <a href="{{ route('admin.addRewardPoints') }}" class="btn btn-primary btn-sm pull-right">+ Add reward</a>
                 <div class="clearfix"></div>
 
                 @if(Session::has("error"))
@@ -60,27 +61,40 @@
                       <div class="col-sm-12">
                         <div class="card-box table-responsive">
 
-                <table id="datatable-buttons" class="table table-striped table-bordered dt-responsive nowrap" cellspacing="0" width="100%">
+                <table id="datatable-buttons" class="table table-striped table-bordered" cellspacing="0" width="100%">
                   <thead>
                     <tr>
                       <th>#</th>
-                      <th>Name</th>
-                      <th>Points to be given</th>
+                      <th>Reward (shown to users) &amp; key</th>
+                      <th>Service</th>
+                      <th>Points</th>
+                      <th>How often</th>
+                      <th>Given by</th>
+                      <th>Status</th>
                       <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
                       @foreach($list as $rows)
-
-                        <td>{{ $loop->iteration }}</td>
-                        <td>{{ $rows->action_performed ?? '' }} .</td>
-                        <td>{{ $rows->points_to_be_given ??'-'}}</td>
+                        <tr>
+                        <td>{{ $list->firstItem() + $loop->index }}</td>
+                        <td>{{ $rows->action_performed ?? '' }}<br><code class="hm-key" title="Key used by the code / app">{{ $rows->key ?? '-' }}</code></td>
+                        <td>{{ $rows->service ?? '-' }}</td>
+                        <td>{{ $rows->points_to_be_given ?? '-' }}</td>
+                        <td>{{ $rows->frequencyLabel() }}</td>
+                        <td>{{ $rows->awarded_by === \App\Models\RewardPointInstance::BY_APP ? 'App' : 'Backend' }}</td>
+                        <td>
+                          @if($rows->is_active)
+                            <span class="label label-success">On</span>
+                          @else
+                            <span class="label label-default">Off</span>
+                          @endif
+                        </td>
                         <td>
                           <a href="{{url('admin/list/edit-reward-points').'/'.$rows->id}}">Edit</a>
                         </td>
-
                         </tr>
-                        @endforeach
+                      @endforeach
                   </tbody>
                 </table>
 

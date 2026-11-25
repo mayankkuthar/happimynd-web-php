@@ -187,11 +187,9 @@ class HappiselfController extends Controller
 
 
             //Send Reward points on complete sub course
-            $reward_points = RewardPointInstance::where('action_performed' , 'When sub module is completed in HappiSELF')->first();
-            $points_to_be_added_to_user = $reward_points->points_to_be_given;
             $user_id = $user->id;
             $task_performed = 'Sub module is completed in HappiSELF';
-            $this->rewardPointToUser()->addRewardToUser($user_id , $points_to_be_added_to_user , $task_performed);
+            $this->rewardPointToUser()->awardByKey($user_id, 'happiself_submodule_completed', $task_performed);
 
             // $reward_data = [
             //     'user_id' => $user->id,
@@ -218,11 +216,9 @@ class HappiselfController extends Controller
             if($course_complete_status == 'true'){
 
                 //Reward Point
-                $reward_points = RewardPointInstance::where('action_performed' , 'When module is completed in HappiSELF')->first();
-                $points_to_be_added_to_user = $reward_points->points_to_be_given;
                 $user_id = $user->id;
                 $task_performed = 'Module is completed in HappiSELF';
-                $this->rewardPointToUser()->addRewardToUser($user_id , $points_to_be_added_to_user , $task_performed);
+                $this->rewardPointToUser()->awardByKey($user_id, 'happiself_module_completed', $task_performed);
 
                 // $reward_data = [
                 //     'user_id' => $user->id,

@@ -13,6 +13,7 @@ class UserRewardPointRecord extends Model
         'user_id',
         'points_earned',
         'task_performed',
+        'reward_key',
     ];
 
 }

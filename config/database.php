@@ -155,6 +155,37 @@ return [
             ]) : [],
         ],
 
+        /*
+        |--------------------------------------------------------------------------
+        | Conscious Growth — Website Enquiries connection
+        |--------------------------------------------------------------------------
+        |
+        | Intern project. Own MySQL database whose application user has only
+        | EXECUTE on the stored procedures (intern_2/Consious Growth Setup).
+        |
+        */
+
+        'enquiries' => [
+            'driver' => 'mysql',
+            'url' => env('ENQUIRIES_DATABASE_URL'),
+            'host' => env('ENQUIRIES_DB_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('ENQUIRIES_DB_PORT', env('DB_PORT', '3306')),
+            'database' => env('ENQUIRIES_DB_DATABASE', 'enquiries'),
+            'username' => env('ENQUIRIES_DB_USERNAME', 'enquiries_api'),
+            'password' => env('ENQUIRIES_DB_PASSWORD', ''),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_0900_ai_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => 'InnoDB',
+            'timezone' => '+00:00',
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DATABASE_URL'),

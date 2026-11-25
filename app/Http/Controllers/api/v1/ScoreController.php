@@ -5,6 +5,7 @@ namespace App\Http\Controllers\api\v1;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Score;
+use App\BusinessModel\RewardPointToUser;
 use Illuminate\Support\Facades\Validator;
 
 class ScoreController extends Controller
@@ -31,6 +32,9 @@ class ScoreController extends Controller
         }
 
         $score = Score::create($request->all());
+
+        // Reward points for a HappiVOICE check (points / how often are set in admin > Reward Points)
+        (new RewardPointToUser())->awardByKey($score->user_id, 'happivoice_check', 'Completed a HappiVOICE check');
 
         return response()->json(['status' => 'success', 'message' => 'Score saved successfully.']);
     }

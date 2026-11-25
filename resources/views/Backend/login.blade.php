@@ -32,7 +32,7 @@
                 <input type="password" class="form-control" placeholder="Password" required="" name="password" autocomplete="current-password"/>
               </div>
               <div>
-                <button type="submit" class="btn btn-round btn-secondary">Log in</a>
+                <button type="submit" class="btn btn-round btn-secondary" data-busy-text="Logging in…">Log in</button>
                 {{-- <a class="reset_pass" href="#">Lost your password?</a> --}}
               </div>
 

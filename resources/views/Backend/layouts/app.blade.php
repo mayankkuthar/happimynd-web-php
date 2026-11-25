@@ -54,12 +54,13 @@
         <!-- Scripts -->
         <script src="{{ asset('js/app.js') }}" defer></script>
 
-        <link href="cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css">
         <link href="{{ asset('assets/Backend/css/plugins/nprogress.css') }}" rel="stylesheet">
         <link href="{{ asset('assets/Backend/css/plugins/dataTables.bootstrap.min.css') }}" rel="stylesheet">
         <link href="{{ asset('assets/Backend/css/plugins/buttons.bootstrap.min.css') }}" rel="stylesheet">
         <link href="{{ asset('assets/Backend/css/plugins/fixedHeader.bootstrap.min.css') }}" rel="stylesheet">
         <link href="{{ asset('assets/Backend/css/plugins/responsive.bootstrap.min.css') }}" rel="stylesheet">
+        <!-- HappiMynd admin theme (after the template CSS so it wins) -->
+        <link href="{{ asset('assets/Backend/css/admin-theme.css') }}?v=2" rel="stylesheet">
 
         {{ $css ?? '' }}
         <style>
@@ -134,7 +135,7 @@
         <script src="{{ asset('assets/Backend/js/plugins/dataTables.bootstrap.min.js') }}"></script>
         <script src="{{ asset('assets/Backend/js/plugins/dataTables.buttons.min.js') }}"></script>
         <script src="{{ asset('assets/Backend/js/plugins/dataTables.keyTable.min.js') }}"></script>
-        {{-- <script src="{{ asset('assets/Backend/js/plugins/buttons.bootstrap.min.js') }}"></script> --}}
+        <script src="{{ asset('assets/Backend/js/plugins/buttons.bootstrap.min.js') }}"></script>
         <script src="{{ asset('assets/Backend/js/plugins/buttons.flash.min.js') }}"></script>
         <script src="{{ asset('assets/Backend/js/plugins/buttons.html5.min.js') }}"></script>
         <script src="{{ asset('assets/Backend/js/plugins/buttons.print.min.js') }}"></script>
@@ -206,23 +207,8 @@
         });
         </script>
         <script src="{{ asset('assets/Backend/js/plugins/fastclick.js') }}"></script>
-        <script src="{{ asset('assets/Backend/js/plugins/nprogress.js') }}"></script>
-        <script src="{{ asset('assets/Backend/js/plugins/icheck.min.js') }}"></script>
-        <script src="{{ asset('assets/Backend/js/plugins/jquery.dataTables.min.js') }}"></script>
-        <script src="{{ asset('assets/Backend/js/plugins/dataTables.bootstrap.min.js') }}"></script>
-        <script src="{{ asset('assets/Backend/js/plugins/dataTables.buttons.min.js') }}"></script>
-        <script src="{{ asset('assets/Backend/js/plugins/buttons.bootstrap.min.js') }}"></script>
-        <script src="{{ asset('assets/Backend/js/plugins/buttons.flash.min.js') }}"></script>
-        <script src="{{ asset('assets/Backend/js/plugins/buttons.html5.min.js') }}"></script>
-        <script src="{{ asset('assets/Backend/js/plugins/buttons.print.min.js') }}"></script>
-        <script src="{{ asset('assets/Backend/js/plugins/dataTables.fixedHeader.min.js') }}"></script>
-        <script src="{{ asset('assets/Backend/js/plugins/dataTables.keyTable.min.js') }}"></script>
-        <script src="{{ asset('assets/Backend/js/plugins/dataTables.responsive.min.js') }}"></script>
-        <script src="{{ asset('assets/Backend/js/plugins/responsive.bootstrap.js') }}"></script>
-        <script src="{{ asset('assets/Backend/js/plugins/dataTables.scroller.min.js') }}"></script>
-        <script src="{{ asset('assets/Backend/js/plugins/jszip.min.js') }}"></script>
-        <script src="{{ asset('assets/Backend/js/plugins/pdfmake.min.js') }}"></script>
-        <script src="{{ asset('assets/Backend/js/plugins/vfs_fonts.js') }}"></script>
+        {{-- The DataTables / PDF / Excel plugins used to be loaded a second time here (~2 MB extra per page). They are all loaded once above. --}}
+        <script src="{{ asset('assets/Backend/js/admin-ux.js') }}?v=2"></script>
         {{ $js ?? '' }}
     </body>
 </html>

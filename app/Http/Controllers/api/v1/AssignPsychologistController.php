@@ -517,11 +517,9 @@ class AssignPsychologistController extends Controller
                 \Mail::to($psychologist_detail->email)->send(new \App\Mail\HappiBuddyChatMail($psychologist_detail, $user->username));
             }
 
-            $reward_points = RewardPointInstance::where('action_performed' , 'When message is shared in HappiBUDDY')->first();
-            $points_to_be_added_to_user = $reward_points->points_to_be_given;
             $user_id = $user->id;
             $task_performed = 'Message sent in HappiBUDDY';
-            $this->rewardPointToUser()->addRewardToUser($user_id , $points_to_be_added_to_user , $task_performed);
+            $this->rewardPointToUser()->awardByKey($user_id, 'happibuddy_message', $task_performed);
 
             // $reward_data = [
             //     'user_id' => $user->id,
