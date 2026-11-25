@@ -92,7 +92,6 @@
                     <label class="control-label col-md-3 col-sm-3 ">Coupon expires on</label>
                     <div class="col-md-9 col-sm-9 ">
                     <input type="date" class="form-control" placeholder="" name="ends_at" value="{{ old('ends_at') }}">
-                    <small class="text-muted">Leave empty to expire after {{ $defaultValidityDays }} days ({{ now()->addDays($defaultValidityDays)->format('d M Y') }}). <a href="{{ route('admin.codeExpirySettings') }}">Change default</a></small>
                     @error('ends_at')<div class="alert alert-danger">{{ $message }}</div>@enderror
                     </div>
                   </div>

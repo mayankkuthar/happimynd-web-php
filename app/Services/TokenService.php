@@ -9,7 +9,6 @@ use App\Models\Plan;
 use App\Models\User;
 use App\Models\Token;
 use App\Models\Package;
-use App\Models\Setting;
 use App\Mail\TokenEmail;
 use App\Models\TokenPlan;
 use App\Models\ThriveCode;
@@ -37,10 +36,7 @@ class TokenService
         if(empty($use_limit)){
             $use_limit=1;
         }
-        // No date given: code expires after the admin-configured number of days (default 60)
-        $valid_till = empty($valid_till)
-            ? Carbon::today()->addDays(Setting::tokenDefaultValidityDays())->toDateString()
-            : Carbon::parse($valid_till)->toDateString();
+        $valid_till = empty($valid_till) ? null : Carbon::parse($valid_till)->toDateString();
         for ($i = 1; $i <= $count; $i++) {
             $tokens[] = [
                 "token" => substr(md5(uniqid()), 0, 6),
