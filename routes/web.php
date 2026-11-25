@@ -30,6 +30,7 @@ use App\Models\UserProfile;
 use Twilio\Rest\Messaging\V1\CampaignContext;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\CouponController;
+use App\Http\Controllers\CodeExpirySettingsController;
 use App\Http\Controllers\PromptController;
 use App\Http\Controllers\ScoreController;
 use App\Http\Controllers\LandingPageController;
@@ -442,6 +443,8 @@ Route::prefix('admin')->name('admin.')->middleware(['jwt.verify:admin'])->group(
     Route::get('/tokenList', [AdminController::class, 'tokenList'])->name('tokenListView');
     Route::post('/tokenList', [AdminController::class, 'tokenList'])->name('tokenList.post');
     Route::post('/token-validity', [AdminController::class, 'updateTokenValidity'])->name('updateTokenValidity');
+    Route::get('/code-expiry-settings', [CodeExpirySettingsController::class, 'edit'])->name('codeExpirySettings');
+    Route::post('/code-expiry-settings', [CodeExpirySettingsController::class, 'update'])->name('codeExpirySettings.update');
     Route::get('/thriveCodeList', [AdminController::class, 'thriveCodeList'])->name('thriveCodeListView');
     Route::post('/thriveCodeList', [AdminController::class, 'thriveCodeList'])->name('thriveCodeList.post');
     Route::get('Organizations', [AdminController::class, 'OrganizationView'])->name('OrganizationView');
