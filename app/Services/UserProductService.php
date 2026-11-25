@@ -104,7 +104,23 @@ class UserProductService
     }
 
     /**
-     * Labels of products a user (loaded with withUsageCounts) has started.
+     * Same "{key}_usage_count" columns as withUsageCounts(), loaded for an
+     * already fetched page of users. Counting only the rows on the page keeps
+     * the list fast: withUsageCounts() on the paginated query made MySQL count
+     * every product for all ~215k HappiLIFE users before it could sort and
+     * take 10, which took minutes.
+     */
+    public static function loadUsageCounts($users)
+    {
+        $counts = [];
+        foreach (self::PRODUCTS as $key => $config) {
+            $counts[] = $config['relation'] . ' as ' . $key . '_usage_count';
+        }
+        return $users->loadCount($counts);
+    }
+
+    /**
+     * Labels of products a user (loaded with withUsageCounts / loadUsageCounts) has started.
      */
     public static function usedProductLabels($user): array
     {

@@ -359,17 +359,20 @@ class AdminController extends Controller
             ])
             ->orderByDesc('users.created_at')
             ->orderByDesc('users.id');
-        UserProductService::withUsageCounts($query);
         if ($product) {
             UserProductService::applyFilter($query, $product);
         }
         UserProductService::applyDateRange($query, $product, $fromDate, $toDate);
-        if ($product && isset(UserProductService::PRODUCTS[$product])) {
-            $query->withMin(UserProductService::PRODUCTS[$product]['relation'] . ' as product_started_at', 'created_at');
-        }
 
         $users = $query->paginate($this->perPage($request))
             ->appends($request->except('page'));
+
+        // Per-row product counts / start date are loaded for the current page only
+        // (see UserProductService::loadUsageCounts)
+        UserProductService::loadUsageCounts($users->getCollection());
+        if ($product && isset(UserProductService::PRODUCTS[$product])) {
+            $users->getCollection()->loadMin(UserProductService::PRODUCTS[$product]['relation'] . ' as product_started_at', 'created_at');
+        }
 
         return view('Backend/customerList')
             ->with('users', $users)

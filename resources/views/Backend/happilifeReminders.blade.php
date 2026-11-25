@@ -63,7 +63,7 @@
                 <tr>
                   <td><input type="checkbox" class="hl-check" name="assessment_ids[]" value="{{ $row->assessment->id }}"></td>
                   <td>
-                    {{ $row->user->name ?: $row->user->username }}
+                    {{ $row->user->nickname ?: $row->user->username }}
                     <div class="hl-muted">{{ $row->user->email }} {{ $row->user->mobile }}</div>
                   </td>
                   <td>
@@ -120,7 +120,7 @@
             @forelse($recent as $r)
               <tr>
                 <td>{{ $r->created_at->format('d M Y, h:i A') }}</td>
-                <td>{{ optional($r->user)->name ?: optional($r->user)->username }}</td>
+                <td>{{ optional($r->user)->nickname ?: optional($r->user)->username }}</td>
                 <td>{{ $r->source === 'auto' ? 'Automatic #'.$r->stage : 'Manual' }}</td>
                 <td>{{ $r->answered }} / {{ $r->total }}</td>
                 <td>{{ $r->channels }}</td>
