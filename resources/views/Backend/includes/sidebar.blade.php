@@ -75,7 +75,6 @@
                 <ul class="nav child_menu">
                   @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'coupen']))<li><a href="{{ route('admin.coupon.show') }}">Coupons</a></li> @endif
                   @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'coupen']))<li><a href="{{ route('admin.coupon.coupon-user') }}">Coupon User</a></li> @endif
-                  @if(auth('admin')->user()->hasAnyRole(['admin','super-admin' , 'coupen']))<li><a href="{{ route('admin.codeExpirySettings') }}">Code Expiry Settings</a></li> @endif
                 </ul>
               </li>
             @endif
@@ -118,7 +117,6 @@
                     <li><a href="{{ route('admin.generateTokenView') }}">Generate Tokens</a></li>
                     <li><a href="{{ route('admin.tokenListView') }}">Tokens List</a></li>
                     <li><a href="{{ route('admin.thriveCodeListView') }}">HappiApp Codes List</a></li>
-                    <li><a href="{{ route('admin.codeExpirySettings') }}">Code Expiry Settings</a></li>
                 </ul>
             </li>
             @endif
