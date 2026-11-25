@@ -248,6 +248,7 @@
                 <ul class="nav child_menu">
                   <li><a href="{{ route('admin.coupon.show') }}">Coupons</a></li>
                   <li><a href="{{ route('admin.coupon.coupon-user') }}">Coupon Users</a></li>
+                  <li><a href="{{ route('admin.codeExpirySettings') }}">Code Expiry Settings</a></li>
                 </ul>
             </li>
             @endif
@@ -258,6 +259,7 @@
                     <li><a href="{{ route('admin.tokenListView') }}">Token List</a></li>
                     <li><a href="{{ route('admin.generateTokenView') }}">Generate Tokens</a></li>
                     <li><a href="{{ route('admin.thriveCodeListView') }}">HappiApp Codes</a></li>
+                    <li><a href="{{ route('admin.codeExpirySettings') }}">Code Expiry Settings</a></li>
                 </ul>
             </li>
             @endif
