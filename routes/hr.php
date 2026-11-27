@@ -3,6 +3,7 @@
 use App\Http\Controllers\Hr\ApplicationController;
 use App\Http\Controllers\Hr\AuthController;
 use App\Http\Controllers\Hr\DepartmentController;
+use App\Http\Controllers\Hr\ExportController;
 use App\Http\Controllers\Hr\HealthController;
 use App\Http\Controllers\Hr\PortalController;
 use App\Http\Controllers\Hr\ResumeController;
@@ -21,11 +22,12 @@ use Illuminate\Support\Facades\Route;
 | API_SPEC.md) relative to the /api/hr base, so the front end's API base URL
 | becomes https://<host>/api/hr.
 |
-| Endpoints that are NOT database work are intentionally omitted and stay on
-| the intern's side: `/schema` (needs schema.ts), `/export` (xlsx), the
-| multipart `/resumes/upload` + `/upload` and `/resumes/{id}/file` (GCS).
-| The database half of upload is exposed as POST /records — see
-| ResumeController::store().
+| The whole contract is served here: /schema returns resources/hr/schema.json
+| (the intern app's own output), /export builds the workbook in PHP
+| (App\Services\Hr\ExcelExport, a port of excel.ts), and uploads / file
+| previews go through App\Services\Hr\GcsStorage. Only /api/hr/worker/* is for
+| the extraction worker (on Render). POST /records (JSON, file already in
+| storage) is kept for tools that upload to GCS themselves.
 |
 */
 
@@ -37,6 +39,9 @@ Route::get('/session', [AuthController::class, 'session']);
 // --- Health (no auth) ------------------------------------------------------
 Route::get('/health', [HealthController::class, 'health']);
 Route::get('/health/ready', [HealthController::class, 'ready']);
+
+// Field metadata (no auth, no database; API_SPEC §3).
+Route::get('/schema', [HealthController::class, 'schema']);
 
 // --- Candidate portal (public, no session; API_SPEC §7) --------------------
 Route::get('/portal/config', [PortalController::class, 'config']);
@@ -66,6 +71,13 @@ Route::middleware('hr.auth')->group(function () {
     Route::patch('/resumes/{id}/viewed', [ResumeController::class, 'viewed'])->where('id', '[A-Za-z0-9]+');
     Route::post('/resumes/{id}/reprocess', [ResumeController::class, 'reprocess'])->where('id', '[A-Za-z0-9]+');
 
+    // Bulk upload (multipart) and the original file for preview (API_SPEC §4).
+    // Route::get also answers HEAD.
+    Route::post('/resumes/upload', [ResumeController::class, 'upload']);
+    Route::post('/upload', [ResumeController::class, 'upload']);
+    Route::get('/resumes/{id}/file', [ResumeController::class, 'file'])->where('id', '[A-Za-z0-9]+');
+    Route::get('/records/{id}/file', [ResumeController::class, 'file'])->where('id', '[A-Za-z0-9]+');
+
     Route::get('/records', [ResumeController::class, 'index']);
     Route::post('/records', [ResumeController::class, 'store']);
     Route::delete('/records', [ResumeController::class, 'clear']);
@@ -77,6 +89,9 @@ Route::middleware('hr.auth')->group(function () {
 
     // Extraction log.
     Route::get('/logs', [ResumeController::class, 'logs']);
+
+    // Excel export of one source's completed records (API_SPEC §5).
+    Route::post('/export', [ExportController::class, 'export']);
 });
 
 // --- Worker / queue (server-to-server) -------------------------------------

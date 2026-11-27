@@ -20,7 +20,9 @@ return [
         'password' => env('HR_ADMIN_PASSWORD'),
         'session_secret' => env('HR_SESSION_SECRET'),
         'cookie' => 'hr_session',
-        'cookie_path' => '/api/hr',
+        // '/api', not '/api/hr': the HR web app proxies /api/* on its own domain
+        // to /api/hr here, so the browser sees paths like /api/resumes.
+        'cookie_path' => env('HR_SESSION_COOKIE_PATH', '/api'),
         'session_ttl_hours' => (int) env('HR_SESSION_TTL_HOURS', 12),
         'cookie_samesite' => env('HR_SESSION_COOKIE_SAMESITE', 'Lax'),
         'cookie_secure' => env('HR_SESSION_COOKIE_SECURE', true),
@@ -40,9 +42,16 @@ return [
         'HR & Finance',
     ],
 
-    // Upload limit (bytes); uploads themselves are handled by the intern app,
-    // which stores the file and registers the row through POST /api/hr/records.
-    'max_file_bytes' => 25 * 1024 * 1024,
+    // Bulk resume upload (POST /resumes/upload, API_SPEC §4). Per-file limit, the
+    // accepted extensions (ALLOWED_UPLOAD_EXTENSIONS in the intern app) and the
+    // most files per request (0 = no limit; PHP's max_file_uploads still applies).
+    'max_file_bytes' => (int) env('HR_MAX_FILE_BYTES', 25 * 1024 * 1024),
+    'upload' => [
+        'allowed_extensions' => array_values(array_filter(array_map(function ($ext) {
+            return strtolower(trim($ext, " .\t"));
+        }, explode(',', (string) env('HR_ALLOWED_UPLOAD_EXTENSIONS', 'pdf,doc,docx,png,jpg,jpeg'))))),
+        'max_files' => (int) env('HR_MAX_FILES_PER_UPLOAD', 0),
+    ],
 
     // Fields that hold a string[] (API_SPEC §4). Edits to these accept an array
     // or `;`-separated text. Extend via HR_LIST_FIELDS without a code change;
