@@ -125,7 +125,7 @@ class PortalController extends HrController
     /** @return array|JsonResponse */
     private function validateSubmission(Request $request)
     {
-        $get = function (string $key): string {
+        $get = function (string $key) use ($request): string {
             $value = $request->input($key, '');
 
             return is_scalar($value) ? trim((string) $value) : '';

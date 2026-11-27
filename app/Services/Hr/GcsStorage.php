@@ -32,7 +32,7 @@ class GcsStorage
         }
 
         $response = Http::withToken($token)
-            ->connectTimeout(10)
+            ->withOptions(['connect_timeout' => 10])
             ->timeout(120)
             ->withHeaders(['Content-Type' => $contentType])
             ->withBody($contents, $contentType)
@@ -50,7 +50,7 @@ class GcsStorage
         }
 
         $response = Http::withToken($token)
-            ->connectTimeout(10)
+            ->withOptions(['connect_timeout' => 10])
             ->timeout(120)
             ->get('https://storage.googleapis.com/storage/v1/b/'
                 . rawurlencode((string) config('hr.storage.bucket'))
@@ -68,7 +68,7 @@ class GcsStorage
         }
 
         Http::withToken($token)
-            ->connectTimeout(10)
+            ->withOptions(['connect_timeout' => 10])
             ->timeout(30)
             ->delete('https://storage.googleapis.com/storage/v1/b/'
                 . rawurlencode((string) config('hr.storage.bucket'))
@@ -119,7 +119,7 @@ class GcsStorage
         $assertion = $header . '.' . $claims . '.' . $this->b64($signature);
 
         $response = Http::asForm()
-            ->connectTimeout(10)
+            ->withOptions(['connect_timeout' => 10])
             ->timeout(30)
             ->post('https://oauth2.googleapis.com/token', [
                 'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
