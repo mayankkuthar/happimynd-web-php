@@ -203,9 +203,51 @@ abstract class HrController extends Controller
             'page_count' => (int) $row->page_count,
             'ai_status' => (string) $row->ai_status,
             'duplicate_of' => $row->duplicate_of !== null ? (string) $row->duplicate_of : null,
+            // Migration 006. isset() keeps rows selected without these columns valid.
+            'from_portal' => isset($row->from_portal) && ((int) $row->from_portal) === 1,
+            'referral_detail' => isset($row->referral_detail) ? (string) $row->referral_detail : null,
             'log' => $this->jsonArray($row->log),
             'created_at' => $this->epochSeconds($row->created_at),
             'elapsed_ms' => $this->elapsedMs($row->created_at, $row->finished_at ?? null),
+        ];
+    }
+
+    /** Present an `applications` row as the Application object (API_SPEC §8; heard_from from migration 006). */
+    protected function presentApplication($row): array
+    {
+        return [
+            'id' => (string) $row->id,
+            'full_name' => (string) $row->full_name,
+            'email' => (string) $row->email,
+            'phone' => (string) $row->phone,
+            'college' => (string) $row->college,
+            'degree' => (string) $row->degree,
+            'specialization' => $row->specialization !== null ? (string) $row->specialization : null,
+            'graduation_year' => $row->graduation_year !== null ? (int) $row->graduation_year : null,
+            'education_details' => $row->education_details !== null ? (string) $row->education_details : null,
+            'current_position' => $row->current_position !== null ? (string) $row->current_position : null,
+            'experience_years' => (float) $row->experience_years,
+            'previous_experience' => $row->previous_experience !== null ? (string) $row->previous_experience : null,
+            'skills' => $this->jsonArray($row->skills),
+            'applied_role' => (string) $row->applied_role,
+            'heard_from' => isset($row->heard_from) ? (string) $row->heard_from : null,
+            'heard_from_other' => isset($row->heard_from_other) ? (string) $row->heard_from_other : null,
+            'preferred_location' => $row->preferred_location !== null ? (string) $row->preferred_location : null,
+            'notice_period' => $row->notice_period !== null ? (string) $row->notice_period : null,
+            'linkedin_url' => $row->linkedin_url !== null ? (string) $row->linkedin_url : null,
+            'github_url' => $row->github_url !== null ? (string) $row->github_url : null,
+            'portfolio_url' => $row->portfolio_url !== null ? (string) $row->portfolio_url : null,
+            'other_links' => $row->other_links !== null ? (string) $row->other_links : null,
+            'has_resume' => $row->resume_storage_key !== null && $row->resume_storage_key !== '',
+            'resume_file_name' => $row->resume_file_name !== null ? (string) $row->resume_file_name : null,
+            'resume_content_type' => $row->resume_content_type !== null ? (string) $row->resume_content_type : null,
+            'resume_size_bytes' => $row->resume_size_bytes !== null ? (int) $row->resume_size_bytes : null,
+            'status' => (string) $row->status,
+            'duplicate_of' => $row->duplicate_of !== null ? (string) $row->duplicate_of : null,
+            'created_at' => $this->epochSeconds($row->created_at),
+            'updated_at' => $this->epochSeconds($row->updated_at),
+            'status_changed_at' => $row->status_changed_at !== null ? $this->epochSeconds($row->status_changed_at) : null,
+            'last_contacted_at' => $row->last_contacted_at !== null ? $this->epochSeconds($row->last_contacted_at) : null,
         ];
     }
 

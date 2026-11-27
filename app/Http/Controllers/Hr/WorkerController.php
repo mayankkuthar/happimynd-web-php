@@ -4,11 +4,12 @@ namespace App\Http\Controllers\Hr;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
- * HR Auto worker/queue endpoints (API_SPEC §5–§6). The intern app keeps its own
- * extraction worker; these replace the SQL it would run directly against
- * `records`:
+ * HR Auto worker/queue endpoints (API_SPEC §9.2, "worker mode"). The extraction
+ * worker (on Render: Bedrock, OCR, GCS) never touches MySQL; these endpoints run
+ * the §9.1 SQL against `records` for it:
  *
  *   claim  -> claimNext: oldest queued -> processing, attempts + 1
  *   done   -> markDone:    status done, replace fields, append log
@@ -26,7 +27,7 @@ class WorkerController extends HrController
     private const TIMEOUT_MSG = 'Processing timed out and exceeded the retry limit.';
 
     /** POST /worker/claim — claimNext (MIGRATION_GUIDE §5.1). */
-    public function claim(Request $request): JsonResponse
+    public function claim(Request $request): Response
     {
         if ($denied = $this->workerDenied($request)) {
             return $denied;
@@ -36,8 +37,8 @@ class WorkerController extends HrController
             $row = $this->db()->table('records')
                 ->where('status', 'queued')
                 ->orderBy('created_at')
-                ->lockForUpdate()
-                ->skipLocked()
+                // Laravel 8.49 has no skipLocked(); MySQL 8 takes the clause verbatim (MIGRATION_GUIDE §5.1).
+                ->lock('FOR UPDATE SKIP LOCKED')
                 ->first();
 
             if ($row === null) {
@@ -57,11 +58,17 @@ class WorkerController extends HrController
             return response()->noContent();
         }
 
+        // Portal resumes carry the candidate's own answers, in the GET /applications/:id
+        // shape (§8); the worker overrides what the model read with them.
+        $application = $this->db()->table('applications')->where('record_id', $row->id)->first();
+
         return $this->ok([
-            'record' => array_merge($this->presentSummary($row), [
-                'text' => (string) ($row->text_content ?? ''),
-                'candidate' => null,
-            ]),
+            'record' => [
+                'id' => (string) $row->id,
+                'file_name' => (string) $row->file_name,
+                'storage_key' => $row->storage_key !== null ? (string) $row->storage_key : null,
+                'application' => $application !== null ? $this->presentApplication($application) : null,
+            ],
         ]);
     }
 
@@ -69,7 +76,7 @@ class WorkerController extends HrController
      * POST /worker/{id}/done — markDone. Replaces fields/confidence/text and
      * appends the worker's log lines to the existing log.
      */
-    public function done(Request $request, string $id): JsonResponse
+    public function done(Request $request, string $id): Response
     {
         if ($denied = $this->workerDenied($request)) {
             return $denied;
@@ -77,9 +84,12 @@ class WorkerController extends HrController
 
         $body = $this->jsonBody($request);
 
-        $row = $this->db()->table('records')->where('id', $id)->first(['id', 'log']);
+        $row = $this->db()->table('records')->where('id', $id)->first(['id', 'log', 'status']);
         if ($row === null) {
             return $this->detail('Record not found', 404);
+        }
+        if ((string) $row->status !== 'processing') {
+            return $this->detail('Record is no longer processing', 409);
         }
 
         $fields = $body['fields'] ?? null;
@@ -92,7 +102,9 @@ class WorkerController extends HrController
             return $this->invalid('confidence', 'confidence must be an object');
         }
 
-        $text = array_key_exists('text', $body) ? (string) $body['text'] : null;
+        // §9.2 sends `text_content`; `text` is accepted from older workers.
+        $text = array_key_exists('text_content', $body) ? (string) $body['text_content']
+            : (array_key_exists('text', $body) ? (string) $body['text'] : null);
 
         $appended = $this->jsonArray($row->log);
         foreach ($this->jsonArray($body['log'] ?? null) as $entry) {
@@ -131,16 +143,21 @@ class WorkerController extends HrController
         }
 
         $bindings[] = $id;
-        $this->db()->update(
-            'UPDATE `records` SET ' . implode(', ', $sets) . ' WHERE `id` = ?',
+        $bindings[] = 'processing';
+        // Only while still processing (§9.2): a reaped-and-reclaimed row must not be overwritten.
+        $updated = $this->db()->update(
+            'UPDATE `records` SET ' . implode(', ', $sets) . ' WHERE `id` = ? AND `status` = ?',
             $bindings
         );
+        if ($updated === 0) {
+            return $this->detail('Record is no longer processing', 409);
+        }
 
-        return $this->ok($this->presentSummary($this->db()->table('records')->where('id', $id)->first()));
+        return response()->noContent();
     }
 
     /** POST /worker/{id}/fail — markFailed (terminal). */
-    public function fail(Request $request, string $id): JsonResponse
+    public function fail(Request $request, string $id): Response
     {
         if ($denied = $this->workerDenied($request)) {
             return $denied;
@@ -152,21 +169,27 @@ class WorkerController extends HrController
             $message = 'Processing failed.';
         }
 
-        $row = $this->db()->table('records')->where('id', $id)->first(['id', 'log']);
+        $row = $this->db()->table('records')->where('id', $id)->first(['id', 'log', 'status']);
         if ($row === null) {
             return $this->detail('Record not found', 404);
+        }
+        if ((string) $row->status !== 'processing') {
+            return $this->detail('Record is no longer processing', 409);
         }
 
         $log = $this->jsonArray($row->log);
         $log[] = 'Processing failed: ' . $message;
 
-        $this->db()->update(
+        $updated = $this->db()->update(
             'UPDATE `records` SET `status` = ?, `error` = ?, `log` = CAST(? AS JSON), '
-            . '`finished_at` = NOW(3), `claimed_at` = NULL WHERE `id` = ?',
-            ['error', $message, json_encode($log), $id]
+            . '`finished_at` = NOW(3), `claimed_at` = NULL WHERE `id` = ? AND `status` = ?',
+            ['error', $message, json_encode($log), $id, 'processing']
         );
+        if ($updated === 0) {
+            return $this->detail('Record is no longer processing', 409);
+        }
 
-        return $this->ok($this->presentSummary($this->db()->table('records')->where('id', $id)->first()));
+        return response()->noContent();
     }
 
     /** POST /worker/reap — reapStuck: two UPDATEs, exhausted first. */
@@ -209,6 +232,9 @@ class WorkerController extends HrController
         );
 
         return $this->ok([
+            // §9.2 shape; the id lists below are kept for the admin tools.
+            'requeued' => count($retried),
+            'failed' => count($exhausted),
             'reaped' => array_map(function ($r) {
                 return (string) $r->id;
             }, $retried),
@@ -219,7 +245,7 @@ class WorkerController extends HrController
         ]);
     }
 
-    /** GET /worker/depth — queue counts by status. */
+    /** GET /worker/depth — { depth: <queued rows> } (§9.2). */
     public function depth(Request $request): JsonResponse
     {
         if ($denied = $this->workerDenied($request)) {
@@ -242,6 +268,7 @@ class WorkerController extends HrController
             $depth[$row->status] = (int) $row->c;
         }
 
-        return $this->ok(['depth' => $depth]);
+        // §9.2: `depth` is the number of queued rows; per-status counts ride along.
+        return $this->ok(['depth' => $depth['queued'], 'counts' => $depth]);
     }
 }

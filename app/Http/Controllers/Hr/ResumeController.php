@@ -17,7 +17,7 @@ class ResumeController extends HrController
     private const LIST_COLUMNS = [
         'id', 'file_name', 'size_bytes', 'content_type', 'source', 'department',
         'status', 'viewed', 'storage_key', 'fields', 'confidence', 'error',
-        'used_ocr', 'page_count', 'ai_status', 'duplicate_of', 'log',
+        'used_ocr', 'page_count', 'ai_status', 'duplicate_of', 'from_portal', 'referral_detail', 'log',
         'created_at', 'finished_at',
     ];
 
