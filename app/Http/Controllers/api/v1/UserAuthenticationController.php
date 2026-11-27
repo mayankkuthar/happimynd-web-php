@@ -1727,6 +1727,46 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
     }
 
     /**
+     * What the user can redeem reward points for (edited in Admin > Engagement > Redeem Options).
+     * Live options only (switched on, inside their dates), in the admin's display order.
+     * can_redeem / points_short compare with the user's current total; redeeming comes later.
+     */
+    public function rewardRedeemOptions(Request $request){
+        $user = Auth::user();
+        $total = (int) UserRewardPointRecord::where('user_id', $user->id)->sum('points_earned');
+
+        $options = \App\Models\RewardRedeemOption::available()->ordered()->get()
+            ->map(function ($o) use ($total) {
+                $inStock = $o->stock === null || $o->stock > 0;
+                return [
+                    'id' => $o->id,
+                    'title' => $o->title,
+                    'description' => $o->description,
+                    'category' => $o->category,
+                    'category_label' => $o->categoryLabel(),
+                    'points_required' => $o->points_required,
+                    'reward_value' => $o->reward_value,
+                    'image' => $o->image,
+                    'stock' => $o->stock,
+                    'in_stock' => $inStock,
+                    'max_per_user' => $o->max_per_user,
+                    'valid_from' => optional($o->valid_from)->toDateString(),
+                    'valid_until' => optional($o->valid_until)->toDateString(),
+                    'terms' => $o->terms,
+                    'can_redeem' => $inStock && $total >= $o->points_required,
+                    'points_short' => max(0, $o->points_required - $total),
+                ];
+            })->values();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Reward redeem options get successfully.',
+            'total_reward_points' => $total,
+            'list' => $options,
+        ]);
+    }
+
+    /**
      * An app / website / service reports that the user did something worth points.
      * Only rewards an admin marked "Reported by app" can be claimed here, and each
      * is limited by its frequency (once a day / only once), so points cannot be farmed.

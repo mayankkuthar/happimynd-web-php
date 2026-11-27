@@ -138,6 +138,28 @@ class HappitalkSession extends Model
     }
 
 
+    /**
+     * When the session starts (app timezone, IST), from `date` + `start_time`
+     * ("5:00 PM"), or null when it can't be read.
+     */
+    public function startsAt()
+    {
+        $time = trim((string) ($this->start_time ?: explode('-', (string) $this->time)[0]));
+        if (!$this->date || $time === '') {
+            return null;
+        }
+        try {
+            return \Carbon\Carbon::parse($this->date . ' ' . $time, config('app.timezone'));
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    public function sentNotifications()
+    {
+        return $this->hasMany(HappitalkSessionNotification::class, 'happitalk_session_id');
+    }
+
     public function getIsGiveFeedbackByUserAttribute(){
             return HappitalkSessionOpinionUser::where('happitalk_session_id' , $this->id)->count() == 0 ? 'no' :'yes';
     }
