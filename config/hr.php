@@ -49,8 +49,12 @@ return [
     'upload' => [
         'allowed_extensions' => array_values(array_filter(array_map(function ($ext) {
             return strtolower(trim($ext, " .\t"));
-        }, explode(',', (string) env('HR_ALLOWED_UPLOAD_EXTENSIONS', 'pdf,doc,docx,png,jpg,jpeg'))))),
-        'max_files' => (int) env('HR_MAX_FILES_PER_UPLOAD', 0),
+        // Default = the intern app's ALLOWED_UPLOAD_EXTENSIONS (server/src/config/env.ts).
+        }, explode(',', (string) env(
+            'HR_ALLOWED_UPLOAD_EXTENSIONS',
+            'pdf,doc,docx,odt,rtf,txt,md,png,jpg,jpeg,gif,bmp,tif,tiff,webp'
+        ))))),
+        'max_files' => (int) env('HR_MAX_FILES_PER_UPLOAD', 500),
     ],
 
     // Fields that hold a string[] (API_SPEC §4). Edits to these accept an array
