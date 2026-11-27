@@ -64,7 +64,7 @@ class PortalController extends HrController
         }
 
         // Rate limit after the cheap validation so bad requests don't burn it.
-        $bucket = 'hr-portal:' . (string) $request->ip();
+        $bucket = 'hr-portal:' . $this->clientIp($request);
         $limit = (int) config('hr.portal.rate_limit_per_hour', 10);
 
         if (RateLimiter::tooManyAttempts($bucket, $limit)) {
@@ -497,6 +497,23 @@ class PortalController extends HrController
         }
 
         return 'APP-' . strtoupper(bin2hex(random_bytes(5)));
+    }
+
+    /**
+     * The candidate's IP for the rate limit. The HR web app reaches us through
+     * a Vercel rewrite, so REMOTE_ADDR is a Vercel server shared by every
+     * candidate; Vercel passes the visitor in x-vercel-forwarded-for. Direct
+     * callers fall back to the connection address.
+     */
+    private function clientIp(Request $request): string
+    {
+        $forwarded = trim(explode(',', (string) $request->header('x-vercel-forwarded-for', ''))[0]);
+
+        if ($forwarded !== '' && filter_var($forwarded, FILTER_VALIDATE_IP) !== false) {
+            return $forwarded;
+        }
+
+        return (string) $request->ip();
     }
 
     private function nullable(string $value): ?string
