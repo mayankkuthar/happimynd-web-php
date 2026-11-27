@@ -19,6 +19,7 @@ use App\Models\User;
 
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
+use App\Services\HappitalkSessionNotifier;
 
 
 
@@ -129,6 +130,43 @@ class HappitalkController extends Controller
         }
     }
 
+
+    /**
+     * Upcoming HappiTALK sessions (soonest first) with the reminders already sent.
+     */
+    public function upcomingSessions(HappitalkSessionNotifier $notifier){
+        return view('happitalk/upcoming_sessions')
+            ->with('sessions', $notifier->upcomingSessions())
+            ->with('labels', HappitalkSessionNotifier::LABELS)
+            ->with('schedule', HappitalkSessionNotifier::SCHEDULE);
+    }
+
+    /**
+     * "Notify" button: send a booking intimation or a reminder now.
+     * POST type=booking|reminder, to=both|user|psychologist
+     */
+    public function notifySession(Request $request, HappitalkSessionNotifier $notifier, $id){
+        $data = $request->validate([
+            'type' => 'required|in:' . HappitalkSessionNotifier::BOOKING . ',' . HappitalkSessionNotifier::REMINDER,
+            'to' => 'required|in:both,user,psychologist',
+        ]);
+
+        $session = $notifier->activeSessions()->with(['userDetail', 'psychologistDetail'])->find($id);
+        if (!$session) {
+            return back()->with('error', 'This session is cancelled, ended or no longer exists.');
+        }
+
+        $recipients = $data['to'] === 'both' ? HappitalkSessionNotifier::RECIPIENTS : [$data['to']];
+        $queued = $notifier->send($session, $data['type'], $recipients, optional(auth('admin')->user())->id);
+        $skipped = $notifier->lastSkipped;
+
+        $label = HappitalkSessionNotifier::LABELS[$data['type']];
+        if ($queued === 0) {
+            return back()->with('error', $label . ' not sent: ' . implode(', ', $skipped) . '.');
+        }
+        return back()->with('success', $label . ' sent (' . $queued . ' message' . ($queued === 1 ? '' : 's') . ')'
+            . ($skipped ? '. Not sent: ' . implode(', ', $skipped) . '.' : '.'));
+    }
 
     public function sessionListBasedOnBookingId(Request $request , $booking_id){
         $sessions = HappitalkSession::where('happitalk_booking_id' , $booking_id)->get();

@@ -30,6 +30,7 @@ use App\Models\UserProfile;
 use Twilio\Rest\Messaging\V1\CampaignContext;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\HappiLifeReminderController;
+use App\Http\Controllers\RewardRedeemOptionController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\CodeExpirySettingsController;
 use App\Http\Controllers\PromptController;
@@ -292,6 +293,8 @@ Route::prefix('admin')->name('admin.')->middleware(['jwt.verify:admin'])->group(
         Route::match(['GET' , 'POST'],'happitalk-booking-by-username', [HappitalkController::class, 'happitalkBookingListByUsername'])->name('happitalkBookingListByUsername');
 
 
+        Route::get('happitalk-upcoming-sessions', [HappitalkController::class, 'upcomingSessions'])->name('happitalkUpcomingSessions');
+        Route::post('happitalk-session-notify/{id}', [HappitalkController::class, 'notifySession'])->name('happitalkSessionNotify');
         Route::match(['GET' , 'POST'],'session-list-based-on-booking-id/{booking_id}', [HappitalkController::class, 'sessionListBasedOnBookingId'])->name('sessionListBasedOnBookingId');
 
         Route::match(['GET' , 'POST'],'talk-notes-detail/{id}', [HappitalkController::class, 'talkNotesDetail'])->name('talkNotesDetail');
@@ -434,6 +437,15 @@ Route::prefix('admin')->name('admin.')->middleware(['jwt.verify:admin'])->group(
     Route::get('/list/reward-points-instance', [AdminController::class, 'getRewardPointsInstanceList'])->name('getRewardPointsInstanceList');
     Route::match(['GET' , 'POST'] , '/list/edit-reward-points/{id}', [AdminController::class, 'getEditRewardPointsList'])->name('getEditRewardPointsList');
     Route::match(['GET' , 'POST'] , '/list/add-reward-points', [AdminController::class, 'addRewardPoints'])->name('addRewardPoints');
+
+    // What users can redeem reward points for (listed to the app by /api/v1/reward-redeem-options)
+    Route::get('/reward-redeem-options', [RewardRedeemOptionController::class, 'index'])->name('rewardRedeemOptions');
+    Route::get('/reward-redeem-options/add', [RewardRedeemOptionController::class, 'create'])->name('rewardRedeemOptions.create');
+    Route::post('/reward-redeem-options/add', [RewardRedeemOptionController::class, 'store'])->name('rewardRedeemOptions.store');
+    Route::get('/reward-redeem-options/{id}/edit', [RewardRedeemOptionController::class, 'edit'])->name('rewardRedeemOptions.edit');
+    Route::post('/reward-redeem-options/{id}/edit', [RewardRedeemOptionController::class, 'update'])->name('rewardRedeemOptions.update');
+    Route::post('/reward-redeem-options/{id}/toggle', [RewardRedeemOptionController::class, 'toggle'])->name('rewardRedeemOptions.toggle');
+    Route::post('/reward-redeem-options/{id}/delete', [RewardRedeemOptionController::class, 'destroy'])->name('rewardRedeemOptions.delete');
 
 
     Route::get('/list/admins', [AdminController::class, 'getAdminList'])->name('adminListView');

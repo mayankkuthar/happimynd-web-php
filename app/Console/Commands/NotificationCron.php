@@ -55,97 +55,20 @@ class NotificationCron extends Command
         $current_time = date('h:i A');
 
 
-        // Booked talk Sessions 5 minutes ago
+        // HappiTALK: booking intimation + reminders 24h / 1h / 5 min before and at the
+        // start, to the user and the psychologist (see HappitalkSessionNotifier).
+        // Replaces the old blocks here, which only matched is_req_accepted = 1
+        // (never set on bookings) and compared times as "h:i A" strings.
+        try {
+            $talkSent = app(\App\Services\HappitalkSessionNotifier::class)->sendDueReminders();
+            if ($talkSent > 0) {
+                \Log::info("HappiTALK session notifications queued: " . $talkSent);
+            }
+        } catch (\Throwable $e) {
+            \Log::error('HappiTALK session notifications failed: ' . $e->getMessage());
+        }
+
         $current_time_plus_5_min = date('h:i A', strtotime($current_time) + (5*60));
-        $bookingList = HappitalkSession::where('date' , $today_date)
-                                                ->where('is_req_accepted' , '1')
-                                                ->where('is_cancel' , '0')
-                                                ->where('is_notification_emit' , '0')
-                                                ->whereBetween(DB::raw('TIME(start_time)') , [$current_time, $current_time_plus_5_min])
-                                                ->get();
-        foreach($bookingList as $row){
-            $userDetail = User::where('id' , $row->user_id)->first();
-            $user_device_token = $userDetail->device_token;
-            if($user_device_token != null){
-                $user_message = 'Your HappiTALK session will start at '.$row->start_time.'. Don'."'".'t forgot to join!';
-                $user_id = $row->user_id;
-                dispatch(new NotificationForSingleUser($user_device_token, $user_message, $user_id));
-            }
-            $psyDetail = Psychologist::where('id' , $row->psychologist_id)->first();
-            $psy_device_token = $psyDetail->device_token;
-            if($psy_device_token != null){
-                $psy_message = 'Your HappiTALK session will start at '.$row->start_time.'. Don'."'".'t forgot to join!';
-                dispatch(new NotificationForSinglePsy($psy_device_token, $psy_message));
-            }
-            $row->is_notification_emit = '1';
-            $row->save();
-            \Log::info("Talk 5 mint notification successfully emit");
-        }
-
-
-        //Talk 30 minute ago
-        $current_time_plus_30_min = date('h:i A', strtotime($current_time) + (30*60));
-        $bookingListStartIn30Min = HappitalkSession::where('date' , $today_date)
-                                                ->where('is_req_accepted' , '1')
-                                                ->where('is_cancel' , '0')
-                                                ->where('is_notification_emit_30_min_ago' , '0')
-                                                ->whereBetween(DB::raw('TIME(start_time)') , [$current_time, $current_time_plus_30_min])
-                                                ->get();
-        foreach($bookingListStartIn30Min as $row){
-            $userDetail = User::where('id' , $row->user_id)->first();
-            $user_device_token = $userDetail->device_token;
-            if($user_device_token != null){
-                $user_message = 'Your HappiTALK session will start at '.$row->start_time.'. Don'."'".'t forgot to join!';
-                $user_id = $row->user_id;
-                dispatch(new NotificationForSingleUser($user_device_token, $user_message, $user_id));
-            }
-            $psyDetail = Psychologist::where('id' , $row->psychologist_id)->first();
-            $psy_device_token = $psyDetail->device_token;
-            if($psy_device_token != null){
-                $psy_message = 'ATTENTION! In 30 minutes, your HappiUser will be waiting for you in the session! 📲';
-                dispatch(new NotificationForSinglePsy($psy_device_token, $psy_message));
-            }
-            $row->is_notification_emit_30_min_ago = '1';
-            $row->save();
-            \Log::info("Talk 30 mint notification successfully emit");
-        }
-
-
-        //Talk 24 hour ago
-        $today_date_plus_one =  date('Y-m-d',strtotime("+1 days"));
-        $bookingList1DayBefore = HappitalkSession::where('date' , $today_date_plus_one)
-                                                ->where('is_req_accepted' , '1')
-                                                ->where('is_cancel' , '0')
-                                                ->where('is_notification_emit_24_hour_ago' , '0')
-                                                ->whereRaw("TIME_FORMAT(`start_time`, '%h:%i %p') < ?", [$current_time])
-                                                ->get();
-        foreach($bookingList1DayBefore as $row){
-            $userDetail = User::where('id' , $row->user_id)->first();
-            $user_device_token = $userDetail->device_token;
-            if($user_device_token != null){
-                $user_message = 'Your HappiTALK session will start at '.$row->start_time.'. Don'."'".'t forgot to join!';
-                $user_id = $row->user_id;
-                dispatch(new NotificationForSingleUser($user_device_token, $user_message, $user_id));
-            }
-            $psyDetail = Psychologist::where('id' , $row->psychologist_id)->first();
-            $psy_device_token = $psyDetail->device_token;
-            if($psy_device_token != null){
-                $psy_message = 'Your HappiTALK session starts in the next 24 hours!';
-                dispatch(new NotificationForSinglePsy($psy_device_token, $psy_message));
-            }
-            $row->is_notification_emit_24_hour_ago = '1';
-            $row->save();
-            \Log::info("Talk 24 hour before notification successfully emit");
-        }
-
-
-
-
-
-
-
-
-
 
 
         //Booked Guide Sessions

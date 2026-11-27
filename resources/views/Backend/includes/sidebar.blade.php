@@ -64,6 +64,7 @@
                         <li><a href="{{ route('admin.notifyUserView') }}">Notify User</a></li>
                         <li><a href="{{ route('admin.pushNotification') }}">Push Notification</a></li>
                         <li><a href="{{ route('admin.getRewardPointsInstanceList') }}">Reward Points</a></li>
+                        <li><a href="{{ route('admin.rewardRedeemOptions') }}">Redeem Options</a></li>
                     </ul>
                 </li>
                 <li><a><i class="fa fa-user-secret"></i> Admins <span class="fa fa-chevron-down"></span></a>
@@ -118,6 +119,7 @@
                 <li><a><i class="fa fa-comments"></i> HappiTALK <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">
                         {!! $productUsersLink('happitalk', 'HappiTALK') !!}
+                        <li><a href="{{ route('admin.happitalkUpcomingSessions') }}">Upcoming Sessions</a></li>
                         <li><a href="{{ route('admin.happitalkBookingList') }}">Booking List</a></li>
                         <li><a href="{{ route('admin.happitalkBookingListByUsername') }}">Booking List by Username</a></li>
                         <li><a href="{{ route('admin.happitalkPsychologistList') }}">HappiTALK Psychologists</a></li>
