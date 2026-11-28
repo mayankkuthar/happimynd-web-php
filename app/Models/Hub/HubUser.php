@@ -20,6 +20,8 @@ class HubUser extends Model
 
     protected $fillable = [
         'id',
+        'happimynd_user_id',
+        'mobile',
         'email',
         'username',
         'name',

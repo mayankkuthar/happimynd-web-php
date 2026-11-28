@@ -23,7 +23,7 @@ class TrackingController extends HubController
     {
         $body = $this->jsonBody($request);
 
-        $common = $this->validateCommon($body);
+        $common = $this->validateCommon($request, $body);
         if (isset($common['error'])) {
             return $this->fail($common['error']);
         }
@@ -50,7 +50,7 @@ class TrackingController extends HubController
     {
         $body = $this->jsonBody($request);
 
-        $common = $this->validateCommon($body);
+        $common = $this->validateCommon($request, $body);
         if (isset($common['error'])) {
             return $this->fail($common['error']);
         }
@@ -85,7 +85,7 @@ class TrackingController extends HubController
     {
         $body = $this->jsonBody($request);
 
-        $common = $this->validateCommon($body);
+        $common = $this->validateCommon($request, $body);
         if (isset($common['error'])) {
             return $this->fail($common['error']);
         }
@@ -143,7 +143,7 @@ class TrackingController extends HubController
      *
      * @return array{error?: string, userType?: string, userId?: ?string}
      */
-    private function validateCommon(array $body): array
+    private function validateCommon(Request $request, array $body): array
     {
         $userType = $body['userType'] ?? null;
         if (!in_array($userType, ['guest', 'registered'], true)) {
@@ -152,9 +152,10 @@ class TrackingController extends HubController
 
         $userId = null;
         if ($userType === 'registered') {
-            $userId = $this->uuidOrNull($body['userId'] ?? null);
+            // Only the signed player token counts; a bare userId is ignored.
+            $userId = $this->uuidOrNull($this->playerId($request, $body));
             if ($userId === null) {
-                return ['error' => 'A valid user id is required for registered users.'];
+                return ['error' => 'A valid player token is required for registered users.'];
             }
         }
         // Guests: ignore any id they send (user_id stays NULL).

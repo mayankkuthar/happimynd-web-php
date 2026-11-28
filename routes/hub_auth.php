@@ -19,5 +19,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('signup', [AuthController::class, 'signup']);
 Route::post('login', [AuthController::class, 'login']);
+Route::post('sso', [AuthController::class, 'sso']);
 Route::get('me', [AuthController::class, 'me']);
 Route::post('logout', [AuthController::class, 'logout']);

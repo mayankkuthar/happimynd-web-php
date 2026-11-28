@@ -28,6 +28,7 @@ use App\Http\Controllers\api\v1\ScoreController;
 use App\Http\Controllers\api\v1\ChatBot\ChatBotController;
 use App\Http\Controllers\api\v1\ChatBot\ChatBotAssessmentController;
 use App\Http\Controllers\api\v1\WebsiteController;
+use App\Http\Controllers\api\v1\SsoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -109,6 +110,9 @@ Route::group(['prefix' => 'v1',  'namespace' => 'api\v1'], function () {
     Route::match(['GET' , 'POST'],'verify-login-otp', [UserAuthenticationController::class,'verifyLoginOtp']);
     Route::match(['GET' , 'POST'],'send-verification-otp', [UserControllerApi::class,'sendVerificationOtp']);
 
+    // Quizzard / Games Hub SSO: server-to-server code exchange (config/sso.php)
+    Route::post('sso/exchange', [SsoController::class, 'exchange']);
+
 
 
     //FAQS & TERMS
@@ -135,6 +139,9 @@ Route::group(['prefix' => 'v1',  'namespace' => 'api\v1'], function () {
 
     Route::group(['middleware' => 'auth:api'], function () {
         Route::match(['GET' , 'POST'],'check', [UserAuthenticationController::class,'check']);
+
+        // Quizzard / Games Hub SSO: one-time code for the logged-in website user
+        Route::post('sso/code', [SsoController::class, 'code']);
 
         //Website (React frontend) user dashboard
         Route::get('website/dashboard', [WebsiteController::class, 'dashboard'])->name('api.website.dashboard');

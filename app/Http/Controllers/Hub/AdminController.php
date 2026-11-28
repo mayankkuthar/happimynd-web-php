@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Hub;
 
+use App\Models\SsoAdminNumber;
 use App\Services\Hub\HubAdminAuth;
 use App\Services\Hub\HubAdminStats;
 use App\Services\Hub\HubContentService;
 use App\Services\Hub\HubContentValidator;
+use App\Services\Sso\SsoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -38,7 +40,20 @@ class AdminController extends HubController
         $this->validator = $validator;
     }
 
+    /**
+     * POST /api/hub/admin/login — retired: admins sign in with HappiMynd
+     * (OTP) and their number must be on Admin Panel > App Admin Numbers.
+     */
     public function login(Request $request)
+    {
+        return $this->fail('Password sign-in has been replaced. Please sign in with HappiMynd.', 410);
+    }
+
+    /**
+     * POST /api/hub/admin/sso  Body: { code } (one-time code from happimynd.com/v2/sso)
+     * Sets the admin cookie if the user's mobile is an active Games Hub admin.
+     */
+    public function sso(Request $request, SsoService $sso)
     {
         if (!$this->auth->configured()) {
             return $this->fail("Admin login isn't set up yet.", 503);
@@ -51,23 +66,24 @@ class AdminController extends HubController
         }
 
         $body = $this->jsonBody($request);
-        $email = trim((string) ($body['email'] ?? ''));
-        $password = (string) ($body['password'] ?? '');
-
-        // Derive the hash and check the email even on a wrong email so the
-        // response timing does not reveal which part was wrong.
-        $emailOk = mb_strtolower($email) === mb_strtolower(trim((string) config('hub.admin.email')));
-        $passwordOk = $this->auth->verifyPassword($password);
-
-        if (!($emailOk && $passwordOk)) {
+        $user = $sso->consume(isset($body['code']) ? (string) $body['code'] : null, 'hub');
+        if (!$user) {
             $this->auth->registerFailure($ip);
 
-            return $this->fail('Incorrect email or password.', 401);
+            return $this->fail('This sign-in link has expired. Please try again.', 401);
+        }
+
+        $admin = SsoAdminNumber::findActiveFor($user->mobile);
+        if (!$admin || !$admin->hub_admin) {
+            return $this->fail('Your number does not have Games Hub admin access.', 403);
         }
 
         $this->auth->clearFailures($ip);
 
-        return $this->ok()->withCookie($this->auth->makeCookie($request));
+        return $this->ok([
+            'name' => $admin->name,
+            'token' => $this->auth->makeToken($user->mobile),
+        ])->withCookie($this->auth->makeCookie($request, $user->mobile));
     }
 
     public function logout(Request $request)
@@ -85,7 +101,9 @@ class AdminController extends HubController
         ];
 
         if ($authenticated) {
-            $data['email'] = (string) config('hub.admin.email');
+            $data['name'] = (string) $this->auth->adminName($request);
+            // Older dashboards show this field.
+            $data['email'] = $data['name'];
         }
 
         return $this->ok($data);

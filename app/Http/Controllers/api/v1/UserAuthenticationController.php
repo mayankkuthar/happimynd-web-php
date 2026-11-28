@@ -32,6 +32,8 @@ use App\Models\HappilifeReminder;
 
 
 use App\Services\OTPService;
+use App\Models\SsoAdminNumber;
+use Illuminate\Support\Facades\RateLimiter;
 
 
 
@@ -1081,7 +1083,23 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
 
         $mobile = $request->mobile;
         $country_code = $request->country_code;
-        $otp = rand(111111, 999999);
+
+        // At most N OTP SMS per number per hour (config/sso.php): stops SMS
+        // pumping now that the website, Quizzard and the Games Hub all use this.
+        $normalizedMobile = SsoAdminNumber::normalize($mobile);
+        $sendKey = 'otp-send:' . $normalizedMobile;
+        if (RateLimiter::tooManyAttempts($sendKey, (int) config('sso.otp_sends_per_hour', 10))) {
+            $minutes = max(1, (int) ceil(RateLimiter::availableIn($sendKey) / 60));
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Too many OTP requests for this number. Please try again in ' . $minutes . ' min.',
+            ], 429);
+        }
+        RateLimiter::hit($sendKey, 3600);
+        // A fresh OTP gets a fresh set of tries.
+        RateLimiter::clear('otp-verify:' . $normalizedMobile);
+
+        $otp = random_int(111111, 999999);
 
         MobileOtp::updateOrCreate(
             ['mobile' => $mobile],
@@ -1129,6 +1147,13 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
             return response()->json(["message" => $validator->errors()->first()], 400);
         }
 
+        // After N wrong tries the OTP is dead, so 6 digits can't be brute-forced.
+        $verifyKey = 'otp-verify:' . SsoAdminNumber::normalize($request->mobile);
+        $maxWrong = (int) config('sso.otp_max_wrong_attempts', 5);
+        if (RateLimiter::tooManyAttempts($verifyKey, $maxWrong)) {
+            return response()->json(['status' => 'error', 'message' => 'Too many wrong attempts. Please request a new OTP.']);
+        }
+
         $mobileOtp = MobileOtp::where('mobile', $request->mobile)
             ->where('otp', $request->otp)
             ->whereNull('verified_at')
@@ -1136,8 +1161,15 @@ Help us keep you safe. Tell us if you signed in from another device😵🤯😨 
             ->first();
 
         if (!$mobileOtp) {
+            RateLimiter::hit($verifyKey, 900);
+            if (RateLimiter::tooManyAttempts($verifyKey, $maxWrong)) {
+                MobileOtp::where('mobile', $request->mobile)->whereNull('verified_at')
+                    ->update(['expires_at' => Carbon::now()->subSecond()]);
+                return response()->json(['status' => 'error', 'message' => 'Too many wrong attempts. Please request a new OTP.']);
+            }
             return response()->json(['status' => 'error', 'message' => 'Invalid OTP or OTP has expired.']);
         }
+        RateLimiter::clear($verifyKey);
 
         $payload = json_encode([
             'mobile' => $request->mobile,

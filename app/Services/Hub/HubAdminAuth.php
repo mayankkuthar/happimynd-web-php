@@ -2,6 +2,8 @@
 
 namespace App\Services\Hub;
 
+use App\Models\SsoAdminNumber;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Cookie;
@@ -11,15 +13,15 @@ use Illuminate\Support\Facades\Cookie;
  *
  * The session cookie `hm_admin` is a self-signed value:
  *   value     = base64url(payload) . "." . base64url(HMAC-SHA256(secret, payload))
- *   payload   = {"e":"<admin email>","x":<expiry ms epoch>}
+ *   payload   = {"m":"<admin mobile>","x":<expiry ms epoch>}
  */
 class HubAdminAuth
 {
     public function configured(): bool
     {
-        return !empty(config('hub.admin.email'))
-            && !empty(config('hub.admin.password_hash'))
-            && !empty(config('hub.admin.session_secret'));
+        // Admins now sign in with HappiMynd SSO (phone list in sso_admin_numbers),
+        // so only the cookie-signing secret is needed.
+        return !empty(config('hub.admin.session_secret'));
     }
 
     /**
@@ -57,7 +59,7 @@ class HubAdminAuth
             return false;
         }
 
-        $raw = $request->cookie(config('hub.admin.cookie'));
+        $raw = $this->rawSession($request);
         if (!is_string($raw) || strpos($raw, '.') === false) {
             return false;
         }
@@ -73,22 +75,59 @@ class HubAdminAuth
             return false;
         }
 
-        $email = isset($decoded['e']) ? (string) $decoded['e'] : '';
+        $mobile = isset($decoded['m']) ? (string) $decoded['m'] : '';
         $expiry = isset($decoded['x']) ? (int) $decoded['x'] : 0;
+        if ($mobile === '' || $expiry <= $this->nowMs()) {
+            return false;
+        }
 
-        return mb_strtolower(trim($email)) === mb_strtolower(trim((string) config('hub.admin.email')))
-            && $expiry > $this->nowMs();
+        // Taking a number off the list (or switching it off) ends its session.
+        $admin = SsoAdminNumber::findActiveFor($mobile);
+
+        return $admin !== null && $admin->hub_admin;
     }
 
-    public function makeCookie(Request $request)
+    /** The admin's name from a valid cookie, for the dashboard header. */
+    public function adminName(Request $request): ?string
+    {
+        if (!$this->isValid($request)) {
+            return null;
+        }
+        [$payload] = explode('.', (string) $this->rawSession($request), 2);
+        $decoded = json_decode($this->base64UrlDecode($payload) ?: '', true);
+        $admin = SsoAdminNumber::findActiveFor((string) ($decoded['m'] ?? ''));
+
+        return $admin ? $admin->name : null;
+    }
+
+    /**
+     * The session as sent: the hm_admin cookie (same-site) or an
+     * "Authorization: Bearer" header (the dashboard on happipause.happimynd.com,
+     * since the API answers CORS with "*" and no credentials).
+     */
+    private function rawSession(Request $request): ?string
+    {
+        $cookie = $request->cookie(config('hub.admin.cookie'));
+
+        return is_string($cookie) && $cookie !== '' ? $cookie : $request->bearerToken();
+    }
+
+    /** Signed session value, used both as the cookie and as the bearer token. */
+    public function makeToken(string $mobile): string
     {
         $payload = json_encode([
-            'e' => (string) config('hub.admin.email'),
+            'm' => SsoAdminNumber::normalize($mobile),
             'x' => $this->nowMs() + ((int) config('hub.admin.cookie_minutes')) * 60 * 1000,
         ], JSON_UNESCAPED_SLASHES);
 
         $payloadB64 = $this->base64UrlEncode($payload);
-        $value = $payloadB64 . '.' . $this->sign($payloadB64);
+
+        return $payloadB64 . '.' . $this->sign($payloadB64);
+    }
+
+    public function makeCookie(Request $request, string $mobile)
+    {
+        $value = $this->makeToken($mobile);
 
         return Cookie::make(
             config('hub.admin.cookie'),

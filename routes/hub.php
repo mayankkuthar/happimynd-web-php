@@ -38,6 +38,7 @@ Route::post('progress/{slug}', [ProgressController::class, 'save']);
 // Admin dashboard
 Route::prefix('admin')->middleware('hub.admin.nostore')->group(function () {
     Route::post('login', [AdminController::class, 'login']);
+    Route::post('sso', [AdminController::class, 'sso']);
     Route::post('logout', [AdminController::class, 'logout']);
     Route::get('session', [AdminController::class, 'session']);
 

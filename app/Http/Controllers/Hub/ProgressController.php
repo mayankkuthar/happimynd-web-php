@@ -13,8 +13,7 @@ use Illuminate\Support\Facades\DB;
  *
  * One save per signed-in player per game. The save is an opaque JSON object
  * that only the game reads; the API stores it as-is. Guests never call these
- * endpoints. There are no player sessions: the API trusts the `userId` it is
- * given, like /api/hub/auth/me.
+ * endpoints. The player comes from the signed token (HubPlayerToken).
  */
 class ProgressController extends HubController
 {
@@ -22,7 +21,7 @@ class ProgressController extends HubController
     private const MAX_BYTES = 65536; // 64 KB
 
     /**
-     * GET /api/hub/progress/:slug?userId=<uuid>
+     * GET /api/hub/progress/:slug   (Authorization: Bearer <player token>)
      */
     public function show(Request $request, $slug)
     {
@@ -31,9 +30,9 @@ class ProgressController extends HubController
             return $this->noStore($this->fail('Invalid game.', 404));
         }
 
-        $userId = $request->query('userId');
+        $userId = $this->playerId($request);
         if (!$this->isUuid($userId)) {
-            return $this->noStore($this->fail('Invalid userId.'));
+            return $this->noStore($this->fail('Please sign in again.', 401));
         }
 
         $row = HubGameProgress::query()
@@ -60,7 +59,7 @@ class ProgressController extends HubController
 
     /**
      * POST /api/hub/progress/:slug
-     * Body: text/plain JSON { userId, data } — parsed from the raw body, like
+     * Body: text/plain JSON { token, data } — parsed from the raw body, like
      * the tracking endpoints.
      */
     public function save(Request $request, $slug)
@@ -77,9 +76,9 @@ class ProgressController extends HubController
             return $this->noStore($this->fail('Invalid game.', 404));
         }
 
-        $userId = is_object($body) ? ($body->userId ?? null) : null;
+        $userId = $this->playerId($request, $body);
         if (!$this->isUuid($userId)) {
-            return $this->noStore($this->fail('Invalid userId.'));
+            return $this->noStore($this->fail('Please sign in again.', 401));
         }
         $userId = mb_strtolower((string) $userId);
 
