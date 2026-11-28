@@ -71,6 +71,7 @@
                     <ul class="nav child_menu">
                         <li><a href="{{ route('admin.adminListView') }}">Admin List</a></li>
                         <li><a href="{{ route('admin.addAdminView') }}">Add Admin</a></li>
+                        <li><a href="{{ route('admin.ssoAdminNumbers') }}">App Admin Numbers</a></li>
                     </ul>
                 </li>
             @endif

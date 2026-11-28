@@ -3,110 +3,69 @@
 namespace App\Http\Controllers\Hub;
 
 use App\Models\Hub\HubUser;
+use App\Services\Hub\HubPlayerToken;
+use App\Services\Sso\SsoService;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
  * Player accounts (API_SPEC §2).
- * No server-side sessions: the API trusts the user id it is given.
+ * Players sign in with HappiMynd SSO and get a signed token (HubPlayerToken);
+ * user-specific endpoints only trust that token, never a sent user id.
  */
 class AuthController extends HubController
 {
-    private const USERNAME_PATTERN = '/^[a-zA-Z0-9_]{3,20}$/';
     private const EMAIL_PATTERN = '/^[^\s@]+@[^\s@]+\.[^\s@]+$/';
 
+    /** Retired: players sign in with HappiMynd (OTP) through /sso. */
     public function signup(Request $request)
     {
-        $body = $this->jsonBody($request);
-
-        $name = trim((string) ($body['name'] ?? ''));
-        $username = trim((string) ($body['username'] ?? ''));
-        $email = trim((string) ($body['email'] ?? ''));
-        $password = (string) ($body['password'] ?? '');
-        $avatar = (array_key_exists('avatar', $body) && $body['avatar'] !== null && $body['avatar'] !== '')
-            ? (string) $body['avatar']
-            : '🧘';
-
-        if (mb_strlen($name) < 2) {
-            return $this->fail('Please enter a name of at least 2 characters.');
-        }
-        if (!preg_match(self::USERNAME_PATTERN, $username)) {
-            return $this->fail('Username must be 3-20 characters long and can only contain letters, numbers, and underscores.');
-        }
-        if (!preg_match(self::EMAIL_PATTERN, $email)) {
-            return $this->fail('Please enter a valid email address.');
-        }
-        if (mb_strlen($password) < 6) {
-            return $this->fail('Password must be at least 6 characters long.');
-        }
-
-        $usernameLc = mb_strtolower($username);
-        $emailLc = mb_strtolower($email);
-
-        if ($this->usernameTaken($usernameLc)) {
-            return $this->fail('Username "@' . $username . '" is already taken.');
-        }
-        if ($this->emailTaken($emailLc)) {
-            return $this->fail('This email address is already registered. Please log in instead.');
-        }
-
-        $now = $this->utcNow();
-
-        try {
-            $user = HubUser::create([
-                'id' => (string) Str::uuid(),
-                'email' => $emailLc,
-                'username' => $usernameLc,
-                'name' => $name,
-                'password_hash' => Hash::make($password), // bcrypt, 10 rounds
-                'avatar' => $avatar,
-                'created_at' => $this->utcStr($now),
-                'updated_at' => $this->utcStr($now),
-            ]);
-        } catch (QueryException $e) {
-            if ($this->isDuplicateKey($e)) {
-                return $this->fail(
-                    $this->usernameTaken($usernameLc)
-                        ? 'Username "@' . $username . '" is already taken.'
-                        : 'This email address is already registered. Please log in instead.'
-                );
-            }
-            throw $e;
-        }
-
-        return $this->ok(['user' => $this->presentUser($user)], 201);
+        return $this->fail('Sign-up now happens with HappiMynd. Please use "Continue with HappiMynd".', 410);
     }
 
+    /** Retired: players sign in with HappiMynd (OTP) through /sso. */
     public function login(Request $request)
     {
-        $body = $this->jsonBody($request);
-
-        $identifier = $body['loginIdentifier'] ?? $body['email'] ?? $body['username'] ?? null;
-        $identifier = trim((string) $identifier);
-        $password = (string) ($body['password'] ?? '');
-
-        if ($identifier === '' || $password === '') {
-            return $this->fail('Please enter your username or email address, and your password.');
-        }
-
-        $identifierLc = mb_strtolower($identifier);
-
-        $user = HubUser::whereRaw('LOWER(username) = ?', [$identifierLc])
-            ->orWhereRaw('LOWER(email) = ?', [$identifierLc])
-            ->first();
-
-        if (!$user || empty($user->password_hash) || !Hash::check($password, $user->password_hash)) {
-            return $this->fail('Invalid email or password', 401);
-        }
-
-        return $this->ok(['user' => $this->presentUser($user)]);
+        return $this->fail('Password sign-in has been replaced. Please use "Continue with HappiMynd".', 410);
     }
 
+    /**
+     * POST /api/hub/auth/sso  Body: { code } (one-time code from happimynd.com/v2/sso)
+     * 200 { success, user, token } — the player, created on first visit.
+     */
+    public function sso(Request $request, SsoService $sso, HubPlayerToken $tokens)
+    {
+        $body = $this->jsonBody($request);
+        $main = $sso->consume(isset($body['code']) ? (string) $body['code'] : null, 'hub');
+        if (!$main) {
+            return $this->fail('This sign-in link has expired. Please try again.', 401);
+        }
+
+        $identity = $sso->identity($main);
+        $user = HubUser::where('happimynd_user_id', $main->id)->first();
+        $now = $this->utcStr();
+
+        if (!$user) {
+            $user = $this->createFromHappimynd($identity, $now);
+        } else {
+            // Keep the name in step with the HappiMynd profile.
+            $user->name = $identity['name'];
+            $user->mobile = $identity['mobile'];
+            $user->updated_at = $now;
+            $user->save();
+        }
+
+        return $this->ok([
+            'user' => $this->presentUser($user),
+            'token' => $tokens->issue((string) $user->id),
+        ]);
+    }
+
+    /** GET /api/hub/auth/me  (Authorization: Bearer <player token>) */
     public function me(Request $request)
     {
-        $userId = $request->query('userId') ?: $request->header('x-user-id');
+        $userId = $this->playerId($request);
 
         if (empty($userId)) {
             return $this->fail('Not authenticated.', 401);
@@ -124,6 +83,46 @@ class AuthController extends HubController
     {
         // Nothing is stored server-side.
         return $this->ok();
+    }
+
+    private function createFromHappimynd(array $identity, string $now): HubUser
+    {
+        // Usernames are shown as @handle; make one from the HappiMynd name.
+        $base = mb_strtolower(preg_replace('/[^a-zA-Z0-9_]+/', '', (string) ($identity['username'] ?: $identity['name'])));
+        $base = substr($base !== '' ? $base : 'player', 0, 14);
+        $username = $base;
+        for ($i = 0; $this->usernameTaken($username); $i++) {
+            $username = substr($base, 0, 14) . '_' . ($i < 3 ? random_int(10, 99) : random_int(1000, 99999));
+        }
+
+        // Email is optional now (many HappiMynd users sign up with a mobile only),
+        // and only kept when no other player already has it.
+        $email = $identity['email'] && preg_match(self::EMAIL_PATTERN, $identity['email']) && !$this->emailTaken($identity['email'])
+            ? $identity['email'] : null;
+
+        try {
+            return HubUser::create([
+                'id' => (string) Str::uuid(),
+                'happimynd_user_id' => (int) $identity['id'],
+                'mobile' => $identity['mobile'],
+                'email' => $email,
+                'username' => $username,
+                'name' => $identity['name'],
+                'password_hash' => null,
+                'avatar' => '🧘',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        } catch (QueryException $e) {
+            // Two tabs finishing SSO at once: the other one created the row.
+            if ($this->isDuplicateKey($e)) {
+                $existing = HubUser::where('happimynd_user_id', (int) $identity['id'])->first();
+                if ($existing) {
+                    return $existing;
+                }
+            }
+            throw $e;
+        }
     }
 
     private function usernameTaken(string $usernameLc): bool

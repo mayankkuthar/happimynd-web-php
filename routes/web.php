@@ -31,6 +31,7 @@ use Twilio\Rest\Messaging\V1\CampaignContext;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\HappiLifeReminderController;
 use App\Http\Controllers\RewardRedeemOptionController;
+use App\Http\Controllers\SsoAdminNumberController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\CodeExpirySettingsController;
 use App\Http\Controllers\PromptController;
@@ -447,6 +448,15 @@ Route::prefix('admin')->name('admin.')->middleware(['jwt.verify:admin'])->group(
     Route::post('/reward-redeem-options/{id}/toggle', [RewardRedeemOptionController::class, 'toggle'])->name('rewardRedeemOptions.toggle');
     Route::post('/reward-redeem-options/{id}/delete', [RewardRedeemOptionController::class, 'destroy'])->name('rewardRedeemOptions.delete');
 
+
+    // Mobile numbers with admin rights in Quizzard / the Games Hub (HappiMynd SSO)
+    Route::get('/app-admin-numbers', [SsoAdminNumberController::class, 'index'])->name('ssoAdminNumbers');
+    Route::get('/app-admin-numbers/add', [SsoAdminNumberController::class, 'create'])->name('ssoAdminNumbers.create');
+    Route::post('/app-admin-numbers/add', [SsoAdminNumberController::class, 'store'])->name('ssoAdminNumbers.store');
+    Route::get('/app-admin-numbers/{id}/edit', [SsoAdminNumberController::class, 'edit'])->name('ssoAdminNumbers.edit');
+    Route::post('/app-admin-numbers/{id}/edit', [SsoAdminNumberController::class, 'update'])->name('ssoAdminNumbers.update');
+    Route::post('/app-admin-numbers/{id}/toggle', [SsoAdminNumberController::class, 'toggle'])->name('ssoAdminNumbers.toggle');
+    Route::post('/app-admin-numbers/{id}/delete', [SsoAdminNumberController::class, 'destroy'])->name('ssoAdminNumbers.delete');
 
     Route::get('/list/admins', [AdminController::class, 'getAdminList'])->name('adminListView');
     Route::get('/edit/{id}', [AdminController::class, 'editAdminView'])->name('editAdminView');

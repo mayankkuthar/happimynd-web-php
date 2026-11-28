@@ -372,42 +372,6 @@ class ApplicationController extends HrController
         );
     }
 
-    private function presentApplication($row): array
-    {
-        return [
-            'id' => (string) $row->id,
-            'full_name' => (string) $row->full_name,
-            'email' => (string) $row->email,
-            'phone' => (string) $row->phone,
-            'college' => (string) $row->college,
-            'degree' => (string) $row->degree,
-            'specialization' => $row->specialization !== null ? (string) $row->specialization : null,
-            'graduation_year' => $row->graduation_year !== null ? (int) $row->graduation_year : null,
-            'education_details' => $row->education_details !== null ? (string) $row->education_details : null,
-            'current_position' => $row->current_position !== null ? (string) $row->current_position : null,
-            'experience_years' => (float) $row->experience_years,
-            'previous_experience' => $row->previous_experience !== null ? (string) $row->previous_experience : null,
-            'skills' => $this->jsonArray($row->skills),
-            'applied_role' => (string) $row->applied_role,
-            'preferred_location' => $row->preferred_location !== null ? (string) $row->preferred_location : null,
-            'notice_period' => $row->notice_period !== null ? (string) $row->notice_period : null,
-            'linkedin_url' => $row->linkedin_url !== null ? (string) $row->linkedin_url : null,
-            'github_url' => $row->github_url !== null ? (string) $row->github_url : null,
-            'portfolio_url' => $row->portfolio_url !== null ? (string) $row->portfolio_url : null,
-            'other_links' => $row->other_links !== null ? (string) $row->other_links : null,
-            'has_resume' => $row->resume_storage_key !== null && $row->resume_storage_key !== '',
-            'resume_file_name' => $row->resume_file_name !== null ? (string) $row->resume_file_name : null,
-            'resume_content_type' => $row->resume_content_type !== null ? (string) $row->resume_content_type : null,
-            'resume_size_bytes' => $row->resume_size_bytes !== null ? (int) $row->resume_size_bytes : null,
-            'status' => (string) $row->status,
-            'duplicate_of' => $row->duplicate_of !== null ? (string) $row->duplicate_of : null,
-            'created_at' => $this->epochSeconds($row->created_at),
-            'updated_at' => $this->epochSeconds($row->updated_at),
-            'status_changed_at' => $row->status_changed_at !== null ? $this->epochSeconds($row->status_changed_at) : null,
-            'last_contacted_at' => $row->last_contacted_at !== null ? $this->epochSeconds($row->last_contacted_at) : null,
-        ];
-    }
-
     private function presentEmail($row): array
     {
         return [

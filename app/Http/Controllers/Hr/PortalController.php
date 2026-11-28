@@ -15,11 +15,23 @@ use Throwable;
  * Public candidate portal (API_SPEC §7).
  *
  * A submission writes an `applications` row plus a linked `records` row
- * (source `others`), so the resume also appears in the extractor's "Others"
- * tab. Roles are free text; there is no open-roles list.
+ * in the source the candidate picked for "Where did you hear about this
+ * opportunity?" (`heard_from`), flagged `from_portal = 1`, so the resume shows
+ * up as New in that Resume Extractor tab. Roles are free text.
  */
 class PortalController extends HrController
 {
+    /** "Where did you hear about this opportunity?" → records.source (API_SPEC §7, migration 006). */
+    private const HEARD_FROM = ['linkedin', 'indeed', 'naukri', 'email', 'others'];
+
+    private const HEARD_FROM_LABELS = [
+        'linkedin' => 'LinkedIn',
+        'indeed' => 'Indeed',
+        'naukri' => 'Naukri.com',
+        'email' => 'Email',
+        'others' => 'Others',
+    ];
+
     public function config(): JsonResponse
     {
         return $this->ok([
@@ -52,7 +64,7 @@ class PortalController extends HrController
         }
 
         // Rate limit after the cheap validation so bad requests don't burn it.
-        $bucket = 'hr-portal:' . (string) $request->ip();
+        $bucket = 'hr-portal:' . $this->clientIp($request);
         $limit = (int) config('hr.portal.rate_limit_per_hour', 10);
 
         if (RateLimiter::tooManyAttempts($bucket, $limit)) {
@@ -87,15 +99,16 @@ class PortalController extends HrController
                 'INSERT INTO `applications` '
                 . '(`id`,`full_name`,`email`,`phone`,`phone_digits`,`college`,`degree`,`specialization`,'
                 . '`graduation_year`,`education_details`,`current_position`,`experience_years`,`previous_experience`,'
-                . '`skills`,`applied_role`,`preferred_location`,`notice_period`,`linkedin_url`,`github_url`,'
+                . '`skills`,`applied_role`,`heard_from`,`heard_from_other`,`preferred_location`,`notice_period`,`linkedin_url`,`github_url`,'
                 . '`portfolio_url`,`other_links`,`resume_storage_key`,`resume_file_name`,`resume_content_type`,'
                 . '`resume_size_bytes`,`status`,`duplicate_of`,`record_id`,`created_at`,`updated_at`) '
-                . 'VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,CAST(? AS JSON),?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(3),NOW(3))',
+                . 'VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,CAST(? AS JSON),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(3),NOW(3))',
                 [
                     $applicationId, $data['full_name'], $data['email'], $data['phone'], $data['phone_digits'],
                     $data['college'], $data['degree'], $data['specialization'], $data['graduation_year'],
                     $data['education_details'], $data['current_position'], $data['experience_years'],
                     $data['previous_experience'], json_encode($data['skills']), $data['applied_role'],
+                    $data['heard_from'], $data['heard_from_other'],
                     $data['preferred_location'], $data['notice_period'], $data['linkedin_url'],
                     $data['github_url'], $data['portfolio_url'], $data['other_links'],
                     $applicationKey, $resume->getClientOriginalName(), $contentType,
@@ -110,7 +123,7 @@ class PortalController extends HrController
         }
 
         // Second copy for the extractor. This never fails the submission.
-        $this->attachRecord($storage, $applicationId, $recordId, $extension, $contents, $contentType, $resume);
+        $this->attachRecord($storage, $applicationId, $recordId, $extension, $contents, $contentType, $resume, $data);
 
         // Confirmation email (never fails the submission).
         if ((bool) config('hr.applications.ack_email', false)) {
@@ -237,6 +250,26 @@ class PortalController extends HrController
             return $this->invalid('applied_role', 'applied_role must be at most 255 characters', 'body');
         }
 
+        $heardFrom = mb_strtolower($get('heard_from'));
+        if ($heardFrom === '') {
+            return $this->invalid('heard_from', 'Please tell us where you heard about this opportunity', 'body');
+        }
+        if (!in_array($heardFrom, self::HEARD_FROM, true)) {
+            return $this->invalid(
+                'heard_from',
+                'Please choose where you heard about this opportunity (one of: ' . implode(', ', self::HEARD_FROM) . ')',
+                'body'
+            );
+        }
+
+        $heardFromOther = null;
+        if ($heardFrom === 'others') {
+            $heardFromOther = $get('heard_from_other');
+            if ($heardFromOther === '' || mb_strlen($heardFromOther) > 100) {
+                return $this->invalid('heard_from_other', 'Please tell us where you heard about us', 'body');
+            }
+        }
+
         if (mb_strlen($get('notice_period')) > 100) {
             return $this->invalid('notice_period', 'notice_period must be at most 100 characters', 'body');
         }
@@ -271,6 +304,8 @@ class PortalController extends HrController
             'previous_experience' => $this->nullable($get('previous_experience')),
             'skills' => $skills,
             'applied_role' => $role,
+            'heard_from' => $heardFrom,
+            'heard_from_other' => $heardFromOther,
             'preferred_location' => $this->nullable($get('preferred_location')),
             'notice_period' => $this->nullable($get('notice_period')),
             'linkedin_url' => $this->nullable($get('linkedin_url')),
@@ -355,10 +390,19 @@ class PortalController extends HrController
         string $extension,
         string $contents,
         string $contentType,
-        UploadedFile $resume
+        UploadedFile $resume,
+        array $data
     ): void {
         try {
-            $recordKey = $storage->resumeKey($recordId . '.' . $extension);
+            $source = $data['heard_from'];
+            $recordKey = $storage->resumeKey($source . '/' . $recordId . '.' . $extension);
+
+            $heardVia = self::HEARD_FROM_LABELS[$source]
+                . ($data['heard_from_other'] !== null ? ': ' . $data['heard_from_other'] : '');
+            $log = [
+                'Submitted through the candidate portal as application ' . $applicationId . '.',
+                'Candidate heard about the opportunity via ' . $heardVia . '.',
+            ];
 
             if (!$storage->upload($recordKey, $contents, $contentType)) {
                 throw new \RuntimeException('upload failed');
@@ -368,12 +412,13 @@ class PortalController extends HrController
                 'INSERT INTO `records` '
                 . '(`id`,`file_name`,`size_bytes`,`checksum`,`source`,`department`,`status`,`viewed`,'
                 . '`storage_key`,`content_type`,`fields`,`confidence`,`text_content`,`log`,`error`,'
-                . '`used_ocr`,`page_count`,`ai_status`,`duplicate_of`,`attempts`,`created_at`) '
-                . 'VALUES (?,?,?,?,?,?,?,?,?,?,JSON_OBJECT(),JSON_OBJECT(),?,CAST(? AS JSON),NULL,0,0,?,?,0,NOW(3))',
+                . '`used_ocr`,`page_count`,`ai_status`,`duplicate_of`,`from_portal`,`referral_detail`,`attempts`,`created_at`) '
+                . 'VALUES (?,?,?,?,?,?,?,?,?,?,JSON_OBJECT(),JSON_OBJECT(),?,CAST(? AS JSON),NULL,0,0,?,?,1,?,0,NOW(3))',
                 [
                     $recordId, $resume->getClientOriginalName(), $resume->getSize(),
-                    hash('sha256', $contents), 'others', null, 'queued', 0,
-                    $recordKey, $contentType, '', json_encode([]), 'disabled', null,
+                    hash('sha256', $contents), $source, null, 'queued', 0,
+                    $recordKey, $contentType, '', json_encode($log), 'disabled', null,
+                    $data['heard_from_other'],
                 ]
             );
         } catch (Throwable $e) {
@@ -452,6 +497,23 @@ class PortalController extends HrController
         }
 
         return 'APP-' . strtoupper(bin2hex(random_bytes(5)));
+    }
+
+    /**
+     * The candidate's IP for the rate limit. The HR web app reaches us through
+     * a Vercel rewrite, so REMOTE_ADDR is a Vercel server shared by every
+     * candidate; Vercel passes the visitor in x-vercel-forwarded-for. Direct
+     * callers fall back to the connection address.
+     */
+    private function clientIp(Request $request): string
+    {
+        $forwarded = trim(explode(',', (string) $request->header('x-vercel-forwarded-for', ''))[0]);
+
+        if ($forwarded !== '' && filter_var($forwarded, FILTER_VALIDATE_IP) !== false) {
+            return $forwarded;
+        }
+
+        return (string) $request->ip();
     }
 
     private function nullable(string $value): ?string

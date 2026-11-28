@@ -41,13 +41,16 @@ use Illuminate\Support\Facades\Route;
 
 // --- Sign-in (no auth) -----------------------------------------------------
 Route::post('/auth/login', [AuthController::class, 'login']);
-Route::get('/auth/me', [AuthController::class, 'me']);
 
 // --- Health (no auth) ------------------------------------------------------
 Route::get('/health', [HealthController::class, 'health']);
 
 // --- Authenticated API -----------------------------------------------------
 Route::middleware('invoice.auth')->group(function () {
+    // Current user. Needs the token decoded by invoice.auth, or every reload
+    // of the dashboard would see "User not found" and log the user out.
+    Route::get('/auth/me', [AuthController::class, 'me']);
+
     // Dashboard.
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
 

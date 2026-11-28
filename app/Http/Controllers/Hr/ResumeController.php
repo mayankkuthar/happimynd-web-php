@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\Hr;
 
+use App\Services\Hr\GcsStorage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 /**
@@ -17,7 +20,7 @@ class ResumeController extends HrController
     private const LIST_COLUMNS = [
         'id', 'file_name', 'size_bytes', 'content_type', 'source', 'department',
         'status', 'viewed', 'storage_key', 'fields', 'confidence', 'error',
-        'used_ocr', 'page_count', 'ai_status', 'duplicate_of', 'log',
+        'used_ocr', 'page_count', 'ai_status', 'duplicate_of', 'from_portal', 'referral_detail', 'log',
         'created_at', 'finished_at',
     ];
 
@@ -174,8 +177,12 @@ class ResumeController extends HrController
         return $this->ok($this->presentSummary($row));
     }
 
-    /** DELETE /resumes/{id} — stats count every source (API_SPEC §4). */
-    public function destroy(string $id): JsonResponse
+    /**
+     * DELETE /resumes/{id}: the row, then its stored file (rows first: an
+     * orphaned file is recoverable, a row pointing at a deleted file is not).
+     * Stats count every source (API_SPEC §4).
+     */
+    public function destroy(GcsStorage $storage, string $id): JsonResponse
     {
         $storageKey = null;
         $found = false;
@@ -194,6 +201,10 @@ class ResumeController extends HrController
             return $this->detail('Record not found', 404);
         }
 
+        if ($storageKey !== null && $storageKey !== '') {
+            $storage->delete((string) $storageKey);
+        }
+
         return $this->ok([
             'deleted' => $id,
             'storage_key' => $storageKey,
@@ -201,8 +212,8 @@ class ResumeController extends HrController
         ]);
     }
 
-    /** DELETE /resumes?source= (alias /records?source=). */
-    public function clear(Request $request): JsonResponse
+    /** DELETE /resumes?source= (alias /records?source=): rows, then their files. */
+    public function clear(Request $request, GcsStorage $storage): JsonResponse
     {
         $source = $request->query('source');
 
@@ -226,6 +237,10 @@ class ResumeController extends HrController
 
             return $this->db()->table('records')->where('source', $source)->delete();
         });
+
+        foreach ($keys as $key) {
+            $storage->delete((string) $key);
+        }
 
         return $this->ok([
             'deleted' => (int) $deleted,
@@ -379,6 +394,210 @@ class ResumeController extends HrController
             'record' => $row ? $this->presentSummary($row) : null,
             'stats' => $this->stats($source),
         ], 200);
+    }
+
+    /**
+     * POST /resumes/upload (alias /upload), API_SPEC §4. Multipart `files`
+     * (send as `files[]`: PHP keeps only the last of several same-named
+     * fields), `source`, `department`. Bad source/department rejects the whole
+     * request; bad files are skipped with a reason and the rest continue.
+     */
+    public function upload(Request $request, GcsStorage $storage): JsonResponse
+    {
+        $source = $request->input('source');
+        if ($err = $this->checkSource(is_string($source) ? trim($source) : null, 'body')) {
+            return $err;
+        }
+        $source = trim($source);
+
+        $department = $request->input('department');
+        $department = is_string($department) && trim($department) !== '' ? trim($department) : null;
+        if ($err = $this->checkDepartment($department, 'body')) {
+            return $err;
+        }
+        $department = $this->canonicalDepartment($department);
+
+        $files = $request->file('files');
+        if ($files instanceof UploadedFile) {
+            $files = [$files];
+        }
+        $files = is_array($files) ? array_values(array_filter($files, function ($f) {
+            return $f instanceof UploadedFile;
+        })) : [];
+
+        if ($files === []) {
+            return $this->missing('files', 'body');
+        }
+
+        $maxFiles = (int) config('hr.upload.max_files', 0);
+        if ($maxFiles > 0 && count($files) > $maxFiles) {
+            return $this->detail('Too many files in a single upload.', 400);
+        }
+
+        if (!$storage->configured()) {
+            return $this->detail('Storage is not configured', 503);
+        }
+
+        $maxBytes = (int) config('hr.max_file_bytes', 25 * 1024 * 1024);
+        $tooLarge = 'Larger than ' . round($maxBytes / 1048576) . ' MB';
+        $allowed = (array) config('hr.upload.allowed_extensions', []);
+        $sniffer = new \finfo(FILEINFO_MIME_TYPE);
+
+        $accepted = [];
+        $rejected = [];
+
+        foreach ($files as $file) {
+            $name = $this->cleanFileName((string) $file->getClientOriginalName());
+            $reject = function (string $reason) use (&$rejected, $name) {
+                $rejected[] = ['file_name' => $name, 'reason' => $reason];
+            };
+
+            if (!$file->isValid()) {
+                $code = $file->getError();
+                $reject(in_array($code, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)
+                    ? $tooLarge : 'Could not be stored — please retry');
+                continue;
+            }
+
+            $size = (int) $file->getSize();
+            if ($size === 0) {
+                $reject('Empty file');
+                continue;
+            }
+            if ($size > $maxBytes) {
+                $reject($tooLarge);
+                continue;
+            }
+
+            $ext = strtolower((string) pathinfo($name, PATHINFO_EXTENSION));
+            if ($ext === '') {
+                $reject('Unsupported file type (no extension)');
+                continue;
+            }
+            if (!in_array($ext, $allowed, true)) {
+                $reject('Unsupported file type (.' . $ext . ')');
+                continue;
+            }
+
+            $bytes = (string) @file_get_contents((string) $file->getRealPath());
+            if ($bytes === '') {
+                $reject('Could not be stored — please retry');
+                continue;
+            }
+
+            // Sniffed from the bytes, not taken from the browser (API_SPEC §4).
+            $contentType = (string) ($sniffer->buffer($bytes) ?: 'application/octet-stream');
+            $id = bin2hex(random_bytes(6));
+            $keyExt = preg_match('/^[a-z0-9]{1,10}$/', $ext) ? $ext : 'bin';
+            $key = $storage->resumeKey($source . '/' . $id . '.' . $keyExt);
+
+            if (!$storage->upload($key, $bytes, $contentType)) {
+                $reject('Could not be stored — please retry');
+                continue;
+            }
+
+            try {
+                $this->insertQueued($id, $name, $size, hash('sha256', $bytes), $source, $department, $key, $contentType);
+            } catch (Throwable $e) {
+                $storage->delete($key);
+                $reject('Could not be saved — please retry');
+                continue;
+            }
+
+            $row = $this->fetchRow($id);
+            if ($row !== null) {
+                $accepted[] = $this->presentSummary($row);
+            }
+        }
+
+        return $this->ok([
+            'accepted' => $accepted,
+            'rejected' => $rejected,
+            'stats' => $this->stats($source),
+        ]);
+    }
+
+    /**
+     * GET / HEAD /resumes/{id}/file (API_SPEC §4): the original file from
+     * storage, for in-browser preview.
+     */
+    public function file(Request $request, GcsStorage $storage, string $id): Response
+    {
+        $row = $this->db()->table('records')->where('id', $id)->first(['id', 'file_name', 'storage_key', 'content_type']);
+
+        if ($row === null || $row->storage_key === null || $row->storage_key === '') {
+            return $this->detail('File not found', 404);
+        }
+
+        $bytes = $storage->download((string) $row->storage_key);
+        if ($bytes === null) {
+            return $this->detail('File not found', 404);
+        }
+
+        $name = (string) $row->file_name;
+        $ascii = preg_replace('/[^\x20-\x7E]|["\\\\]/', '_', $name);
+
+        return response($request->isMethod('HEAD') ? '' : $bytes, 200, [
+            'Content-Type' => (string) ($row->content_type ?: 'application/octet-stream'),
+            'Content-Length' => (string) strlen($bytes),
+            'Content-Disposition' => 'inline; filename="' . $ascii . '"; filename*=UTF-8\'\'' . rawurlencode($name),
+            'Cache-Control' => 'private, max-age=3600',
+            'Content-Security-Policy' => "sandbox; default-src 'none'",
+        ]);
+    }
+
+    /** Path stripped, control characters and leading dots removed, ≤ 255, else "unnamed". */
+    private function cleanFileName(string $name): string
+    {
+        $name = str_replace('\\', '/', $name);
+        $name = substr($name, (int) strrpos('/' . $name, '/'));
+        $name = (string) preg_replace('/[\x00-\x1F\x7F]/u', '', $name);
+        $name = trim(ltrim(trim($name), '.'));
+        $name = mb_substr($name, 0, 255);
+
+        return $name !== '' ? $name : 'unnamed';
+    }
+
+    /**
+     * Insert a queued record, flagging (not rejecting) an identical file already
+     * in this source: oldest same-checksum original, FOR UPDATE (API_SPEC §4).
+     */
+    private function insertQueued(
+        string $id,
+        string $fileName,
+        int $sizeBytes,
+        string $checksum,
+        string $source,
+        ?string $department,
+        ?string $storageKey,
+        string $contentType
+    ): void {
+        $this->db()->transaction(function () use (
+            $id, $fileName, $sizeBytes, $checksum, $source, $department, $storageKey, $contentType
+        ) {
+            $existing = $this->db()->table('records')
+                ->where('source', $source)
+                ->where('checksum', $checksum)
+                ->whereNull('duplicate_of')
+                ->orderBy('created_at')
+                ->lockForUpdate()
+                ->first(['id', 'file_name']);
+
+            $duplicateOf = $existing !== null ? (string) $existing->id : null;
+            $log = $existing !== null ? ['Duplicate of ' . $existing->file_name . ' (identical file contents).'] : [];
+
+            $this->db()->insert(
+                'INSERT INTO `records` '
+                . '(`id`,`file_name`,`size_bytes`,`checksum`,`source`,`department`,`status`,`viewed`,'
+                . '`storage_key`,`content_type`,`fields`,`confidence`,`text_content`,`log`,`error`,'
+                . '`used_ocr`,`page_count`,`ai_status`,`duplicate_of`,`attempts`,`created_at`) '
+                . 'VALUES (?,?,?,?,?,?,?,?,?,?,JSON_OBJECT(),JSON_OBJECT(),?,CAST(? AS JSON),NULL,0,0,?,?,0,NOW(3))',
+                [
+                    $id, $fileName, $sizeBytes, $checksum, $source, $department, 'queued', 0,
+                    $storageKey, $contentType, '', json_encode($log), 'disabled', $duplicateOf,
+                ]
+            );
+        });
     }
 
     private function fetchRow(string $id)

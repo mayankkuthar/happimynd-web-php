@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Hub;
 
 use App\Http\Controllers\Controller;
+use App\Services\Hub\HubPlayerToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
@@ -51,6 +52,25 @@ abstract class HubController extends Controller
         }
 
         return $request->all();
+    }
+
+    /**
+     * The signed-in player's hub user id, from the signed token in the
+     * Authorization header, or a `token` field in the body (text/plain
+     * beacons can't set headers). Null when missing or invalid.
+     */
+    protected function playerId(Request $request, $body = null): ?string
+    {
+        $token = $request->bearerToken();
+        if (!$token) {
+            if (is_array($body) && isset($body['token'])) {
+                $token = (string) $body['token'];
+            } elseif (is_object($body) && isset($body->token)) {
+                $token = (string) $body->token;
+            }
+        }
+
+        return app(HubPlayerToken::class)->userId($token);
     }
 
     /** Current time in UTC (the app timezone is not UTC). */

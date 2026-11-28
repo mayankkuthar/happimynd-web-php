@@ -47,6 +47,22 @@ class HealthController extends HrController
         ], $ready ? 200 : 503);
     }
 
+    /**
+     * GET /schema (API_SPEC §3): field metadata, so the front end hardcodes no
+     * column list. resources/hr/schema.json is the intern app's own GET /schema
+     * response (generated from server/src/domain/schema.ts). No database access.
+     */
+    public function schema(): JsonResponse
+    {
+        $schema = json_decode((string) @file_get_contents(resource_path('hr/schema.json')), true);
+
+        if (!is_array($schema)) {
+            return response()->json(['detail' => 'Schema is not available'], 500);
+        }
+
+        return response()->json($schema, 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
     private function databaseStatus(): string
     {
         if (config('database.connections.hr.database') === null) {
